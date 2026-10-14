@@ -1,6 +1,7 @@
-# One-shot tool: extract toolbar icons (wireless/upload/network) from the original
-# GuojiaTiZhi.exe embedded resources into this project's Resources folder as PNG.
-# After extraction the PNGs live in the project; no runtime dependency on the original exe.
+# One-shot tool (historical record; icons already extracted and checked in under
+# HH.DataCollection.Wifi/Resources, so normally never needs to run again):
+# extract toolbar icons (wireless/upload/network) from the original GuojiaTiZhi.exe
+# embedded resources into this project's Resources folder as PNG.
 # NOTE: keep this file pure ASCII (Windows PowerShell 5.1 reads .ps1 as GBK without BOM).
 param(
     [string]$Source = "D:\Huihai\Guojiatizhi\GuojiaTiZhi.exe",
