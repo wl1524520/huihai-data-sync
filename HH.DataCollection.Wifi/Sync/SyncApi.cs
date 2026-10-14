@@ -1,0 +1,311 @@
+using System;
+using System.IO;
+using System.Net;
+using System.Text;
+using Newtonsoft.Json.Linq;
+
+namespace HH.DataCollection.Wifi.Sync
+{
+    /// <summary>
+    /// 同步接口的 HTTP 层(.NET 4.0 无 HttpClient,用 HttpWebRequest)。
+    /// 契约见 unite-data-sync/docs/汇海同步接口文档.md:
+    ///   认证头 X-Huihai-Token;base 必须以 /api/hh 结尾;
+    ///   成功判定严格为 HTTP 200 + JSON + success===true。
+    /// </summary>
+    public class SyncApi
+    {
+        private static readonly int[] RetryableStatusCodes = { 429, 500, 502, 503, 504 };
+        private const int MaxAttempts = 3;
+        private const int TimeoutMs = 30000;
+
+        private readonly string _baseUrl;
+        private readonly string _token;
+
+        public SyncApi(string baseUrl, string token)
+        {
+            _baseUrl = (baseUrl ?? "").Trim().TrimEnd('/');
+            _token = token ?? "";
+        }
+
+        /// <summary>GET /sync/info:返回 token 绑定的学校与平台当前项目。retry=true 时网络错误/限流/5xx 重试至多 3 次(间隔 1s/2s)。</summary>
+        public SyncInfo GetSyncInfo(bool retry)
+        {
+            int attempts = retry ? MaxAttempts : 1;
+            string lastError = null;
+            for (int i = 0; i < attempts; i++)
+            {
+                HttpResult resp = null;
+                try
+                {
+                    resp = Send("GET", "/sync/info", null, null);
+                }
+                catch (Exception ex)
+                {
+                    lastError = "网络请求失败:" + ex.Message;
+                }
+                if (resp != null)
+                {
+                    if (resp.StatusCode == 200)
+                    {
+                        var data = ParseJsonObject(resp.Body, "服务端返回的同步信息不是有效 JSON");
+                        var school = data["school"] as JObject;
+                        var project = data["project"] as JObject;
+                        if (school == null || project == null ||
+                            school["id"] == null || project["id"] == null ||
+                            school["name"] == null || project["name"] == null)
+                            throw new SyncException("服务端返回的同步信息格式错误");
+                        return new SyncInfo
+                        {
+                            SchoolId = school["id"].ToString(),
+                            SchoolName = school["name"].ToString(),
+                            ProjectId = project["id"].ToString(),
+                            ProjectName = project["name"].ToString(),
+                        };
+                    }
+                    lastError = "HTTP " + resp.StatusCode;
+                    if (Array.IndexOf(RetryableStatusCodes, resp.StatusCode) < 0)
+                        throw new SyncException(lastError);
+                }
+                if (i < attempts - 1) System.Threading.Thread.Sleep(1000 << i);
+            }
+            throw new SyncException(lastError ?? "获取同步信息失败");
+        }
+
+        /// <summary>GET /sync/student?page=N:拉一页学生。不重试;422 抛带 data_issues 摘要的 SyncException。</summary>
+        public StudentPage GetStudentPage(int page, int perPage)
+        {
+            HttpResult resp;
+            try
+            {
+                resp = Send("GET", "/sync/student", "page=" + page + "&per_page=" + perPage, null);
+            }
+            catch (Exception ex)
+            {
+                throw new SyncException("网络请求失败:" + ex.Message);
+            }
+            if (resp.StatusCode == 200)
+            {
+                var data = ParseJsonObject(resp.Body, "服务端学生分页响应不是有效 JSON");
+                return ValidateStudentPage(data, page);
+            }
+            if (resp.StatusCode == 422)
+            {
+                string message = "平台学生数据存在脏数据,请先处理后再同步";
+                try
+                {
+                    var err = JObject.Parse(resp.Body);
+                    message = err["message"] != null ? err["message"].ToString() : message;
+                    var issues = err["data_issues"] as JObject;
+                    var counts = issues != null ? issues["issue_counts"] as JObject : null;
+                    if (counts != null && counts.HasValues)
+                    {
+                        var parts = new StringBuilder();
+                        foreach (var kv in counts)
+                            parts.Append(parts.Length == 0 ? "(" : ";").Append(kv.Key).Append(":").Append(kv.Value);
+                        message += parts.Append(")");
+                    }
+                }
+                catch { /* 用默认提示 */ }
+                throw new SyncException(message);
+            }
+            throw new SyncException("HTTP " + resp.StatusCode);
+        }
+
+        /// <summary>
+        /// POST /sync/score:上传一批成绩(1~5000 条)。
+        /// 单次尝试,不原地重试。仅当 HTTP 200 + JSON + success===true 视为平台已接收。
+        /// 异常分类(依据 2026-10-14 版接口文档 §6.2/§7):
+        ///   401 → SyncAuthException(停止本轮);400 → SyncFatalException(停止本轮);
+        ///   200+success=false → SyncBatchRejectedException(部分明细保存失败,停止本轮,重启后原样补传);
+        ///   422 → SyncBatchRejectedException(字段验证失败,修复前重发无意义,停止本轮);
+        ///   网络错误/429/5xx/其他 → SyncException(调用方跳过本批继续下一批)。
+        /// </summary>
+        public void PostScores(JArray items)
+        {
+            var payload = new JObject();
+            payload["items"] = items;
+            HttpResult resp;
+            try
+            {
+                resp = Send("POST", "/sync/score", null, payload.ToString(Newtonsoft.Json.Formatting.None));
+            }
+            catch (Exception ex)
+            {
+                throw new SyncException("网络请求失败:" + ex.Message);
+            }
+            if (resp.StatusCode == 200)
+            {
+                var data = ParseJsonObject(resp.Body, "服务端返回的成功响应不是有效 JSON");
+                var success = data["success"];
+                if (success != null && success.Type == JTokenType.Boolean)
+                {
+                    if (success.Value<bool>()) return;
+                    // success=false:至少一条原始明细保存失败(已保存行平台保留),
+                    // 本批不得标记,提示错误并停止本轮,重新启动后原样补传
+                    throw new SyncBatchRejectedException(
+                        "部分原始成绩保存失败:" + (data["message"] != null ? data["message"].ToString() : "请重新上传"));
+                }
+                throw new SyncException(data["message"] != null ? data["message"].ToString() : "服务端响应不满足接收协议");
+            }
+            if (resp.StatusCode == 401)
+                throw new SyncAuthException("令牌无效或已停用(401),请检查同步设置");
+            if (resp.StatusCode == 400)
+                throw new SyncFatalException("学校或项目不存在(400),请核对同步设置与平台配置");
+            if (resp.StatusCode == 422)
+            {
+                string detail = "";
+                try
+                {
+                    var err = JObject.Parse(resp.Body);
+                    detail = err["message"] != null ? err["message"].ToString() : "";
+                }
+                catch { }
+                throw new SyncBatchRejectedException("字段验证失败(422)" + (detail.Length > 0 ? ":" + detail : ""));
+            }
+            throw new SyncException("HTTP " + resp.StatusCode);
+        }
+
+        private static StudentPage ValidateStudentPage(JObject data, int expectedPage)
+        {
+            var items = data["items"] as JArray;
+            var meta = data["meta"] as JObject;
+            if (items == null || meta == null)
+                throw new SyncException("服务端学生分页响应格式错误:items 或 meta 缺失");
+            string[] requiredMeta = { "current_page", "per_page", "last_page", "total", "project_id", "project_year" };
+            foreach (var key in requiredMeta)
+            {
+                var v = meta[key];
+                if (v == null || v.Type != JTokenType.Integer)
+                    throw new SyncException("服务端学生分页响应格式错误:meta 字段不完整");
+            }
+            var page = new StudentPage
+            {
+                Items = items,
+                CurrentPage = meta["current_page"].Value<int>(),
+                PerPage = meta["per_page"].Value<int>(),
+                LastPage = meta["last_page"].Value<int>(),
+                Total = meta["total"].Value<int>(),
+                ProjectId = meta["project_id"].Value<int>(),
+                ProjectYear = meta["project_year"].Value<int>(),
+            };
+            if (page.CurrentPage != expectedPage || page.CurrentPage < 1 || page.LastPage < 1)
+                throw new SyncException("服务端学生分页响应格式错误:页码不一致");
+            if (page.CurrentPage > page.LastPage || page.PerPage < 1 || page.Total < 0)
+                throw new SyncException("服务端学生分页响应格式错误:分页参数无效");
+            string[] requiredItemFields = { "student_no", "name", "id_number", "gender", "birth", "nation", "origin_id", "grade", "addr", "class_id", "class_name", "mc" };
+            foreach (var item in items)
+            {
+                var obj = item as JObject;
+                if (obj == null) throw new SyncException("服务端学生分页响应格式错误:学生字段不完整");
+                foreach (var f in requiredItemFields)
+                    // birth 等字段允许为 JSON null,但字段本身必须存在
+                    if (obj.Property(f) == null)
+                        throw new SyncException("服务端学生分页响应格式错误:学生字段不完整");
+            }
+            return page;
+        }
+
+        private static JObject ParseJsonObject(string body, string errorMessage)
+        {
+            try
+            {
+                var obj = JObject.Parse(body);
+                return obj;
+            }
+            catch (Exception)
+            {
+                throw new SyncException(errorMessage);
+            }
+        }
+
+        private HttpResult Send(string method, string path, string query, string jsonBody)
+        {
+            string url = _baseUrl + path + (string.IsNullOrEmpty(query) ? "" : "?" + query);
+            var req = (HttpWebRequest)WebRequest.Create(url);
+            req.Method = method;
+            req.Timeout = TimeoutMs;
+            req.ReadWriteTimeout = TimeoutMs;
+            req.Accept = "application/json";
+            req.Headers["X-Huihai-Token"] = _token;
+            if (jsonBody != null)
+            {
+                req.ContentType = "application/json";
+                byte[] bytes = Encoding.UTF8.GetBytes(jsonBody);
+                req.ContentLength = bytes.Length;
+                using (var stream = req.GetRequestStream())
+                    stream.Write(bytes, 0, bytes.Length);
+            }
+            try
+            {
+                using (var resp = (HttpWebResponse)req.GetResponse())
+                using (var reader = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+                    return new HttpResult { StatusCode = (int)resp.StatusCode, Body = reader.ReadToEnd() };
+            }
+            catch (WebException ex)
+            {
+                var errorResp = ex.Response as HttpWebResponse;
+                if (errorResp == null) throw; // 真网络错误,交给调用方
+                using (errorResp)
+                using (var reader = new StreamReader(errorResp.GetResponseStream(), Encoding.UTF8))
+                    return new HttpResult { StatusCode = (int)errorResp.StatusCode, Body = reader.ReadToEnd() };
+            }
+        }
+
+        private class HttpResult
+        {
+            public int StatusCode;
+            public string Body;
+        }
+    }
+
+    public class SyncInfo
+    {
+        public string SchoolId;
+        public string SchoolName;
+        public string ProjectId;
+        public string ProjectName;
+
+        public override string ToString()
+        {
+            return string.Format("远端同步信息:学校:{0}(ID:{1});项目:{2}(ID:{3})", SchoolName, SchoolId, ProjectName, ProjectId);
+        }
+    }
+
+    public class StudentPage
+    {
+        public JArray Items;
+        public int CurrentPage;
+        public int PerPage;
+        public int LastPage;
+        public int Total;
+        public int ProjectId;
+        public int ProjectYear;
+    }
+
+    /// <summary>普通同步错误:当前批次/操作失败,但不影响后续批次。</summary>
+    public class SyncException : Exception
+    {
+        public SyncException(string message) : base(message) { }
+    }
+
+    /// <summary>
+    /// 本批数据被服务端拒收(200+success=false 部分保存失败,或 422 字段验证失败):
+    /// 不得标记本批,停止本轮;修复或重启后原样补传(文档 §6.2/§7)。
+    /// </summary>
+    public class SyncBatchRejectedException : SyncException
+    {
+        public SyncBatchRejectedException(string message) : base(message) { }
+    }
+
+    /// <summary>令牌失效:停止本轮,不继续后续批次。</summary>
+    public class SyncAuthException : SyncException
+    {
+        public SyncAuthException(string message) : base(message) { }
+    }
+
+    /// <summary>学校/项目不存在等平台侧配置错误:停止本轮。</summary>
+    public class SyncFatalException : SyncException
+    {
+        public SyncFatalException(string message) : base(message) { }
+    }
+}

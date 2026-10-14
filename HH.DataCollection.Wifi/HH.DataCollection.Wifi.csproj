@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{B7C2A1E4-3D5F-4A6B-9C8D-1E2F3A4B5C6D}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <!-- 程序图标沿用汇海发布目录中的 HXHH_green.ico -->
+    <ApplicationIcon>$(SolutionDir)..\Guojiatizhi\HXHH_green.ico</ApplicationIcon>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>HH.DataCollection.Wifi</RootNamespace>
+    <AssemblyName>HH.DataCollection.Wifi</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- 汇海体测软件发布目录,所有被引用的 DLL 与配置文件从这里复制 -->
+    <HuiHaiDir>$(SolutionDir)..\Guojiatizhi\</HuiHaiDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(HuiHaiDir)Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Model">
+      <HintPath>$(HuiHaiDir)Model.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="BLL">
+      <HintPath>$(HuiHaiDir)BLL.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="DAL">
+      <HintPath>$(HuiHaiDir)DAL.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UI">
+      <HintPath>$(HuiHaiDir)UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Device">
+      <HintPath>$(HuiHaiDir)Device.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="LJH.GeneralLibrary">
+      <HintPath>$(HuiHaiDir)LJH.GeneralLibrary.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="HH.TiYu.SQLite">
+      <HintPath>$(HuiHaiDir)HH.TiYu.SQLite.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data.SQLite">
+      <HintPath>$(HuiHaiDir)System.Data.SQLite.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="FrmMain.cs" />
+    <Compile Include="FrmSelectProject.cs" />
+    <Compile Include="Db\LocalDb.cs" />
+    <Compile Include="Sync\SyncConfig.cs" />
+    <Compile Include="Sync\SyncApi.cs" />
+    <Compile Include="Sync\StudentSync.cs" />
+    <Compile Include="Sync\ScoreUpload.cs" />
+    <Compile Include="Sync\FrmSyncSettings.cs" />
+    <Compile Include="Sync\FrmSyncTasks.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- 工具栏图标,由 tools\ExtractIcons.ps1 从原软件 GuojiaTiZhi.exe 资源提取 -->
+    <EmbeddedResource Include="Resources\wireless.png" />
+    <EmbeddedResource Include="Resources\upload.png" />
+    <EmbeddedResource Include="Resources\network.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <!-- 把运行所需的全部 DLL、配置文件复制到输出目录(仅更新较新文件) -->
+    <Exec Command="xcopy &quot;$(HuiHaiDir)*.dll&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
+    <!-- 删除采集+同步不需要的组件:备份件/淘宝SDK/MySQL/PDF/二维码;评分标准与模板目录也不再复制 -->
+    <Exec Command="del /Q &quot;$(TargetDir)UI.origin.dll&quot; &quot;$(TargetDir)TopSdk.dll&quot; &quot;$(TargetDir)MySql.Data.dll&quot; &quot;$(TargetDir)itextsharp.dll&quot; &quot;$(TargetDir)zxing.dll&quot; &quot;$(TargetDir)zxing.presentation.dll&quot; &quot;$(TargetDir)Gma.QrCodeNet.Encoding.dll&quot; &quot;$(TargetDir)Dewlt.dll&quot; 2&gt;nul &amp; exit 0" />
+    <Exec Command="xcopy &quot;$(HuiHaiDir)config.xml&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
+    <Exec Command="xcopy &quot;$(HuiHaiDir)DbUpdate_SQLITE.sql&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
+    <!-- 补丁:摘空输出目录 BLL.dll 拷贝件中 PhysicalScoresSavingService.AddScore/AddScores,主库成绩表不写 -->
+    <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)BLL.dll&quot;" />
+    <!-- 补丁:把输出目录 Model.dll 拷贝件中硬编码的 HHRawScore.db 改为 HuihaiTiyu.db(原始成绩落主库,单库方案) -->
+    <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)Model.dll&quot;" />
+  </Target>
+</Project>
