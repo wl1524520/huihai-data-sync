@@ -78,16 +78,6 @@ namespace HH.TiYu.Model
             _Grades.Add(42, "大二");
             _Grades.Add(43, "大三");
             _Grades.Add(44, "大四");
-            _Grades.Add(101, "年龄20_24");
-            _Grades.Add(102, "年龄25_29");
-            _Grades.Add(103, "年龄30_34");
-            _Grades.Add(104, "年龄35_39");
-            _Grades.Add(105, "年龄40_44");
-            _Grades.Add(106, "年龄45_49");
-            _Grades.Add(107, "年龄50_54");
-            _Grades.Add(108, "年龄55_59");
-            _Grades.Add(109, "年龄60_64");
-            _Grades.Add(110, "年龄65_69");
         }
 
         public bool TryParse(string grade, out int m_Grade)
