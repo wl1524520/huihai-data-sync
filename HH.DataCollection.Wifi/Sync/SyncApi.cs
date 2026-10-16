@@ -279,8 +279,9 @@ namespace HH.DataCollection.Wifi.Sync
                 throw new SyncException("服务端学生分页响应格式错误:页码不一致");
             if (page.CurrentPage > page.LastPage || page.PerPage < 1 || page.Total < 0)
                 throw new SyncException("服务端学生分页响应格式错误:分页参数无效");
-            // 2026-10-16 版契约:items[] 仅六字段(§3.2),旧版 birth/nation/origin_id/addr/class_id/mc 已移除
-            string[] requiredItemFields = { "student_no", "name", "id_number", "gender", "grade", "class_name" };
+            // 2026-10-16 12:42 版契约(§3.2/§10):items[] 仅五字段,test_no 取代 student_no 与 id_number
+            // (test_no 是学校 qrcode_field 决定的"学号或身份证",客户端不区分、原样处理)
+            string[] requiredItemFields = { "test_no", "name", "gender", "grade", "class_name" };
             foreach (var item in items)
             {
                 var obj = item as JObject;

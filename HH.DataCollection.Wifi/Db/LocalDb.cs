@@ -193,29 +193,37 @@ namespace HH.DataCollection.Wifi.Db
   [PhysicalItems] nvarchar(1000),
   [TotalFormula] nvarchar(1000),
   CONSTRAINT [sqlite_autoindex_ProjectPhysicalItems_1] PRIMARY KEY ([ID]))",
-            // 学生名单(平台下发)
+            // 学生名单(平台下发)。2026-10-16 版契约的学生条目仅五字段
+            // (test_no/name/gender/grade/class_name),平台不再分别下发学号与身份证。
+            // 真值列 9 个:ID StudentID ProjectID Name Sex Grade ClassName FacilityID UpdateDate
+            //   StudentID 自 2026-10 起存放平台 test_no(学校 qrcode_field 决定的"学号或身份证",
+            //   已去首尾空白,最多 60 字符)。链路闭环:
+            //   平台 test_no → 本列 → 下发主机的 HostStudent.StudentID → 主机回传
+            //   PhysicalRecord.StudentNumber → StudentRawScore.StudentID → 上传 test_no
+            // 以下 10 列为"兼容占位列":原软件 DAL.dll 内嵌 DataMapping.xml 的 Student 列映射
+            // 强制要求它们物理存在(缺失会让 GetFullInfo(23) 的学生 SELECT 直接报错),但平台不给、
+            // 本地也不产生,故一律恒 NULL、同步层永不写入:
+            //   CardID BirthDay IDNumber Nation District ClassID IsAbsent Graduation Note Address
             @"CREATE TABLE IF NOT EXISTS [Student] (
   [ID] GUID(50) NOT NULL,
-  [StudentID] CHAR NOT NULL,
+  [StudentID] nvarchar(64) NOT NULL, -- 平台 test_no(去首尾空白,<=60 字符)
   [ProjectID] CHAR NOT NULL,
   [Name] nvarchar(50) NOT NULL,
   [Sex] INTEGER(50) NOT NULL,
   [FacilityID] NVARCHAR(50) NOT NULL,
+  [Grade] INTEGER,
+  [ClassName] nvarchar(50),
+  [UpdateDate] datetime,
   [CardID] NVARCHAR(50),
   [BirthDay] DATETIME,
   [IDNumber] nvarchar(50),
   [Nation] INTEGER,
   [District] nvarchar(50),
-  [Grade] INTEGER,
   [ClassID] NVARCHAR(50),
-  [ClassName] nvarchar(50),
-  [Graduation] INTEGER,
   [IsAbsent] bit,
-  [UpdateDate] datetime,
-  [UploadToCloudDate] datetime,
-  [Address] nvarchar(200),
+  [Graduation] INTEGER,
   [Note] nvarchar(512),
-  [Memo] nvarchar(200),
+  [Address] nvarchar(200),
   CONSTRAINT [con_projectID_studentID] UNIQUE([StudentID], [ProjectID]) ON CONFLICT FAIL,
   CONSTRAINT [sqlite_autoindex_Student_1] PRIMARY KEY ([ID]))",
             // 唯一成绩表:设备上报的原始成绩,全量原样保存;Uploaded 为上传标记
@@ -240,6 +248,8 @@ namespace HH.DataCollection.Wifi.Db
             @"CREATE TABLE IF NOT EXISTS [sync_config] (
   [config_key] TEXT PRIMARY KEY NOT NULL,
   [config_value] TEXT NOT NULL)",
+            // 主界面按 项目+班级 筛选学生(名单量级不大,索引零成本)
+            @"CREATE INDEX IF NOT EXISTS [IX_Student_Project_Class] ON [Student] ([ProjectID], [ClassName])",
         };
     }
 }

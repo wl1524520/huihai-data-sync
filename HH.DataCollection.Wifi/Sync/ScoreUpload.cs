@@ -7,14 +7,17 @@ namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
     /// 成绩上传(本地 → 平台),移植自 unite-data-sync 的 upload_scores,按本软件方案调整:
-    ///   - 数据源为唯一成绩表 StudentRawScore 中 Uploaded=0 的行,原样全传(不去重)
-    ///   - 仅接口 code 映射表内的科目上传,code = TestID + 10000(映射依据已核对
-    ///     lib/DbUpdate_SQLITE.sql 种子字典与 2026-10-16 版接口文档 §5.1 code 表一致);
+    ///   - 数据源为唯一成绩表 StudentRawScore 中 Uploaded=0 的行,原样全传(不去重);
+    ///     行内 StudentID 即学生标识(= 平台下发的 test_no,链路见 Student 表建表注释)
+    ///   - 仅 CodeMap 内的科目上传。code 显式写死,不再用 TestID+10000 推导:文档 §5.1 要求
+    ///     "根据数据源中的项目含义进行映射",并明确告诫不能按未经核对的编号规则推算;
     ///     表外科目留在本地底账;SpecialType 非空的特殊成绩不上传(与原工具一致)
     ///   - 每批 1000 条;网络错误/5xx 由 SyncApi 有限退避后仍失败则跳过本批传下一批,下轮自然重传;
     ///     429 退避后仍未缓解停止本轮;200+success=false 与 422 按文档 §4/§7 停止本轮,重启后原样补传
     ///   - 仅当 HTTP 200 + JSON success===true 才在事务内把该批标记 Uploaded=1
     ///   - 401/400 停止本轮;上传前按文档 §4/§5 做本地预校验,非法行隔离不上传、不阻断其他成绩
+    ///   - 另做一次"标识是否在本地名单中"的核对:后台业务拒绝(学生不存在/免测/日期越界等)
+    ///     不通过接口返回(文档 §6.2),客户端唯一能自救的是把这类行提前报出来;只报告、不阻断
     /// </summary>
     public class ScoreUpload
     {
@@ -22,12 +25,42 @@ namespace HH.DataCollection.Wifi.Sync
         public const int RoundIntervalSeconds = 120;
 
         /// <summary>
-        /// 接口有 code 映射的科目白名单(本地 TestID)。
-        /// 对应平台 code:10001身高/10002体重/10004肺活量/10005 50米/10006立定跳远/10007坐位体前屈/
-        /// 10009 50米×8往返/10010 800米/10011 1000米/10012仰卧起坐/10014引体向上/10018跳绳。
-        /// 种子字典另有 24(BMI),文档明确禁止上传,不在白名单。
+        /// 本地 TestID → 平台 code 的显式映射(文档 §5.1)。
+        /// 文档要求"根据数据源中的项目含义进行映射",并告诫"不能按未经核对的编号规则推算",
+        /// 故逐条写死,不用 TestID+10000 的隐含规则;条目已与 lib/DbUpdate_SQLITE.sql 的
+        /// PhysicalItem 种子字典逐项核对对应。种子字典另有 24(BMI 指数),文档明确禁止作为
+        /// 外部成绩上传,故不在表中。
         /// </summary>
-        private static readonly int[] UploadableItems = { 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 18 };
+        private static readonly Dictionary<int, int> CodeMap = CreateCodeMap();
+
+        private static Dictionary<int, int> CreateCodeMap()
+        {
+            // .NET 4.0 的 csc 只支持 C# 5,不能用 ["k"] = v 形式的集合初始化器,只能逐个赋值
+            var map = new Dictionary<int, int>();
+            map[1] = 10001;  // 身高(cm)
+            map[2] = 10002;  // 体重(kg)
+            map[4] = 10004;  // 肺活量(ml)
+            map[5] = 10005;  // 50 米跑(秒)
+            map[6] = 10006;  // 立定跳远(cm)
+            map[7] = 10007;  // 坐位体前屈(cm,可负值)
+            map[9] = 10009;  // 50 米×8 往返跑(分.秒)
+            map[10] = 10010; // 800 米跑(分.秒)
+            map[11] = 10011; // 1000 米跑(分.秒)
+            map[12] = 10012; // 一分钟仰卧起坐(次)
+            map[14] = 10014; // 引体向上(次)
+            map[18] = 10018; // 一分钟跳绳(次)
+            return map;
+        }
+
+        /// <summary>可上传科目白名单(SQL 与待传计数共用),由 CodeMap 派生并排序以保证 SQL 文本确定。</summary>
+        private static readonly int[] UploadableItems = CreateUploadableItems();
+
+        private static int[] CreateUploadableItems()
+        {
+            var keys = new List<int>(CodeMap.Keys);
+            keys.Sort();
+            return keys.ToArray();
+        }
 
         /// <summary>分.秒(m.ss)编码的科目(文档 §5.3:10009/10010/10011,服务器不猜编码)</summary>
         private static readonly int[] MinSecItems = { 9, 10, 11 };
@@ -60,6 +93,7 @@ namespace HH.DataCollection.Wifi.Sync
             var pending = GetPendingScores();
             report("待上传成绩 " + pending.Count + " 条");
             IsolateInvalidRows(pending, report);
+            ReportUnknownIdentifiers(pending, report);
             int sent = 0, failed = 0;
             for (int offset = 0; offset < pending.Count && !stopRequested(); offset += BatchSize)
             {
@@ -106,7 +140,7 @@ namespace HH.DataCollection.Wifi.Sync
         }
 
         /// <summary>
-        /// 上传前本地预校验(文档 §4/§5.3):number 非空 ≤50、|score| ≤99999999.99、
+        /// 上传前本地预校验(文档 §4/§5.3):test_no 去首尾空白后非空且 ≤60、|score| ≤99999999.99、
         /// 分.秒项目秒位 00~59。非法行从待传列表移除并逐条报告——不预检的话一行脏数据
         /// 会让整批 422,且按 CreateTime 排序后永远卡在队首堵死全部上传("毒行")。
         /// 隔离行保持 Uploaded=0,每轮重复报告,直到原始数据被修正。
@@ -122,8 +156,8 @@ namespace HH.DataCollection.Wifi.Sync
                 if (isolated <= 20)
                 {
                     var row = pending[i];
-                    report(string.Format("已隔离非法成绩:学号 {0} 科目 {1} 成绩 {2} — {3}",
-                        row.StudentID, row.TestID + 10000, row.Score, reason));
+                    report(string.Format("已隔离非法成绩:{0} 科目 {1} 成绩 {2} — {3}",
+                        DescribeRow(row), row.TestID, row.Score, reason));
                 }
                 pending.RemoveAt(i);
             }
@@ -134,8 +168,10 @@ namespace HH.DataCollection.Wifi.Sync
         /// <summary>返回该行违反接口格式的原因,合法返回 null。Score 已由查询保证非空。</summary>
         private static string ValidateRow(RawScoreRow row)
         {
-            if (string.IsNullOrWhiteSpace(row.StudentID) || row.StudentID.Length > 50)
-                return "学号为空或超过 50 字符";
+            // 文档 §8:test_no 最大 60 字符,不静默截断——超长直接隔离并报告
+            string testNo = (row.StudentID ?? "").Trim();
+            if (testNo.Length == 0 || testNo.Length > 60)
+                return "标识(test_no)为空或超过 60 字符";
             decimal score = row.Score.Value;
             if (Math.Abs(score) > 99999999.99m)
                 return "成绩绝对值超过 99999999.99";
@@ -149,6 +185,87 @@ namespace HH.DataCollection.Wifi.Sync
             return null;
         }
 
+        /// <summary>
+        /// 上传前把"标识不在本地名单中"的成绩报出来。
+        /// 背景(文档 §3.4/§6.2):平台按学校当前 qrcode_field 匹配学生,匹配不到只做后台业务拒绝,
+        /// 既不返回 HTTP 错误、也不撤回接收 ACK —— 成绩会被静默丢弃。客户端无法转换标识
+        /// (本地只存 test_no 一个字符串,没有独立的学号/身份证列),能做的只有提前暴露。
+        /// 只报告、不阻断:这些行不会让整批 422,阻断反而可能在名单陈旧时搁置数据。
+        /// </summary>
+        private void ReportUnknownIdentifiers(List<RawScoreRow> pending, Action<string> report)
+        {
+            if (pending.Count == 0) return;
+            var known = LoadKnownIdentifiers();
+            if (known.Count == 0)
+            {
+                report("提示:本地暂无学生名单,跳过标识核对(先执行一次学生同步即可启用本项)");
+                return;
+            }
+            var unknown = new List<RawScoreRow>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var row in pending)
+            {
+                string id = (row.StudentID ?? "").Trim();
+                if (id.Length == 0 || known.Contains(id)) continue;
+                if (seen.Add(id)) unknown.Add(row); // 同一标识只报一次
+            }
+            if (unknown.Count == 0) return;
+            for (int i = 0; i < unknown.Count && i < 20; i++)
+                report("标识不在本地名单中(平台多半会业务拒绝):" + DescribeRow(unknown[i]) +
+                       " 科目 " + unknown[i].TestID);
+            report(string.Format(
+                "共 {0} 条成绩的标识不在本地名单中(仍照常上传,但会被平台后台静默拒绝;" +
+                "请核对名单,或确认学校 qrcode_field 与主机上报的标识类型一致)", unknown.Count));
+        }
+
+        /// <summary>当前项目的本地学生标识集合(去首尾空白;忽略大小写,兼容身份证与学号的平台规范化差异)。</summary>
+        private HashSet<string> LoadKnownIdentifiers()
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT StudentID FROM Student WHERE ProjectID = @p";
+                    cmd.Parameters.AddWithValue("@p", _projectID);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string id = Convert.ToString(reader["StudentID"]);
+                            if (id != null && id.Trim().Length > 0) set.Add(id.Trim());
+                        }
+                    }
+                }
+            }
+            return set;
+        }
+
+        /// <summary>报告用的定位文字:姓名(有则显示)+ 打码后的标识。</summary>
+        private static string DescribeRow(RawScoreRow row)
+        {
+            string name = (row.StudentName ?? "").Trim();
+            string id = MaskTestNoForLog(row.StudentID);
+            return name.Length == 0 ? "标识 " + id : name + "(标识 " + id + ")";
+        }
+
+        /// <summary>
+        /// 日志用标识打码。平台 test_no 可能是学号也可能是身份证,而文档 §1.1 要求
+        /// 完整证件号不进入普通日志。只对身份证形态(18 位、前 17 位数字、末位数字或 X)打码;
+        /// 其余(典型学号)原样输出,否则操作员无法据此定位要修正的记录。
+        /// </summary>
+        internal static string MaskTestNoForLog(string testNo)
+        {
+            string v = (testNo ?? "").Trim();
+            if (v.Length != 18) return v;
+            for (int i = 0; i < 17; i++)
+                if (!char.IsDigit(v[i])) return v;
+            char last = v[17];
+            if (!char.IsDigit(last) && last != 'X' && last != 'x') return v;
+            return v.Substring(0, 6) + new string('*', 8) + v.Substring(14);
+        }
+
         private List<RawScoreRow> GetPendingScores()
         {
             var list = new List<RawScoreRow>();
@@ -158,7 +275,7 @@ namespace HH.DataCollection.Wifi.Sync
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText =
-                        "SELECT HEX(ID) AS Mono, StudentID, TestID, Score, CreateTime FROM StudentRawScore " +
+                        "SELECT HEX(ID) AS Mono, StudentID, StudentName, TestID, Score, CreateTime FROM StudentRawScore " +
                         "WHERE ProjectID = @p AND Uploaded = 0 AND " + UploadableWhere + " " +
                         "ORDER BY CreateTime";
                     cmd.Parameters.AddWithValue("@p", _projectID);
@@ -170,6 +287,7 @@ namespace HH.DataCollection.Wifi.Sync
                             {
                                 Mono = Convert.ToString(reader["Mono"]),
                                 StudentID = Convert.ToString(reader["StudentID"]),
+                                StudentName = Convert.ToString(reader["StudentName"]),
                                 TestID = Convert.ToInt32(reader["TestID"]),
                                 Score = reader["Score"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["Score"]),
                                 CreateTime = Convert.ToDateTime(reader["CreateTime"]),
@@ -182,8 +300,9 @@ namespace HH.DataCollection.Wifi.Sync
         }
 
         /// <summary>
-        /// 组装接口载荷:每行仅 number/code/score/completed_at 四字段。
-        /// 2026-10-16 版契约(§4):modifier 必须不存在,null/空串也会 422 整批拒收。
+        /// 组装接口载荷:每行仅 test_no/code/score/completed_at 四字段(文档 §4 白名单)。
+        /// 契约要点:items[].modifier 必须不存在(null/空串同样 422 整批拒收);顶层只发 items;
+        /// 旧字段 number 已废弃且不提供兼容。score 用普通十进制字符串保留精度。
         /// </summary>
         private static JArray BuildItems(List<RawScoreRow> batch)
         {
@@ -191,10 +310,11 @@ namespace HH.DataCollection.Wifi.Sync
             foreach (var row in batch)
             {
                 if (row.Score == null) continue; // 无成绩值的记录不上传(接口必填 score)
+                int code;
+                if (!CodeMap.TryGetValue(row.TestID, out code)) continue; // 表外科目留在本地底账
                 var item = new JObject();
-                item["number"] = row.StudentID;
-                item["code"] = row.TestID + 10000;
-                // score 用普通十进制字符串保留精度(文档 §4 建议)
+                item["test_no"] = (row.StudentID ?? "").Trim(); // 只去首尾空白,不做大小写转换
+                item["code"] = code;
                 item["score"] = row.Score.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 item["completed_at"] = row.CreateTime.ToString("yyyy-MM-dd HH:mm:ss");
                 items.Add(item);
@@ -274,6 +394,7 @@ namespace HH.DataCollection.Wifi.Sync
         {
             public string Mono;
             public string StudentID;
+            public string StudentName;
             public int TestID;
             public decimal? Score;
             public DateTime CreateTime;

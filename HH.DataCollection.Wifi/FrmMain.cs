@@ -390,7 +390,9 @@ namespace HH.DataCollection.Wifi
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    string sql = "SELECT StudentID AS 学号, Name AS 姓名, " +
+                    // 列头用"标识"而非"学号":平台 test_no 可能是学号也可能是身份证
+                    // (学校 qrcode_field 决定),客户端不区分
+                    string sql = "SELECT StudentID AS 标识, Name AS 姓名, " +
                                  "CASE Sex WHEN 1 THEN '男' WHEN 2 THEN '女' ELSE '' END AS 性别, " +
                                  "ClassName AS 班级 FROM Student WHERE ProjectID = @p";
                     if (_cboClass.SelectedIndex > 0)
@@ -425,7 +427,7 @@ namespace HH.DataCollection.Wifi
             }
             var row = _gridStudents.SelectedRows[0].DataBoundItem as DataRowView;
             if (row == null) return;
-            string studentID = Convert.ToString(row["学号"]);
+            string studentID = Convert.ToString(row["标识"]);
             _lblScoreTitle.Text = string.Format("原始成绩:{0}({1})", Convert.ToString(row["姓名"]), studentID);
 
             var table = new DataTable();

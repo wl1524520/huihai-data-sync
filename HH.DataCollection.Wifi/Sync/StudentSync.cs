@@ -10,13 +10,17 @@ namespace HH.DataCollection.Wifi.Sync
     /// syncRemoteStudents,行为对齐点:
     ///   - 先 /sync/info 核对,再逐页拉取;首页记录 (project_id, project_year) 与
     ///     (total, per_page, last_page),后续页任一变化即中止
-    ///   - 整页单事务 upsert:按 FacilityID+ProjectID+身份证(忽略大小写)定位;
-    ///     身份证多人冲突、学号被他人占用 → 报错中止
-    ///   - 无 PhysicalScore 表(本软件不建),学号/年级变更的成绩联动因此跳过,
-    ///     原始成绩按设备上报时的学号原样保留
-    ///   - 2026-10-16 版契约:items[] 仅六字段(student_no/name/id_number/gender/grade/class_name);
-    ///     平台不再下发 birth/nation/origin_id/addr/class_id/mc,本地对应列写 null;
-    ///     免测(mc)已无平台来源,新学生 IsAbsent=0,更新已有学生时不覆盖本地免测标记
+    ///     (文档 §3.4:服务器 offset 分页、无快照,读取期间增删会造成重复或遗漏)
+    ///   - 整页单事务 upsert:按 FacilityID+ProjectID+test_no(去首尾空白、忽略大小写)定位,
+    ///     即唯一键 (StudentID, ProjectID)
+    ///   - 无 PhysicalScore 表(本软件不建),标识/年级变更的成绩联动因此跳过,
+    ///     原始成绩按设备上报时的标识原样保留
+    ///   - 2026-10-16 12:42 版契约(§3.2/§10):items[] 仅五字段
+    ///     (test_no/name/gender/grade/class_name)。test_no 取代 student_no 与 id_number,
+    ///     不是平台学生主键,也不区分学号/身份证;客户端只去首尾空白,不做大小写转换
+    ///     (身份证统一大写是平台侧规则,学号的大小写与前导零保留)
+    ///   - 平台不再下发 birth/nation/origin_id/addr/class_id/mc:本地只写 9 个真值列,
+    ///     Student 表其余 10 列是 DAL 列映射强制要求的兼容占位列,一律恒 NULL
     /// </summary>
     public class StudentSync
     {
@@ -97,59 +101,32 @@ namespace HH.DataCollection.Wifi.Sync
                     {
                         var st = RemoteStudent.Parse((JObject)token);
                         string existingRowid = null;
-                        string oldStudentNo = null;
-                        int matchCount = 0;
                         using (var cmd = conn.CreateCommand())
                         {
                             cmd.Transaction = tx;
-                            cmd.CommandText = "SELECT rowid, StudentID FROM Student WHERE FacilityID = @f AND ProjectID = @p " +
-                                              "AND UPPER(TRIM(IDNumber)) = UPPER(@idn)";
+                            // 定位键 = test_no(去首尾空白、忽略大小写);唯一约束 (StudentID, ProjectID)
+                            // 保证同项目内至多命中一条,不再需要旧版"多匹配即冲突"的判断
+                            cmd.CommandText = "SELECT rowid FROM Student WHERE FacilityID = @f AND ProjectID = @p " +
+                                              "AND UPPER(TRIM(StudentID)) = UPPER(@no) LIMIT 1";
                             cmd.Parameters.AddWithValue("@f", facility.ID);
                             cmd.Parameters.AddWithValue("@p", facility.ProjectID);
-                            cmd.Parameters.AddWithValue("@idn", st.IdNumber);
-                            using (var reader = cmd.ExecuteReader())
-                            {
-                                while (reader.Read())
-                                {
-                                    matchCount++;
-                                    if (existingRowid == null)
-                                    {
-                                        existingRowid = Convert.ToString(reader["rowid"]);
-                                        oldStudentNo = Convert.ToString(reader["StudentID"]);
-                                    }
-                                }
-                            }
+                            cmd.Parameters.AddWithValue("@no", st.TestNo);
+                            object rowid = cmd.ExecuteScalar();
+                            if (rowid != null) existingRowid = Convert.ToString(rowid);
                         }
-                        if (matchCount > 1)
-                            throw new SyncException("本地身份证冲突:身份证 " + MaskIdNumber(st.IdNumber) + " 对应多条学生记录");
 
                         if (existingRowid == null)
                         {
                             using (var cmd = conn.CreateCommand())
                             {
                                 cmd.Transaction = tx;
-                                cmd.CommandText = "SELECT IDNumber FROM Student WHERE FacilityID = @f AND ProjectID = @p " +
-                                                  "AND TRIM(StudentID) = @no LIMIT 1";
-                                cmd.Parameters.AddWithValue("@f", facility.ID);
-                                cmd.Parameters.AddWithValue("@p", facility.ProjectID);
-                                cmd.Parameters.AddWithValue("@no", st.StudentNo);
-                                object conflict = cmd.ExecuteScalar();
-                                if (conflict != null)
-                                    throw new SyncException(string.Format(
-                                        "本地学号冲突:学号 {0} 已关联身份证 {1},无法同步身份证 {2}",
-                                        st.StudentNo, MaskIdNumber(NormalizeIdNumber(Convert.ToString(conflict))),
-                                        MaskIdNumber(st.IdNumber)));
-                            }
-                            using (var cmd = conn.CreateCommand())
-                            {
-                                cmd.Transaction = tx;
                                 cmd.CommandText =
-                                    "INSERT INTO Student (ID, StudentID, ProjectID, Name, Sex, FacilityID, BirthDay, IDNumber, " +
-                                    "Nation, District, Grade, ClassID, ClassName, IsAbsent, Address, UpdateDate) VALUES (" +
-                                    "@ID, @StudentID, @ProjectID, @Name, @Sex, @FacilityID, @BirthDay, @IDNumber, " +
-                                    "@Nation, @District, @Grade, @ClassID, @ClassName, @IsAbsent, @Address, @UpdateDate)";
+                                    "INSERT INTO Student (ID, StudentID, ProjectID, Name, Sex, FacilityID, " +
+                                    "Grade, ClassName, UpdateDate) VALUES (" +
+                                    "@ID, @StudentID, @ProjectID, @Name, @Sex, @FacilityID, " +
+                                    "@Grade, @ClassName, @UpdateDate)";
                                 cmd.Parameters.AddWithValue("@ID", Guid.NewGuid());
-                                AddStudentParams(cmd, st, true);
+                                AddStudentParams(cmd, st);
                                 cmd.Parameters.AddWithValue("@ProjectID", facility.ProjectID);
                                 cmd.Parameters.AddWithValue("@FacilityID", facility.ID);
                                 cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
@@ -162,19 +139,17 @@ namespace HH.DataCollection.Wifi.Sync
                             using (var cmd = conn.CreateCommand())
                             {
                                 cmd.Transaction = tx;
-                                // IsAbsent 不在更新列:平台已不再下发免测,保留本地已有标记
                                 cmd.CommandText =
-                                    "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, BirthDay=@BirthDay, " +
-                                    "IDNumber=@IDNumber, Nation=@Nation, District=@District, Grade=@Grade, ClassID=@ClassID, " +
-                                    "ClassName=@ClassName, Address=@Address, UpdateDate=@UpdateDate " +
+                                    "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, " +
+                                    "Grade=@Grade, ClassName=@ClassName, UpdateDate=@UpdateDate " +
                                     "WHERE rowid = @rowid";
-                                AddStudentParams(cmd, st, false);
+                                AddStudentParams(cmd, st);
                                 cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
                                 cmd.Parameters.AddWithValue("@rowid", existingRowid);
                                 cmd.ExecuteNonQuery();
                             }
                             updated++;
-                            // 原工具此处联动更新 PhysicalScore 的学号/年级;本软件无该表,原始成绩按上报时学号原样保留
+                            // 原工具此处联动更新 PhysicalScore 的标识/年级;本软件无该表,原始成绩原样保留
                         }
                     }
                     tx.Commit();
@@ -184,24 +159,16 @@ namespace HH.DataCollection.Wifi.Sync
         }
 
         /// <summary>
-        /// 绑定学生参数。includeIsAbsent=true 仅用于 INSERT(新学生默认免测=0);
-        /// 平台已不再下发 mc,UPDATE 时不绑定该参数以保留本地标记。
+        /// 绑定学生参数:只绑定 9 个真值列里的可写项。其余列(含 DAL 列映射强制要求的
+        /// 兼容占位列)既不出现在 INSERT/UPDATE 的列清单里,也不绑定参数,落到库里恒为 NULL。
         /// </summary>
-        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st, bool includeIsAbsent)
+        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st)
         {
-            cmd.Parameters.AddWithValue("@StudentID", st.StudentNo);
+            cmd.Parameters.AddWithValue("@StudentID", st.TestNo);
             cmd.Parameters.AddWithValue("@Name", st.Name);
             cmd.Parameters.AddWithValue("@Sex", st.Gender);
-            cmd.Parameters.AddWithValue("@BirthDay", DBNull.Value); // 契约已无 birth,写 null
-            cmd.Parameters.AddWithValue("@IDNumber", st.IdNumber);
-            cmd.Parameters.AddWithValue("@Nation", DBNull.Value);   // 契约已无 nation
-            cmd.Parameters.AddWithValue("@District", DBNull.Value); // 契约已无 origin_id
             cmd.Parameters.AddWithValue("@Grade", st.Grade);
-            cmd.Parameters.AddWithValue("@ClassID", DBNull.Value);  // 契约已无 class_id
             cmd.Parameters.AddWithValue("@ClassName", st.ClassName);
-            cmd.Parameters.AddWithValue("@Address", DBNull.Value);  // 契约已无 addr
-            if (includeIsAbsent)
-                cmd.Parameters.AddWithValue("@IsAbsent", 0);
         }
 
         private FacilityTarget GetFacility()
@@ -231,19 +198,6 @@ namespace HH.DataCollection.Wifi.Sync
             }
         }
 
-        private static string NormalizeIdNumber(string value)
-        {
-            return (value ?? "").Trim().Replace('x', 'X');
-        }
-
-        /// <summary>身份证打码(前 6 后 4),完整证件号不进入日志(接口文档 §1.2)。</summary>
-        internal static string MaskIdNumber(string idNumber)
-        {
-            if (string.IsNullOrEmpty(idNumber)) return "";
-            if (idNumber.Length <= 10) return new string('*', idNumber.Length);
-            return idNumber.Substring(0, 6) + new string('*', idNumber.Length - 10) + idNumber.Substring(idNumber.Length - 4);
-        }
-
         private class FacilityTarget
         {
             public string ID;
@@ -253,14 +207,15 @@ namespace HH.DataCollection.Wifi.Sync
         }
 
         /// <summary>
-        /// 一页中的一条远端学生记录:2026-10-16 版契约仅六字段
-        /// (student_no/name/id_number/gender/grade/class_name)。
+        /// 一页中的一条远端学生记录:2026-10-16 12:42 版契约仅五字段
+        /// (test_no/name/gender/grade/class_name)。test_no 是学校范围内的唯一测试标识字符串,
+        /// 可能是学号也可能是身份证(由学校 qrcode_field 决定),客户端不区分、原样保存与上传,
+        /// 不转数字;只去首尾空白。
         /// </summary>
         private class RemoteStudent
         {
-            public string StudentNo;
+            public string TestNo;
             public string Name;
-            public string IdNumber;
             public int Gender;
             public int Grade;
             public string ClassName;
@@ -270,9 +225,8 @@ namespace HH.DataCollection.Wifi.Sync
                 if (item == null) throw new SyncException("服务端学生数据格式错误");
                 var st = new RemoteStudent
                 {
-                    StudentNo = Text(item["student_no"]),
+                    TestNo = Text(item["test_no"]),
                     Name = Text(item["name"]),
-                    IdNumber = NormalizeIdNumber(Text(item["id_number"])),
                     ClassName = Text(item["class_name"]),
                 };
                 var grade = item["grade"];
@@ -283,10 +237,8 @@ namespace HH.DataCollection.Wifi.Sync
                 st.Gender = gender != null && gender.Type == JTokenType.Integer ? gender.Value<int>() : 0;
 
                 var missing = new System.Text.StringBuilder();
-                if (st.StudentNo.Length == 0) missing.Append("student_no ");
-                if (st.Name.Length == 0) missing.Append("name ");
-                if (st.IdNumber.Length == 0) missing.Append("id_number ");
-                if (st.ClassName.Length == 0) missing.Append("class_name");
+                if (st.TestNo.Length == 0) missing.Append("test_no ");
+                if (st.Name.Length == 0) missing.Append("name");
                 if (missing.Length > 0)
                     throw new SyncException("服务端学生数据缺少必要字段:" + missing);
                 return st;
