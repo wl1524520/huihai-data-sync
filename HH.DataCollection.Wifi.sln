@@ -4,12 +4,24 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.DataCollection.Wifi", "H
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.TiYu.DAL", "HH.TiYu.DAL\HH.TiYu.DAL.csproj", "{C4E3D764-8282-4A96-B44E-289346D9EF50}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.TiYu.Model", "HH.TiYu.Model\HH.TiYu.Model.csproj", "{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.TiYu.BLL", "HH.TiYu.BLL\HH.TiYu.BLL.csproj", "{C6AE204B-4D6A-409A-A684-0E2F79AB7802}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6AE204B-4D6A-409A-A684-0E2F79AB7802}.Debug|x86.ActiveCfg = Debug|x86
+		{C6AE204B-4D6A-409A-A684-0E2F79AB7802}.Debug|x86.Build.0 = Debug|x86
+		{C6AE204B-4D6A-409A-A684-0E2F79AB7802}.Release|x86.ActiveCfg = Release|x86
+		{C6AE204B-4D6A-409A-A684-0E2F79AB7802}.Release|x86.Build.0 = Release|x86
+		{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}.Debug|x86.ActiveCfg = Debug|x86
+		{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}.Debug|x86.Build.0 = Debug|x86
+		{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}.Release|x86.ActiveCfg = Release|x86
+		{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}.Release|x86.Build.0 = Release|x86
 		{C4E3D764-8282-4A96-B44E-289346D9EF50}.Debug|x86.ActiveCfg = Debug|x86
 		{C4E3D764-8282-4A96-B44E-289346D9EF50}.Debug|x86.Build.0 = Debug|x86
 		{C4E3D764-8282-4A96-B44E-289346D9EF50}.Release|x86.ActiveCfg = Release|x86

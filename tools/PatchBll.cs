@@ -6,6 +6,8 @@ using Mono.Cecil.Cil;
 namespace HH.DataCollection.Wifi.Tools
 {
     /// <summary>
+    /// 历史对照工具：Model/BLL 已还原为源码，本解决方案不再调用此工具。
+    /// 适配行为现位于 AppSettings.StudentRawScoreDB 和 PhysicalScoresSavingService。
     /// 构建后补丁工具,只修改本软件输出目录中的 DLL 拷贝,Guojiatizhi 原始发布目录不受影响。
     /// 按目标文件自动选择补丁:
     ///   BLL.dll   —— 摘空 PhysicalScoresSavingService.AddScore/AddScores,主库评分成绩路径不写库

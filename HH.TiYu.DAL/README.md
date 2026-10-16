@@ -33,13 +33,9 @@
 
 采集器通过 `ProjectReference` 引用本项目，构建时自动复制源码生成的 `DAL.dll`。`AfterBuild` 复制依赖时排除 `lib/DAL.dll`，不再执行 DAL 二进制补丁。原 `lib/DAL.dll` 保留作为逆向基准与兼容性验证输入，不参与应用部署。
 
-BLL 和 Model 的既有补丁继续保留；`tools/PatchBll.cs` 和对应 EXE 已移除 DAL 补丁支持。修改此工具后，可用 .NET Framework 4.0 的 `csc.exe` 重建：
+Model 与 BLL 也已还原为源码；原有单库和停用正式成绩写入的调整直接体现在源码中。`tools/PatchBll.cs` 和对应 EXE 仅作历史对照，不再参与构建。
 
-```powershell
-& "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\csc.exe" /nologo /codepage:65001 /target:exe /reference:tools\Mono.Cecil.dll /out:tools\PatchBll.exe tools\PatchBll.cs
-```
-
-本项目仍引用 `lib/Model.dll`、`lib/LJH.GeneralLibrary.dll`、`lib/System.Data.SQLite.dll`。公共的 `ProviderBase`、`DataContextFactory`、工作单元与实体模型仍来自这些组件，不属于本次还原范围。以后如果需要改变其通用持久化机制，需要另外还原对应组件。
+本项目通过 `ProjectReference` 引用 `HH.TiYu.Model`，仍引用 `lib/LJH.GeneralLibrary.dll`、`lib/System.Data.SQLite.dll`。实体模型可在 Model 项目中维护；公共的 `ProviderBase`、`DataContextFactory` 与工作单元仍来自外部组件。以后如果需要改变其通用持久化机制，需要另外还原对应组件。
 
 ## 不支持照片
 
@@ -63,7 +59,7 @@ BLL 和 Model 的既有补丁继续保留；`tools/PatchBll.cs` 和对应 EXE �
 
 - 用 Mono.Cecil 比较 26 个业务类型的可见性、基类、接口，以及 113 个公共/受保护方法的签名、标志和方法泛型约束；验证嵌入映射字节一致。
 - 创建全部 22 个 Provider，确认工厂选择正确。
-- 在源码版本的实际八表结构中，通过既有 `BLL.dll` 读取项目，执行采集器使用的 `GetFullInfo(23)`，加载区域、学校、学生和科目；通过后才扩展测试库。
+- 在源码版本的实际八表结构中，通过源码构建的 `BLL.dll` 读取项目，执行采集器使用的 `GetFullInfo(23)`，加载区域、学校、学生和科目；通过后才扩展测试库。
 - 验证学生查询过滤、新增、覆盖、批量修改、批量删除。
 - 验证正式成绩新增、SQLite 查询过滤、批量修改和删除。
 - 无照片表时验证照片空读取、单条和批量写入拒绝。

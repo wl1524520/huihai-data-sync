@@ -32,10 +32,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml" />
-    <Reference Include="Model">
-      <HintPath>..\lib\Model.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="LJH.GeneralLibrary">
       <HintPath>..\lib\LJH.GeneralLibrary.dll</HintPath>
       <Private>False</Private>
@@ -76,6 +72,13 @@
     <EmbeddedResource Include="LinqProvider\DataMapping.xml">
       <LogicalName>HH.TiYu.DAL.LinqProvider.DataMapping.xml</LogicalName>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HH.TiYu.Model\HH.TiYu.Model.csproj">
+      <Project>{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}</Project>
+      <Name>HH.TiYu.Model</Name>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
