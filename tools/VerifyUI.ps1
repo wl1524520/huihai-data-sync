@@ -21,4 +21,11 @@ if ($LASTEXITCODE -ne 0) { throw 'UI verifier compilation failed' }
 # Constructor-side DAL reads use the actual current schema in this isolated directory.
 Push-Location $run
 try { & $exe; if ($LASTEXITCODE -ne 0) { throw 'UI verification failed' } } finally { Pop-Location }
-Write-Output "Isolated UI verification directory: $run"
+# Delete this run's isolated directory after a successful verification, so tools\bin does not
+# grow with every run; a failed run keeps its residue for inspection.
+for ($attempt = 0; $attempt -lt 5 -and (Test-Path -LiteralPath $run); $attempt++) {
+    Start-Sleep -Milliseconds 300
+    Remove-Item -LiteralPath $run -Recurse -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path -LiteralPath $run) { throw "Verification artifacts could not be removed: $run" }
+Write-Output "Isolated UI verification passed. Artifacts verified and removed: $run"

@@ -35,6 +35,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <!-- 旧“学生分组下发”工作流的专用窗体与文本展示控件已随本轮精简删除。 -->
     <Compile Include="UserControl\ClassNameCombox.cs" />
     <Compile Include="UserControl\DivisionComboBox.cs" />
     <Compile Include="DivisionHelper.cs" />
@@ -49,10 +50,7 @@
     <Compile Include="FrmSerialRange.cs" />
     <Compile Include="FrmStudentDownloadPara.cs" />
     <Compile Include="FrmStudentIDRange.cs" />
-    <Compile Include="Frm学生分组选择.cs" />
-    <Compile Include="Frm组人员实时显示.cs" />
     <Compile Include="Controls\GradeComboBox.cs" />
-    <Compile Include="UC学生信息.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -67,7 +65,6 @@
     <EmbeddedResource Include="Resources\HH.TiYu.UI.FrmHosts.resx"><LogicalName>HH.TiYu.UI.FrmHosts.resources</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Resources\HH.TiYu.UI.FrmProcessing.resx"><LogicalName>HH.TiYu.UI.FrmProcessing.resources</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="Resources\HH.TiYu.UI.FrmScoreCollect_Wifi.resx"><LogicalName>HH.TiYu.UI.FrmScoreCollect_Wifi.resources</LogicalName></EmbeddedResource>
-    <EmbeddedResource Include="Resources\HH.TiYu.UI.Frm学生分组选择.resx"><LogicalName>HH.TiYu.UI.Frm学生分组选择.resources</LogicalName></EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

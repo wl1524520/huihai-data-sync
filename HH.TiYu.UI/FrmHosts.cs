@@ -33,8 +33,6 @@ namespace HH.TiYu.UI
 	{
 		private readonly int _Port = 10000;
 
-		private PhysicalScoresSavingService _PhysicalScoresSavingService = null;
-
 		private List<FrmScoreCollect_Wifi> _OpenFrms = new List<FrmScoreCollect_Wifi>();
 
 		private List<FrmProcessing> _ProcessingForms = new List<FrmProcessing>();
@@ -44,8 +42,6 @@ namespace HH.TiYu.UI
 		private int _Columns = 1;
 
 		private Thread _SearchThread = null;
-
-		private Frm组人员实时显示 _Frm组人员实时显示 = null;
 
 		private IContainer components = null;
 
@@ -116,8 +112,6 @@ namespace HH.TiYu.UI
 		private DataGridViewCheckBoxColumn colCheck;
 
 		private DataGridViewLinkColumn colOperation;
-
-		private ToolStripMenuItem mnu_学生测试;
 
 		public FrmHosts()
 		{
@@ -282,7 +276,6 @@ namespace HH.TiYu.UI
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			_PhysicalScoresSavingService = new PhysicalScoresSavingService();
 			mnu参数设置.Enabled = Operator.Current.ID == Operator.DefaultLogID;
 		}
 
@@ -682,11 +675,6 @@ namespace HH.TiYu.UI
 						if (score != null)
 						{
 							score.SetProperty(ScoreNote.设备号, reader.HostSN);
-							List<PhysicalScore> scores = PhysicalProject.Current.GetScores(score.StudentID, score.PhysicalItem);
-							if ((scores == null || !scores.Exists((PhysicalScore it) => it.UpdateDate == score.UpdateDate && it.Score == score.Score)) && _PhysicalScoresSavingService != null)
-							{
-								_PhysicalScoresSavingService.AddScore(score);
-							}
 						}
 						if (StudentRawScoresSavingService.Current != null)
 						{
@@ -950,73 +938,6 @@ namespace HH.TiYu.UI
 								frmP.ShowProgress(string.Format("主机 {0} 存储器已满", hi.HostID), 0.9m, Color.Red);
 								return;
 							}
-						}
-					}
-					frmP.ShowProgress(string.Empty, 1m);
-				}
-				catch (ThreadAbortException)
-				{
-				}
-				catch (Exception)
-				{
-				}
-				finally
-				{
-					sd.Close();
-				}
-			};
-			Thread t = new Thread(action.Invoke);
-			t.IsBackground = true;
-			t.Start();
-			frmP.FormClosed += delegate(object obj, FormClosedEventArgs args)
-			{
-				_ProcessingForms.Remove(obj as FrmProcessing);
-				t.Abort();
-				row.Tag = null;
-				row.Cells["colOperation"].Value = null;
-			};
-			frmP.Show();
-		}
-
-
-		private void 下载测试人员(DataGridViewRow row, List<Student> students)
-		{
-			WifiHostInfo hi = row.Cells["colSer"].Tag as WifiHostInfo;
-			HH.Zhongkao.Device.Wifi.StudentDownloader sd = HH.Zhongkao.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
-			sd.Log = chkLog.Checked;
-			FrmProcessing frmP = new FrmProcessing();
-			frmP.MdiParent = this;
-			_ProcessingForms.Add(frmP);
-			frmP.Caption = string.Format("主机{0}_{1} 下载测试学生", hi.HostID, row.Cells["colSer"].Value);
-			Action action = delegate
-			{
-				try
-				{
-					int num = 0;
-					List<HostStudent> list = new List<HostStudent>();
-					frmP.ShowProgress(string.Format("正在下载学生信息到 主机 {0} ...", hi.HostID), 0m);
-					using (WifiHost wifiHost = WifiHost.CreateInstance(hi.HostID, hi.IP, hi.LocalIP))
-					{
-						wifiHost.Log = sd.Log;
-						wifiHost.PreDownloadStudent();
-					}
-					sd.Open();
-					foreach (Student student in students)
-					{
-						list.Add(new HostStudent
-						{
-							StudentID = student.StudentID,
-							Name = student.Name,
-							Sex = ((student.Sex == Sex.Male) ? "男" : "女"),
-							Grade = (byte)(student.Grade.HasValue ? ((uint)student.Grade.Value) : 0u),
-							ClassName = student.ClassName,
-						});
-						num++;
-						if (num == students.Count && list.Count > 0)
-						{
-							StudentDownloadResult studentDownloadResult = sd.下载测试学生(list.ToArray());
-							list.Clear();
-							frmP.ShowProgress(string.Format("主机 {0} 已经下载 {1} 人，总共 {2}", hi.HostID, num, students.Count), (decimal)num / (decimal)students.Count);
 						}
 					}
 					frmP.ShowProgress(string.Empty, 1m);
@@ -1370,55 +1291,6 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void mnu_学生测试_Click(object sender, EventArgs e)
-		{
-			if (dataGridView2.SelectedRows.Count != 1)
-			{
-				return;
-			}
-			DataGridViewRow dataGridViewRow = dataGridView2.SelectedRows[0];
-			if (!dataGridViewRow.Selected || dataGridViewRow.Tag != null || !Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue))
-			{
-				return;
-			}
-			Frm学生分组选择 frm学生分组选择 = new Frm学生分组选择();
-			frm学生分组选择.StartPosition = FormStartPosition.CenterParent;
-			if (frm学生分组选择.ShowDialog() != DialogResult.OK)
-			{
-				return;
-			}
-			StudentGroup studentGroup = frm学生分组选择.StudentGroup;
-			if (studentGroup != null && studentGroup.Items != null && studentGroup.Items.Count > 0)
-			{
-				List<Student> students = (from pair in studentGroup.Items
-					orderby pair.Channel
-					select PhysicalProject.Current.GetStudentByID(pair.StudentID)).ToList();
-				下载测试人员(dataGridViewRow, students);
-			}
-			if (_Frm组人员实时显示 == null)
-			{
-				_Frm组人员实时显示 = new Frm组人员实时显示();
-			}
-			if (Screen.AllScreens.Length >= 2)
-			{
-				_Frm组人员实时显示.StartPosition = FormStartPosition.Manual;
-				_Frm组人员实时显示.FormBorderStyle = FormBorderStyle.None;
-				_Frm组人员实时显示.WindowState = FormWindowState.Maximized;
-				_Frm组人员实时显示.ShowInTaskbar = false;
-				Screen screen = Screen.AllScreens[1];
-				_Frm组人员实时显示.Location = screen.WorkingArea.Location;
-				_Frm组人员实时显示.Show();
-				_Frm组人员实时显示.ShowStudentGroup(studentGroup);
-			}
-			else
-			{
-				Frm组人员实时显示 frm组人员实时显示 = new Frm组人员实时显示();
-				frm组人员实时显示.StartPosition = FormStartPosition.CenterParent;
-				frm组人员实时显示.ShowStudentGroup(studentGroup);
-				frm组人员实时显示.ShowDialog();
-			}
-		}
-
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && components != null)
@@ -1460,7 +1332,6 @@ namespace HH.TiYu.UI
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 			this.mnu下载学生名单 = new System.Windows.Forms.ToolStripMenuItem();
 			this.清空学生名单ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.mnu_学生测试 = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
 			this.mnu参数设置 = new System.Windows.Forms.ToolStripMenuItem();
 			this.同步时间ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -1542,9 +1413,9 @@ namespace HH.TiYu.UI
 			this.colOperation.ReadOnly = true;
 			this.colOperation.Resizable = System.Windows.Forms.DataGridViewTriState.True;
 			this.colOperation.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[16]
+			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[15]
 			{
-				this.增加主机USBToolStripMenuItem, this.toolStripSeparator3, this.mnu_开始实时采集, this.结束实时采集ToolStripMenuItem, this.mnu_集中采集所有数据, this.高级集中采集ToolStripMenuItem, this.toolStripSeparator1, this.mnu下载学生名单, this.清空学生名单ToolStripMenuItem, this.mnu_学生测试,
+				this.增加主机USBToolStripMenuItem, this.toolStripSeparator3, this.mnu_开始实时采集, this.结束实时采集ToolStripMenuItem, this.mnu_集中采集所有数据, this.高级集中采集ToolStripMenuItem, this.toolStripSeparator1, this.mnu下载学生名单, this.清空学生名单ToolStripMenuItem,
 				this.toolStripSeparator2, this.mnu参数设置, this.同步时间ToolStripMenuItem, this.通讯质量检测ToolStripMenuItem, this.关机ToolStripMenuItem, this.toolStripSeparator4
 			});
 			this.contextMenuStrip2.Name = "contextMenuStrip1";
@@ -1586,9 +1457,6 @@ namespace HH.TiYu.UI
 			this.清空学生名单ToolStripMenuItem.Name = "清空学生名单ToolStripMenuItem";
 			resources.ApplyResources(this.清空学生名单ToolStripMenuItem, "清空学生名单ToolStripMenuItem");
 			this.清空学生名单ToolStripMenuItem.Click += new System.EventHandler(清空学生名单ToolStripMenuItem_Click);
-			this.mnu_学生测试.Name = "mnu_学生测试";
-			resources.ApplyResources(this.mnu_学生测试, "mnu_学生测试");
-			this.mnu_学生测试.Click += new System.EventHandler(mnu_学生测试_Click);
 			this.toolStripSeparator2.Name = "toolStripSeparator2";
 			resources.ApplyResources(this.toolStripSeparator2, "toolStripSeparator2");
 			this.mnu参数设置.Name = "mnu参数设置";

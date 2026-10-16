@@ -142,7 +142,7 @@ namespace HH.DataCollection.Wifi
         /// <summary>
         /// 取当前学年(8 月 1 日起算)的项目,没有则按原软件规则自建一个。
         /// 学年唯一(一个学年只有一个项目),当前学年即最新项目。
-        /// 预设 ID 绕开 AutoCreateNumber 编号表;不写 TemplateProjectID 绕开模板拷贝;
+        /// 预设 ID 不依赖任何编号表;不写 TemplateProjectID 绕开模板拷贝;
         /// 科目关联用 PhysicalProjectHelper.创建学生体测项目 种子(与原软件 year>=2019 的行为一致)。
         /// </summary>
         private static PhysicalProject EnsureCurrentYearProject(PhysicalProjectBLL projectBLL)

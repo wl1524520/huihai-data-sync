@@ -126,9 +126,10 @@ FJ.CoreWin 和 Barcode._1D 的精确上游构建来源尚未确认，仍无必�
 静态可解析不保证没有反编译差异，也不保证运行兼容。
 全部新检查目标的身份、SHA-256、MVID、分类和证据 ID 见同目录 lib-maintenance-evidence.json。
 
-辅助材料位于工作区 _lib_analysis/sqlite/DAL.original.cs、_lib_analysis/device/DAL.original.cs。
-已有 _ildump/UI.utf8.il 的 FrmHosts 成绩回调约 20341–20357 行调用原始成绩服务；
-约 26981–27023 行的照片读取调用 FluxJpeg。
+辅助材料原位于工作区 `_lib_analysis/sqlite/DAL.original.cs`、`_lib_analysis/device/DAL.original.cs`
+和 `_ildump/UI.utf8.il`(其中 FrmHosts 成绩回调约 20341–20357 行调用原始成绩服务，
+约 26981–27023 行的照片读取调用 FluxJpeg)。这批临时分析材料已随 DAL 精简后的工作区清理删除，
+可由保留的 `lib` 基线用同一 ILSpy 版本重新生成；上面的定位结论仍然成立。
 本轮未重新校验全部历史 IL 文件与 DLL 的字节绑定，历史 IL 仅作辅助定位，
 核心职责同时由当前源码、当前 REA 元数据及新 SQLite/Device 反编译交叉核对。
 

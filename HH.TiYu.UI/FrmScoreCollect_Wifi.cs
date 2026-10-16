@@ -35,8 +35,6 @@ namespace HH.TiYu.UI
 
 		private List<Facility> _AllSchools = new FacilityBLL(AppSettings.Current.ConnStr).GetItems(null).QueryObjects;
 
-		private PhysicalScoresSavingService _PhysicalScoresSavingService = null;
-
 		private object _GridLocker = new object();
 
 		private int _CurItemCount = 0;
@@ -120,11 +118,6 @@ namespace HH.TiYu.UI
 							if (score != null)
 							{
 								ShowScore(record.SN, score);
-								List<PhysicalScore> scores = PhysicalProject.Current.GetScores(score.StudentID, score.PhysicalItem);
-								if ((scores == null || !scores.Exists((PhysicalScore it) => it.UpdateDate == score.UpdateDate && it.Score == score.Score)) && _PhysicalScoresSavingService != null)
-								{
-									_PhysicalScoresSavingService.AddScore(score);
-								}
 							}
 							else
 							{
@@ -348,11 +341,6 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void FrmScoreCollect_Wifi_Load(object sender, EventArgs e)
-		{
-			_PhysicalScoresSavingService = new PhysicalScoresSavingService();
-		}
-
 		private void mnu_Clear_Click(object sender, EventArgs e)
 		{
 			dataGridView1.Rows.Clear();
@@ -466,11 +454,6 @@ namespace HH.TiYu.UI
 				if (score != null)
 				{
 					ShowScore(item.SN, score);
-					List<PhysicalScore> scores = PhysicalProject.Current.GetScores(score.StudentID, score.PhysicalItem);
-					if ((scores == null || !scores.Exists((PhysicalScore it) => it.UpdateDate == score.UpdateDate && it.Score == score.Score)) && _PhysicalScoresSavingService != null)
-					{
-						_PhysicalScoresSavingService.AddScore(score);
-					}
 				}
 				else
 				{
@@ -619,7 +602,6 @@ namespace HH.TiYu.UI
 			base.Controls.Add(this.dataGridView1);
 			base.MinimizeBox = false;
 			base.Name = "FrmScoreCollect_Wifi";
-			base.Load += new System.EventHandler(FrmScoreCollect_Wifi_Load);
 			((System.ComponentModel.ISupportInitialize)this.dataGridView1).EndInit();
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);

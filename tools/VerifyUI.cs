@@ -27,8 +27,18 @@ internal static class VerifyUI
             PhysicalProject.Current = new PhysicalProject();
             Assembly assembly = typeof(FrmHosts).Assembly;
             Type[] types = assembly.GetTypes().Where(t => t.IsPublic && !t.IsNested).ToArray();
-            Check(types.Length == 18, "Expected the 18 retained UI types");
-            Check(assembly.GetManifestResourceNames().Length == 4, "Expected only the four used form resources");
+            string[] retained =
+            {
+                "FrmAddHost_USB", "FrmDateRange", "FrmHostParameters", "FrmHosts", "FrmProcessing",
+                "FrmScoreCollectStatitics", "FrmScoreCollect_Wifi", "FrmSerialRange", "FrmStudentDownloadPara", "FrmStudentIDRange",
+                "ClassNameCombox", "DivisionComboBox", "FacilityComboBox", "GradeComboBox", "DivisionHelper"
+            };
+            foreach (string name in retained)
+                Check(types.Any(t => t.Name == name), "Retained UI type missing: " + name);
+            foreach (string name in new[] { "Frm学生分组选择", "Frm组人员实时显示", "UC学生信息" })
+                Check(types.All(t => t.Name != name), "Removed group download UI type remains: " + name);
+            Check(types.Length == retained.Length, "Unexpected retained UI type count");
+            Check(assembly.GetManifestResourceNames().Length == 3, "Expected only the three used form resources");
             int forms = 0, controls = 0;
             foreach (Type type in types)
             {
@@ -42,6 +52,11 @@ internal static class VerifyUI
                     {
                         Check(control.Controls.Find("btnSearch", true).Single().Text == "搜索主机", "FrmHosts localized search caption missing");
                         Check(((Form)control).IsMdiContainer, "FrmHosts MDI layout missing");
+                        Check(type.GetField("mnu_学生测试", BindingFlags.NonPublic | BindingFlags.Instance) == null, "Legacy student-group menu field retained");
+                        Check(type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).All(f => f.Name.IndexOf("学生分组", StringComparison.Ordinal) < 0 && f.Name.IndexOf("组人员实时显示", StringComparison.Ordinal) < 0), "Legacy group download field retained");
+                        var menu = (ContextMenuStrip)type.GetField("contextMenuStrip2", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(control);
+                        Check(menu != null && menu.Items.Count == 15, "FrmHosts context menu entry count changed");
+                        Check(menu.Items.OfType<ToolStripItem>().All(i => i.Name != "mnu_学生测试"), "Legacy student-group menu entry retained");
                     }
                     if (type == typeof(FrmScoreCollect_Wifi))
                     {
@@ -51,7 +66,7 @@ internal static class VerifyUI
                     }
                 }
             }
-            Check(forms == 12 && controls == 5, "Window/control closure changed");
+            Check(forms == 10 && controls == 4, "Window/control closure changed");
             Check(typeof(FrmStudentDownloadPara).GetField("DownloadPhoto") == null, "Photo download option retained");
             Check(typeof(FrmStudentDownloadPara).GetField("cardID4StudentID") == null, "Card identity replacement option retained");
             using (var form = new FrmStudentDownloadPara())

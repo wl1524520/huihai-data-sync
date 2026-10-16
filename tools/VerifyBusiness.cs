@@ -13,7 +13,32 @@ internal static class VerifyBusiness
 {
     private static int checks;
     private static readonly List<string> snapshot = new List<string>();
+    // 本轮精简明确允许删除的 BLL 类型与成员；其余公开/受保护契约必须与原始 DLL 一致。
+    private static readonly string[] RemovedTypes =
+    {
+        "HH.TiYu.BLL.AlarmInfoBLL", "HH.TiYu.BLL.AppraiseTemplateBLL", "HH.TiYu.BLL.DiscussionBLL", "HH.TiYu.BLL.OperatorBLL",
+        "HH.TiYu.BLL.PhysicalScoreBLL", "HH.TiYu.BLL.RoleBLL", "HH.TiYu.BLL.SportsBLL", "HH.TiYu.BLL.SportsStudentPairBLL",
+        "HH.TiYu.BLL.SportSuggestionBLL", "HH.TiYu.BLL.StandardBLL", "HH.TiYu.BLL.StudentCheckRecordBLL", "HH.TiYu.BLL.StudentGroupBLL",
+        "HH.TiYu.BLL.SysParameterBLL", "HH.TiYu.BLL.SysParaSettingsBll", "HH.TiYu.BLL.PhysicalScoresSavingService"
+    };
+    private static readonly string[] RemovedMembers =
+    {
+        "HH.TiYu.BLL.StudentBLL:更新考试科目", "HH.TiYu.BLL.StudentBLL:Upgrade", "HH.TiYu.BLL.StudentBLL:Absent",
+        "HH.TiYu.BLL.StudentBLL:UndoAbsent", "HH.TiYu.BLL.StudentBLL:UpdateUploadToCloudDate", "HH.TiYu.BLL.StudentBLL:ClearUploadToCloudDate",
+        "HH.TiYu.BLL.StudentBLL:设置学生特殊情况",
+        "HH.TiYu.BLL.PhysicalProjectBLL:AddScores", "HH.TiYu.BLL.PhysicalProjectBLL:UpdateScore", "HH.TiYu.BLL.PhysicalProjectBLL:DeleteScores",
+        "HH.TiYu.BLL.PhysicalProjectBLL:CalScores", "HH.TiYu.BLL.PhysicalProjectBLL:SaveStandards",
+        "HH.TiYu.BLL.PhysicalProjectBLL:GetStateByID", "HH.TiYu.BLL.PhysicalProjectBLL:GetStates"
+    };
     private static void Require(bool ok, string message) { if (!ok) throw new Exception(message); checks++; }
+    private static string MemberName(string contractLine)
+    {
+        int colon = contractLine.IndexOf(':');
+        if (colon < 0) return contractLine;
+        string rest = contractLine.Substring(colon + 1);
+        int end = rest.IndexOfAny(new[] { '`', '(', ':' });
+        return end < 0 ? rest : rest.Substring(0, end);
+    }
     private static int Main(string[] args)
     {
         try
@@ -26,11 +51,7 @@ internal static class VerifyBusiness
                 foreach (string name in new[] { "Model", "BLL" }) CheckApi(Path.Combine(args[1], name + ".dll"), name + ".dll");
                 using (var bll = AssemblyDefinition.ReadAssembly("BLL.dll"))
                 {
-                    var service = bll.MainModule.Types.Single(t => t.Name == "PhysicalScoresSavingService");
-                    foreach (var method in service.Methods.Where(m => m.Name == "AddScore" || m.Name == "AddScores"))
-                    {
-                        Require(method.HasBody && method.Body.Instructions.All(i => i.OpCode.Code == Mono.Cecil.Cil.Code.Nop || i.OpCode.Code == Mono.Cecil.Cil.Code.Ret), "Formal score enqueue must remain a no-op: " + method.Name);
-                    }
+                    Require(bll.MainModule.Types.All(t => t.Name != "PhysicalScoresSavingService"), "Legacy formal score saving service must be removed");
                 }
             }
             Require(Path.GetFileName(AppSettings.Current.StudentRawScoreDB) == (source ? "HuihaiTiyu.db" : "HHRawScore.db"), "Raw score database path differs");
@@ -100,17 +121,25 @@ internal static class VerifyBusiness
             var newTypes = Types(after.MainModule.Types).ToDictionary(t => t.FullName);
             oldTypes.Remove("HH.TiYu.Model.StudentPhoto");
             newTypes.Remove("HH.TiYu.Model.SyncConfigEntry");
-            Require(oldTypes.Keys.OrderBy(s => s).SequenceEqual(newTypes.Keys.OrderBy(s => s)), "Public/protected type set differs: " + sourcePath);
-            foreach (var pair in oldTypes)
+            var removedTypes = new HashSet<string>(RemovedTypes, StringComparer.Ordinal);
+            var missingTypes = oldTypes.Keys.Except(newTypes.Keys).ToList();
+            Require(missingTypes.All(removedTypes.Contains), "Unexpected removed type: " + string.Join(",", missingTypes));
+            var addedTypes = newTypes.Keys.Except(oldTypes.Keys).ToList();
+            Require(!addedTypes.Any(), "Unexpected added type: " + string.Join(",", addedTypes));
+            foreach (var pair in oldTypes.Where(p => newTypes.ContainsKey(p.Key)))
             {
                 var oldContract = Contract(pair.Value);
                 if (pair.Key == "HH.TiYu.Model.Student") oldContract = oldContract.Where(c => !c.Contains("HasPhoto")).ToList();
                 if (pair.Key == "HH.TiYu.BLL.StudentBLL") oldContract = oldContract.Where(c => !c.Contains("Photo")).ToList();
                 var newContract = Contract(newTypes[pair.Key]);
-                Require(oldContract.SequenceEqual(newContract), "API differs " + pair.Key + "\nMissing: " + string.Join("\n", oldContract.Except(newContract)) + "\nAdded: " + string.Join("\n", newContract.Except(oldContract)));
-                checks += oldContract.Count;
+                var allowed = new HashSet<string>(RemovedMembers.Where(m => m.StartsWith(pair.Key + ":", StringComparison.Ordinal)).Select(m => m.Substring(pair.Key.Length + 1)), StringComparer.Ordinal);
+                var missing = oldContract.Except(newContract).Where(c => !allowed.Contains(MemberName(c))).ToList();
+                var added = newContract.Except(oldContract).ToList();
+                Require(!missing.Any(), "Unexpected API removal in " + pair.Key + "\n" + string.Join("\n", missing));
+                Require(!added.Any(), "Unexpected API addition in " + pair.Key + "\n" + string.Join("\n", added));
+                checks += newContract.Count;
             }
-            Console.WriteLine("API " + before.Name.Name + ": " + oldTypes.Count + " public/protected types; signatures, flags, constants, properties/events and contract attributes match");
+            Console.WriteLine("API " + before.Name.Name + ": " + newTypes.Count + " public/protected types; declared removals applied, remaining signatures, flags, constants, properties/events and contract attributes match");
         }
     }
     private static void Observe(string key, object value) { snapshot.Add(key + "=" + Constant(value)); }

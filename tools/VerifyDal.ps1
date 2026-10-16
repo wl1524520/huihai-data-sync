@@ -33,4 +33,11 @@ foreach ($variant in @('source')) {
         if ($LASTEXITCODE -ne 0) { throw "Verification failed: $variant" }
     } finally { Pop-Location }
 }
-Write-Host "Verification artifacts: $run"
+# Delete this run's isolated directory after a successful verification, so tools\bin does not
+# grow with every run; a failed run keeps its residue for inspection.
+for ($attempt = 0; $attempt -lt 5 -and (Test-Path -LiteralPath $run); $attempt++) {
+    Start-Sleep -Milliseconds 300
+    Remove-Item -LiteralPath $run -Recurse -Force -ErrorAction SilentlyContinue
+}
+if (Test-Path -LiteralPath $run) { throw "Verification artifacts could not be removed: $run" }
+Write-Host "Verification artifacts verified and removed: $run"

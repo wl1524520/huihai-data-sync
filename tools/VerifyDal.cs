@@ -61,6 +61,7 @@ internal static class VerifyDal
             CheckSchema();
             CheckFactories();
             CheckConfig();
+            CheckProjectPhysicalItems();
             CheckStudentsAndProjects();
             Check(typeof(Student).Assembly.GetType("HH.TiYu.Model.StudentPhoto") == null, "Photo model remains");
             Check(typeof(Student).GetProperty("HasPhoto") == null, "Photo flag remains");
@@ -104,7 +105,23 @@ internal static class VerifyDal
     private static void CheckFactories()
     {
         string[] supported = { "DivisionProvider", "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider" };
-        foreach (var type in typeof(ProviderFactory).Assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.Namespace == "HH.TiYu.DAL.LinqProvider"))
+        string[] removed = { "AlarmProvider", "AppraiseTemplateProvider", "DiscussionProvider", "OperatorProvider", "PhysicalProjectStateProvider", "PhysicalScoreProvider", "RoleProvider", "SportsProvider", "SportsStudentPairProvider", "SportSuggestionProvider", "StandardProvider", "StudentCheckRecordProvider", "StudentGroupPairProvider", "StudentGroupProvider", "SysparameterProvider" };
+        var assembly = typeof(ProviderFactory).Assembly;
+        foreach (var name in removed)
+            Check(assembly.GetType("HH.TiYu.DAL.LinqProvider." + name) == null, "Removed provider still present: " + name);
+        foreach (var name in new[] { "AutoNumberCreater", "AutoCreateNumber" })
+            Check(assembly.GetType("HH.TiYu.DAL.LinqProvider." + name) == null, "Removed numbering type still present: " + name);
+        foreach (var name in supported)
+        {
+            Type type = assembly.GetType("HH.TiYu.DAL.LinqProvider." + name);
+            Check(type != null, "Retained provider missing: " + name);
+            Type contract = type.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IProvider<,>));
+            Check(contract != null, "Retained provider contract missing: " + name);
+            object provider = typeof(ProviderFactory).GetMethod("Create").MakeGenericMethod(contract).Invoke(null, new object[] { Uri });
+            Check(provider.GetType() == type, "Retained provider not creatable: " + name);
+        }
+        Check(!assembly.GetReferencedAssemblies().Any(a => a.Name == "System.Data.SQLite"), "DAL still references System.Data.SQLite directly");
+        foreach (var type in assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.Namespace == "HH.TiYu.DAL.LinqProvider"))
         {
             var contract = type.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IProvider<,>));
             if (contract == null) continue;
@@ -148,6 +165,28 @@ internal static class VerifyDal
         Execute("DROP TRIGGER fail_token");
         loaded.Save();
         Check(HH.DataCollection.Wifi.Sync.SyncConfig.Load().ApiToken == "must fail", "Config recovery after rollback");
+    }
+    private static void CheckProjectPhysicalItems()
+    {
+        var projects = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri);
+        var items = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, Guid>>(Uri);
+        var project = new PhysicalProject { ID = "PP1", Name = "科目项目", CreateDate = DateTime.Now };
+        Check(projects.Insert(project).Result == ResultCode.Successful, "Subject project insert");
+        Func<int> count = () => Convert.ToInt32(Scalar("SELECT count(*) FROM ProjectPhysicalItems WHERE ProjectID='PP1'"));
+        var male = new ProjectPhysicalItem { ID = Guid.NewGuid(), ProjectID = project.ID, Sex = Sex.Male, Grade = 7, PhysicalItems = "1,2" };
+        Check(items.BatchAdd(new List<ProjectPhysicalItem> { male }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Subject batch import");
+        Check(count() == 1, "Subject batch import persisted");
+        var replacement = new ProjectPhysicalItem { ID = Guid.NewGuid(), ProjectID = project.ID, Sex = Sex.Male, Grade = 7, PhysicalItems = "3,4" };
+        Check(items.BatchAdd(new List<ProjectPhysicalItem> { replacement }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Subject batch re-import");
+        Check(count() == 1 && Convert.ToString(Scalar("SELECT PhysicalItems FROM ProjectPhysicalItems WHERE ProjectID='PP1'")) == "3,4", "Same grade/sex subject import must replace, not duplicate");
+        Check(ProviderFactory.Create<IProvider<ProjectPhysicalItem, Guid>>(Uri).GetItems(new ProjectPhysicalItemSearchCondition { ProjectID = project.ID }).QueryObjects.Count == 1, "Subject project query");
+        bool unsupported = false;
+        try { items.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = replacement.ID, Key = "Grade", Value = "8" } }); }
+        catch (NotSupportedException) { unsupported = true; }
+        Check(unsupported, "Subject batch patch must report unsupported explicitly");
+        Check(items.BatchDelete(new List<ProjectPhysicalItem> { replacement }, project.ID).Result == ResultCode.Successful, "Subject batch delete");
+        Check(count() == 0, "Subject batch delete persisted");
+        Check(projects.Delete(project).Result == ResultCode.Successful, "Subject project cleanup");
     }
     private static void CheckStudentsAndProjects()
     {

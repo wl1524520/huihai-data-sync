@@ -1,23 +1,9 @@
 ﻿// 从 lib/BLL.dll 还原；维护范围与差异见 README.md。
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Runtime.Versioning;
-using System.Text;
-using System.Threading;
 using HH.TiYu.DAL;
 using HH.TiYu.Model;
-using HH.TiYu.Model.SearchCondition;
-using HH.TiYu.Model.Security;
 using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
 
 namespace HH.TiYu.BLL
 {
@@ -42,149 +28,6 @@ namespace HH.TiYu.BLL
             if (commandResult.Result == ResultCode.Successful)
             {
                 PhysicalProject.Current.AddStudent(info);
-            }
-            return commandResult;
-        }
-
-        public CommandResult 更新考试科目(List<Student> students)
-        {
-            string key = StudentNote.考试科目.ToString();
-            List<UpdateItem<Guid>> patchs = students.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = key,
-                Value = it.GetProperty(key)
-            }).ToList();
-            return ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchPatch(patchs);
-        }
-
-        public CommandResult Upgrade(List<Student> students, int maxGrade)
-        {
-            CommandResult commandResult = null;
-            List<UpdateItem<Guid>> list = new List<UpdateItem<Guid>>();
-            DateTime now = DateTime.Now;
-            foreach (Student student2 in students)
-            {
-                Student student = student2.Clone();
-                student.Upgrade(maxGrade);
-                if (student.Graduation != student2.Graduation)
-                {
-                    list.Add(new UpdateItem<Guid>
-                    {
-                        ID = student2.ID,
-                        Key = "Graduation",
-                        Value = (student.Graduation.HasValue ? student.Graduation.ToString() : "null")
-                    });
-                }
-                if (student.Grade != student2.Grade)
-                {
-                    list.Add(new UpdateItem<Guid>
-                    {
-                        ID = student2.ID,
-                        Key = "Grade",
-                        Value = student.Grade.ToString()
-                    });
-                }
-                list.Add(new UpdateItem<Guid>
-                {
-                    ID = student2.ID,
-                    Key = "UpdateDate",
-                    Value = now.ToString("yyyy-MM-dd HH:mm:ss")
-                });
-            }
-            commandResult = ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchPatch(list);
-            if (commandResult.Result == ResultCode.Successful)
-            {
-                foreach (Student student3 in students)
-                {
-                    student3.UpdateDate = now;
-                    student3.Upgrade(maxGrade);
-                }
-            }
-            return commandResult;
-        }
-
-        public CommandResult Absent(List<Student> students)
-        {
-            List<UpdateItem<Guid>> patchs = students.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = "IsAbsent",
-                Value = true.ToString()
-            }).ToList();
-            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchPatch(patchs);
-            if (commandResult.Result == ResultCode.Successful)
-            {
-                foreach (Student student in students)
-                {
-                    student.IsAbsent = true;
-                    student.UpdateDate = DateTime.Now;
-                }
-            }
-            return commandResult;
-        }
-
-        public CommandResult UndoAbsent(List<Student> students)
-        {
-            List<UpdateItem<Guid>> patchs = students.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = "IsAbsent",
-                Value = null
-            }).ToList();
-            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchPatch(patchs);
-            if (commandResult.Result == ResultCode.Successful)
-            {
-                foreach (Student student in students)
-                {
-                    student.IsAbsent = null;
-                    student.UpdateDate = DateTime.Now;
-                }
-            }
-            return commandResult;
-        }
-
-        public CommandResult UpdateUploadToCloudDate(ThirdSyncPlateForm pf, List<Student> students, DateTime dt)
-        {
-            List<UpdateItem<Guid>> patchs = students.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = pf.ToString(),
-                Value = dt.ToString("yyyy-MM-dd HH:mm:ss")
-            }).ToList();
-            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchPatch(patchs);
-            if (commandResult.Result == ResultCode.Successful)
-            {
-                foreach (Student student in students)
-                {
-                    student.设置上传到平台时间(pf, dt);
-                }
-            }
-            return commandResult;
-        }
-
-        public CommandResult ClearUploadToCloudDate(ThirdSyncPlateForm pf, List<Student> ss)
-        {
-            List<UpdateItem<Guid>> list = ss.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = pf.ToString(),
-                Value = null
-            }).ToList();
-            list.AddRange(ss.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = string.Format("{0}_msg", pf.ToString()),
-                Value = null
-            }).ToList());
-            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<PhysicalScore, Guid>>(base.RepoUri).BatchPatch(list);
-            if (commandResult.Result == ResultCode.Successful)
-            {
-                ss.ForEach(delegate(Student it)
-                {
-                    it.设置上传到平台时间(pf, null);
-                    it.设置上传到平台错误信息(pf, null);
-                });
             }
             return commandResult;
         }
@@ -219,25 +62,5 @@ namespace HH.TiYu.BLL
             }
             return commandResult;
         }
-
-        public CommandResult 设置学生特殊情况(List<Student> students, StudentState? spt)
-        {
-            List<UpdateItem<Guid>> patchs = students.Select((Student it) => new UpdateItem<Guid>
-            {
-                ID = it.ID,
-                Key = StudentNote.特殊学生类型.ToString(),
-                Value = (spt.HasValue ? ((int)spt.Value).ToString() : null)
-            }).ToList();
-            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchPatch(patchs);
-            if (commandResult.Result == ResultCode.Successful)
-            {
-                foreach (Student student in students)
-                {
-                    student.SetProperty(StudentNote.特殊学生类型, spt.HasValue ? ((int)spt.Value).ToString() : null);
-                }
-            }
-            return commandResult;
-        }
-
     }
 }

@@ -134,12 +134,6 @@
   <data name="指定序列号段的数据ToolStripMenuItem.Visible" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
-  <data name="&gt;&gt;mnu_学生测试.Name" xml:space="preserve">
-    <value>mnu_学生测试</value>
-  </data>
-  <data name="&gt;&gt;mnu_学生测试.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
   <data name="mnu_开始实时采集.Text" xml:space="preserve">
     <value>开始实时采集</value>
   </data>
@@ -1614,12 +1608,6 @@
   </data>
   <data name="btnRevert.TabIndex" type="System.Int32, mscorlib">
     <value>153</value>
-  </data>
-  <data name="mnu_学生测试.Text" xml:space="preserve">
-    <value>学生测试</value>
-  </data>
-  <data name="mnu_学生测试.Size" type="System.Drawing.Size, System.Drawing">
-    <value>172, 22</value>
   </data>
   <data name="chkLog.TabIndex" type="System.Int32, mscorlib">
     <value>36</value>

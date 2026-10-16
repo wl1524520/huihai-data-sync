@@ -3,17 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Data.Linq;
 using System.Data.Linq.Mapping;
-using System.Data.SQLite;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
-using HH.TiYu.Model.Security;
 using LJH.GeneralLibrary.Core.DAL;
 using LJH.GeneralLibrary.Core.DAL.Linq;
 using LJH.GeneralLibrary.ExceptionHandling;
@@ -54,17 +46,19 @@ namespace HH.TiYu.DAL.LinqProvider
         {
             try
             {
-                DataContext dataContext = CreateDataContext();
-                List<ProjectPhysicalItem> source = (from it in dataContext.GetTable<ProjectPhysicalItem>()
-                    where it.ProjectID == projectID
-                    select it).ToList();
-                foreach (ProjectPhysicalItem item in items)
+                using (DataContext dataContext = CreateDataContext())
                 {
-                    item.ProjectID = projectID;
-                    dataContext.GetTable<ProjectPhysicalItem>().InsertOnSubmit(item);
-                    dataContext.GetTable<ProjectPhysicalItem>().DeleteAllOnSubmit(source.Where((ProjectPhysicalItem it) => it.Sex == item.Sex && it.Grade == item.Grade));
+                    List<ProjectPhysicalItem> source = (from it in dataContext.GetTable<ProjectPhysicalItem>()
+                        where it.ProjectID == projectID
+                        select it).ToList();
+                    foreach (ProjectPhysicalItem item in items)
+                    {
+                        item.ProjectID = projectID;
+                        dataContext.GetTable<ProjectPhysicalItem>().InsertOnSubmit(item);
+                        dataContext.GetTable<ProjectPhysicalItem>().DeleteAllOnSubmit(source.Where((ProjectPhysicalItem it) => it.Sex == item.Sex && it.Grade == item.Grade));
+                    }
+                    dataContext.SubmitChanges();
                 }
-                dataContext.SubmitChanges();
                 return new CommandResult(ResultCode.Successful, string.Empty);
             }
             catch (Exception ex)
@@ -78,12 +72,14 @@ namespace HH.TiYu.DAL.LinqProvider
         {
             try
             {
-                DataContext dataContext = CreateDataContext();
-                foreach (ProjectPhysicalItem item in items)
+                using (DataContext dataContext = CreateDataContext())
                 {
-                    DeletingItem(item, dataContext);
+                    foreach (ProjectPhysicalItem item in items)
+                    {
+                        DeletingItem(item, dataContext);
+                    }
+                    dataContext.SubmitChanges();
                 }
-                dataContext.SubmitChanges();
                 return new CommandResult(ResultCode.Successful, string.Empty);
             }
             catch (Exception ex)
@@ -95,7 +91,7 @@ namespace HH.TiYu.DAL.LinqProvider
 
         public CommandResult BatchPatch(List<UpdateItem<Guid>> patchs)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("采集器不支持项目科目的批量修改");
         }
     }
 }

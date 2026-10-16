@@ -33,27 +33,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AlarmInfoBLL.cs" />
-    <Compile Include="AppraiseTemplateBLL.cs" />
+    <!-- 仅保留采集器实际使用的区域、学校、科目、学生与项目业务类；失效业务类与空评分服务已随本轮精简删除。 -->
     <Compile Include="BLLBase.cs" />
     <Compile Include="DivisionBLL.cs" />
     <Compile Include="FacilityBLL.cs" />
-    <Compile Include="OperatorBLL.cs" />
     <Compile Include="PhysicalItemBLL.cs" />
     <Compile Include="PhysicalProjectBLL.cs" />
-    <Compile Include="PhysicalScoreBLL.cs" />
-    <Compile Include="PhysicalScoresSavingService.cs" />
-    <Compile Include="RoleBLL.cs" />
-    <Compile Include="SportsBLL.cs" />
-    <Compile Include="SportsStudentPairBLL.cs" />
-    <Compile Include="SportSuggestionBLL.cs" />
-    <Compile Include="StandardBLL.cs" />
     <Compile Include="StudentBLL.cs" />
-    <Compile Include="StudentCheckRecordBLL.cs" />
-    <Compile Include="StudentGroupBLL.cs" />
-    <Compile Include="SysParaSettingsBll.cs" />
-    <Compile Include="SysParameterBLL.cs" />
-    <Compile Include="DiscussionBLL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

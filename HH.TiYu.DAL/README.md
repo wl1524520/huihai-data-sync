@@ -26,12 +26,13 @@ StudentID 保存平台 test_no，映射容量为 64，平台约束最多 60 字�
 
 ## Provider 与读写范围
 
-ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余恢复源码暂保留，工厂抛出 NotSupportedException。
-工厂不再吞掉映射异常。不要直接实例化未启用的旧 Provider。
+ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余契约一律抛出 NotSupportedException。
+工厂不再吞掉映射异常，也不存在可实例化的停用 Provider：本轮精简已删除 15 个停用 Provider 源码（Alarm、AppraiseTemplate、Discussion、Operator、PhysicalProjectState、PhysicalScore、Role、Sports、SportsStudentPair、SportSuggestion、Standard、StudentCheckRecord、StudentGroup、StudentGroupPair、Sysparameter）以及 `AutoNumberCreater`、`AutoCreateNumber` 两个编号类型，并移除了 DAL 项目对 `System.Data.SQLite` 的显式引用（保留的 Provider 只用 LINQ 映射，无 SQLite 类型使用）。旧实现仍可从原始 `lib/DAL.dll` 基线重新反编译恢复。
 
 - StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；毕业状态和卡号筛选、未映射字段修改明确失败。
 - 删除学生名单不删除已经采集的 StudentRawScore。
-- PhysicalProjectProvider 使用 GUID 生成项目编号，模板仅复制项目科目；不依赖旧 AutoCreateNumber 表。
+- PhysicalProjectProvider 使用 GUID 生成项目编号，模板仅复制项目科目；项目编号不依赖任何编号表。
+- ProjectPhysicalItemProvider 的批量导入按性别与年级替换同组记录，批量删除按主键删除；`BatchPatch` 明确抛出 NotSupportedException，采集器不支持项目科目的批量修改。
 - 显式删除项目时，在一个事务中清理项目、学校、区域、名单、科目关联和原始成绩；工作单元入口没有显式事务时拒绝执行。
 - SyncConfigProvider.SavePairs 使用映射读写，并在单个事务中新增/覆盖传入键，保留其他键，空值转换为空字符串。
 - 采集器 SyncConfig.Load/Save 已接入 DAL，保留六项设置、URL 规范化与原有配置校验。
@@ -46,7 +47,7 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 ## 验证
 
 运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
-测试在全新隔离目录使用真实 LocalDb 八表结构，覆盖七表映射、启用/禁用工厂、启动加载23、学生增改删、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
+测试在全新隔离目录使用真实 LocalDb 八表结构，覆盖七表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、七个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载23、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
 不再扩展旧业务表，也不再要求映射与原 DLL 逐字相同。
 VerifyBusiness 保留模型算法的原 DLL 对照；VerifyRecoveredApi 验证剩余 API 和所有源码组件间的引用解析。
 未连接真实设备或云平台。
