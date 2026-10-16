@@ -18,6 +18,7 @@ internal static class VerifyRecoveredApi {
           var oldTypes=Types(before.MainModule.Types).ToDictionary(t=>t.FullName);
           var newTypes=Types(after.MainModule.Types).ToList();
           foreach(var type in newTypes){
+            if (type.FullName == "HH.TiYu.Model.SyncConfigEntry" || type.FullName == "HH.TiYu.DAL.LinqProvider.SyncConfigProvider") continue;
             Require(oldTypes.ContainsKey(type.FullName),"Unexpected public type: "+type.FullName);
             var oldContract=Contract(oldTypes[type.FullName]);
             var newContract=Contract(type);
@@ -28,6 +29,9 @@ internal static class VerifyRecoveredApi {
                 !s.StartsWith("METHOD:Flush") && !(s.StartsWith("METHOD:Stop")&&s.Contains("timeout:")) &&
                 !s.StartsWith("METHOD:Dispose") && !s.StartsWith("INTERFACE:System.IDisposable")).ToList();
             }
+            // Explicit override adds the transaction missing from the legacy base Delete.
+            if (type.FullName == "HH.TiYu.DAL.LinqProvider.PhysicalProjectProvider")
+                newContract = newContract.Where(c => !c.StartsWith("METHOD:Delete`")).ToList();
             Require(!newContract.Except(oldContract).Any(),"Changed retained contract: "+type.FullName+"\n"+string.Join("\n",newContract.Except(oldContract)));
           }
           if(name=="Device"){

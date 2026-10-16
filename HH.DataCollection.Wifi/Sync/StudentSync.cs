@@ -20,7 +20,7 @@ namespace HH.DataCollection.Wifi.Sync
     ///     不是平台学生主键,也不区分学号/身份证;客户端只去首尾空白,不做大小写转换
     ///     (身份证统一大写是平台侧规则,学号的大小写与前导零保留)
     ///   - 平台不再下发 birth/nation/origin_id/addr/class_id/mc:本地只写 9 个真值列,
-    ///     Student 表其余 10 列是 DAL 列映射强制要求的兼容占位列,一律恒 NULL
+    ///     Student 表仅保留当前同步和采集实际使用的九个字段
     /// </summary>
     public class StudentSync
     {
@@ -160,7 +160,7 @@ namespace HH.DataCollection.Wifi.Sync
 
         /// <summary>
         /// 绑定学生参数:只绑定 9 个真值列里的可写项。其余列(含 DAL 列映射强制要求的
-        /// 兼容占位列)既不出现在 INSERT/UPDATE 的列清单里,也不绑定参数,落到库里恒为 NULL。
+        /// 旧字段)不出现在 INSERT/UPDATE 的列清单里，也不再由新库创建。
         /// </summary>
         private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st)
         {

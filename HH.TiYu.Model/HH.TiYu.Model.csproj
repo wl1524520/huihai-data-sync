@@ -33,7 +33,6 @@
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="Jurassic"><HintPath>..\lib\Jurassic.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Newtonsoft.Json"><HintPath>..\lib\Newtonsoft.Json.dll</HintPath><Private>False</Private></Reference>
@@ -76,7 +75,6 @@
     <Compile Include="StudentGroupPair.cs" />
     <Compile Include="StudentHistoryRecord.cs" />
     <Compile Include="StudentNote.cs" />
-    <Compile Include="StudentPhoto.cs" />
     <Compile Include="SysParameter.cs" />
     <Compile Include="ThirdSyncPlateForm.cs" />
     <Compile Include="TotalCalType.cs" />
@@ -110,6 +108,7 @@
     <Compile Include="SearchCondition\StudentCheckRecordSearchCondition.cs" />
     <Compile Include="SearchCondition\StudentGroupSearchCondition.cs" />
     <Compile Include="SearchCondition\StudentSearchCondition.cs" />
+    <Compile Include="SyncConfigEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

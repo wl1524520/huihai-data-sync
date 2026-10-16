@@ -21,6 +21,9 @@ internal static class VerifyUI
         try
         {
             Application.EnableVisualStyles();
+            HH.DataCollection.Wifi.Db.LocalDb.EnsureDatabase();
+            AppSettings.Current.LocalDB = "SQLITE:" + HH.DataCollection.Wifi.Db.LocalDb.ConnStr;
+            AppSettings.Current.RemoteDB = string.Empty;
             PhysicalProject.Current = new PhysicalProject();
             Assembly assembly = typeof(FrmHosts).Assembly;
             Type[] types = assembly.GetTypes().Where(t => t.IsPublic && !t.IsNested).ToArray();
@@ -50,10 +53,17 @@ internal static class VerifyUI
             }
             Check(forms == 12 && controls == 5, "Window/control closure changed");
             Check(typeof(FrmStudentDownloadPara).GetField("DownloadPhoto") == null, "Photo download option retained");
+            Check(typeof(FrmStudentDownloadPara).GetField("cardID4StudentID") == null, "Card identity replacement option retained");
+            using (var form = new FrmStudentDownloadPara())
+            {
+                var grid = (DataGridView)form.Controls.Find("dataGridView1", true).Single();
+                Check(grid.Columns.Count == 7 && !grid.Columns.Contains("colCardID"), "Student list retained card column");
+                Check(!Walk(form).Any(c => c.Name == "chkCardIDForStudentID"), "Card identity checkbox retained");
+            }
             Console.WriteLine("UI verification passed: " + checks + " checks, " + forms + " windows and " + controls + " controls constructed/disposed without showing windows or opening devices.");
             return 0;
         }
-        catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
+        catch (Exception ex) { System.IO.File.WriteAllText("verification-error.txt", ex.ToString()); Console.Error.WriteLine(ex); return 1; }
     }
 
     private static IEnumerable<Control> Walk(Control control)
@@ -61,5 +71,13 @@ internal static class VerifyUI
         yield return control;
         foreach (Control child in control.Controls)
             foreach (Control descendant in Walk(child)) yield return descendant;
+    }
+}
+
+namespace HH.DataCollection.Wifi
+{
+    internal static class Program
+    {
+        internal static void WriteLog(string level, string message) { Console.WriteLine(level + ": " + message); }
     }
 }

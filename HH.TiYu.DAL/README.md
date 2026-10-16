@@ -1,82 +1,55 @@
-# DAL 源码与维护说明
+# 采集器 DAL
 
-本项目从仓库 `lib/DAL.dll` 恢复，直接集成在 `HH.DataCollection.Wifi.sln` 中，供汇海数据采集器使用。包含原程序集全部 26 个业务类型；照片 Provider 仅作为旧 BLL/UI 的兼容入口，不提供照片功能。
+基于恢复源码维护，目标为 .NET Framework 4.0 / C# 4 / x86，输出 DAL.dll。
+当前代码以采集器功能为准，不再保证原体测软件的全部 API 或完整数据库兼容。
 
-目标为 **.NET Framework 4.0 / C# 4 / x86**，输出仍为 `DAL, Version=1.0.0.0`。采用 x86 是因为采集器及现有 SQLite、LJH 依赖均为 x86。原 DAL 的命名空间、业务类型可见性、继承关系、接口和已有公共/受保护方法签名保留。编译器生成的闭包和匿名类型不作为维护接口。
+## 当前数据契约
 
-## 从哪里修改数据处理
+`LinqProvider/DataMapping.xml` 仅映射七表：
 
-| 处理内容 | 源码入口 |
+| 表 | 实体/用途 |
 | --- | --- |
-| 学生查询、卡号检查、导入覆盖规则、批量更新与删除 | `LinqProvider/StudentProvider.cs` |
-| 学校、区域及删除约束 | `LinqProvider/FacilityProvider.cs`、`DivisionProvider.cs` |
-| 年度体测项目、项目复制及删除关联数据 | `LinqProvider/PhysicalProjectProvider.cs` |
-| 科目字典、项目与科目关联 | `LinqProvider/PhysicalItemProvider.cs`、`ProjectPhysicalItemProvider.cs` |
-| 正式成绩查询、SQLite 读取、批量新增/覆盖/修改 | `LinqProvider/PhysicalScoreProvider.cs` |
-| 分组、评分标准、综合评价、运动建议、检录、复议等 | 对应名称的 `LinqProvider/*Provider.cs` |
-| 自动编号 | `LinqProvider/AutoNumberCreater.cs`、`AutoCreateNumber.cs` |
-| 创建 Provider 与装载映射 | `ProviderFactory.cs` |
-| 批量操作契约 | `IBatchProvider.cs` |
-| 实体属性与数据库字段映射 | `LinqProvider/DataMapping.xml` |
+| PhysicalProject | 体测项目 |
+| Division | 区域 |
+| Facility | 学校 |
+| PhysicalItem | 科目字典 |
+| ProjectPhysicalItems | 项目科目关联 |
+| Student | 学生名单 |
+| SyncConfig | 同步配置，ID 为配置键、Value 为配置值 |
 
-注意：采集器新增的同步代码有自己的数据库访问路径。平台学生同步的写入逻辑在 `HH.DataCollection.Wifi/Sync/StudentSync.cs`，原始成绩上传和上传标记在 `Sync/ScoreUpload.cs`，界面列表也有直接 SQL。修改 DAL 不会自动改变这些直接 SQL 的行为。
+Student 仅映射 ID、StudentID、ProjectID、Name、Sex、FacilityID、Grade（对应实体 _Grade）、ClassName、UpdateDate。
+StudentID 保存平台 test_no，映射容量为 64，平台约束最多 60 字符。名单下发不再用卡号替换标识。
+已修复重复 FacilityID、ID 重复 NOT NULL、科目 Min/Max 可空性和 Memo 长度声明。
 
-设备原始成绩由独立源码项目 `HH.TiYu.SQLite.StudentRawScoresSavingService` 写入 `StudentRawScore`。本项目 `PhysicalScoreProvider` 操作的是原软件正式成绩表 `PhysicalScore`，二者不同。
+实际建库仍由采集器 `Db/LocalDb.cs` 负责，共八表。StudentRawScore 独立映射位于 HH.TiYu.SQLite；Uploaded 标记由上传模块维护。
+当前开发版本不提供旧库迁移。XML 不负责建表；字段调整需同步修改 LocalDb 和同步 SQL。
 
-## 构建与集成
+## Provider 与读写范围
 
-在解决方案目录运行，或使用 Visual Studio 构建该解决方案：
+ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余恢复源码暂保留，工厂抛出 NotSupportedException。
+工厂不再吞掉映射异常。不要直接实例化未启用的旧 Provider。
 
-```powershell
-& "$env:WINDIR\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe" .\HH.DataCollection.Wifi.sln /t:Build /p:Configuration=Release /p:Platform=x86
-```
+- StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；毕业状态和卡号筛选、未映射字段修改明确失败。
+- 删除学生名单不删除已经采集的 StudentRawScore。
+- PhysicalProjectProvider 使用 GUID 生成项目编号，模板仅复制项目科目；不依赖旧 AutoCreateNumber 表。
+- 显式删除项目时，在一个事务中清理项目、学校、区域、名单、科目关联和原始成绩；工作单元入口没有显式事务时拒绝执行。
+- SyncConfigProvider.SavePairs 使用映射读写，并在单个事务中新增/覆盖传入键，保留其他键，空值转换为空字符串。
+- 采集器 SyncConfig.Load/Save 已接入 DAL，保留六项设置、URL 规范化与原有配置校验。
+- 学生同步、成绩上传仍有独立 SQL 路径；修改 DAL 不会自动修改这些逻辑。
 
-采集器通过 `ProjectReference` 引用本项目，构建时自动复制源码生成的 `DAL.dll`。`AfterBuild` 复制依赖时排除 `lib/DAL.dll`，不再执行 DAL 二进制补丁。原 `lib/DAL.dll` 保留作为逆向基准与兼容性验证输入，不参与应用部署。
+## 无学生照片
 
-Model 与 BLL 也已还原为源码；原有单库和停用正式成绩写入的调整直接体现在源码中。`tools/PatchBll.cs` 和对应 EXE 仅作历史对照，不再参与构建。
-
-本项目通过 `ProjectReference` 引用 `HH.TiYu.Model` 和 `LJH.GeneralLibrary` 源码；`System.Data.SQLite.dll` 保持通用第三方依赖。公共的 `ProviderBase`、`DataContextFactory` 与工作单元可在 `LJH.GeneralLibrary/Core/DAL/Linq` 中维护。
-
-## 不支持照片
-
-- 学生列表直接返回学生查询结果，不再关联 `StudentPhoto` 或计算 `HasPhoto`。
-- 已删除学生/项目删除流程中的三处照片删除 SQL。
-- 保留 `StudentPhotoProvider` 的类型、构造函数和原方法签名，供旧二进制调用。
-- 照片列表返回空列表，按 ID 查询返回空值；由基类包装后，未找到 ID 的结果仍为失败。
-- 批量照片写入返回 `ResultCode.Fail`；单条写入和工作单元入口由保护方法拒绝，避免误报保存成功。
-- 保留原 XML 中的照片映射声明以维持完整映射兼容性；它不会创建照片表，源码没有照片表查询/写入。
+已删除 StudentPhoto、Student.HasPhoto、StudentPhotoProvider、StudentBLL 的照片方法和 TempFolderManager。
+照片表不创建也不映射。照片旧枚举值仅保留数值定义，避免改变无关枚举，不提供照片业务入口。
+构建排除九个已无调用的图像/照片库并清理输出目录残留；原始 lib 文件保持不变。
 
 ## 验证
 
-```powershell
-.\tools\VerifyDal.ps1 -Configuration Debug
-.\tools\VerifyDal.ps1 -Configuration Release
-```
-
-脚本构建解决方案，在全新的 `tools/bin/DalVerification/<运行标识>/source` 和 `legacy` 目录中分别运行两个进程。它不读取应用现有数据库、不连接云平台、不连接设备。源码版本使用采集器实际输出的依赖，并验证输出 DLL 与源码项目产物哈希一致。
-
-验证内容：
-
-- 用 Mono.Cecil 比较 26 个业务类型的可见性、基类、接口，以及 113 个公共/受保护方法的签名、标志和方法泛型约束；验证嵌入映射字节一致。
-- 创建全部 22 个 Provider，确认工厂选择正确。
-- 在源码版本的实际八表结构中，通过源码构建的 `BLL.dll` 读取项目，执行采集器使用的 `GetFullInfo(23)`，加载区域、学校、学生和科目；通过后才扩展测试库。
-- 验证学生查询过滤、新增、覆盖、批量修改、批量删除。
-- 验证正式成绩新增、SQLite 查询过滤、批量修改和删除。
-- 无照片表时验证照片空读取、单条和批量写入拒绝。
-
-2026-10-16：Debug 与 Release 验证均通过。Release 源码版本 273 项断言，原版基准 45 项断言。计数不同是因为源码版本额外执行 API 和照片禁用验证。测试会在隔离库中增加原软件所需的其他表，以验证完整 DAL 的部分功能；采集器生产库仍为原来的八表结构。
-
-这些验证覆盖接口和上述实际执行场景，不代表所有 Provider 的所有输入都已证明与原版等价；未进行设备现场联调或云平台联调。
-
-## 保留的原有行为与限制
-
-本阶段只恢复源码及实现照片禁用，没有顺便重写其他业务规则：
-
-- `AlarmProvider.BatchPatch`、`ProjectPhysicalItemProvider.BatchPatch`、`StandardProvider.BatchPatch` 原本就抛出 `NotImplementedException`，现仍保留。
-- `ProviderFactory.Create<T>` 保留原有异常处理：捕获内部异常后抛出“没有找到”提示，可能掩盖连接或映射错误。
-- 一些删除方法拼接 SQL，并依赖完整原软件数据库中的成绩、分组、评分等表。恢复源码不意味着这些方法现在都可在采集器八表库中调用。后续需要使用时应单独适配事务、参数化与关联表范围。
-- 保留原批量导入的大小写匹配、覆盖字段及空值规则，也保留原日期/数值转换行为。
-- 未实现对现有数据库的新迁移；修改字段需要同时考虑实体模型、XML 映射、本地建表及同步 SQL。
+运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
+测试在全新隔离目录使用真实 LocalDb 八表结构，覆盖七表映射、启用/禁用工厂、启动加载23、学生增改删、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
+不再扩展旧业务表，也不再要求映射与原 DLL 逐字相同。
+VerifyBusiness 保留模型算法的原 DLL 对照；VerifyRecoveredApi 验证剩余 API 和所有源码组件间的引用解析。
+未连接真实设备或云平台。
 
 ## 逆向来源与证据
 

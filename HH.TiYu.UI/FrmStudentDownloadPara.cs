@@ -35,17 +35,11 @@ namespace HH.TiYu.UI
 
 		private List<Facility> _Facilitys = null;
 
-
-
-
 		public List<Student> students = null;
 
 		public int maxStudentPertime = 20;
 
-		public bool cardID4StudentID = false;
-
 		public bool clearFirst = false;
-
 
 		private IContainer components = null;
 
@@ -115,14 +109,9 @@ namespace HH.TiYu.UI
 
 		private DataGridViewTextBoxColumn colSex;
 
-		private DataGridViewTextBoxColumn colCardID;
-
 		private DataGridViewTextBoxColumn colMemo;
 
-		private CheckBox chkCardIDForStudentID;
-
 		private Button button2;
-
 
 		private ClassNameCombox txtClassName;
 
@@ -148,7 +137,6 @@ namespace HH.TiYu.UI
 			row.Cells["colClassName"].Value = s.ClassName;
 			row.Cells["colName"].Value = s.Name;
 			row.Cells["colSex"].Value = ((s.Sex == Sex.Male) ? "男" : "女");
-			row.Cells["colCardID"].Value = s.CardID;
 		}
 
 		private List<Student> GetSelectedStudents()
@@ -175,10 +163,6 @@ namespace HH.TiYu.UI
 			string configContent = AppSettings.Current.GetConfigContent(string.Format("{0}_{1}", base.Name, chkClearFirst.Name));
 			bool.TryParse(configContent, out result);
 			chkClearFirst.Checked = result;
-			bool result2 = false;
-			configContent = AppSettings.Current.GetConfigContent(string.Format("{0}_{1}", base.Name, chkCardIDForStudentID.Name));
-			bool.TryParse(configContent, out result2);
-			chkCardIDForStudentID.Checked = result2;
 		}
 
 		private void btnQuery_Click(object sender, EventArgs e)
@@ -232,7 +216,7 @@ namespace HH.TiYu.UI
 				if (list != null && list.Count > 0)
 				{
 					list = (from s in list
-						orderby s.FacilityName, s.Grade, s.ClassID, s.StudentID
+						orderby s.FacilityName, s.Grade, s.ClassName, s.StudentID
 						select s).ToList();
 					foreach (Student item in list)
 					{
@@ -273,14 +257,8 @@ namespace HH.TiYu.UI
 			AppSettings.Current.SaveConfig(string.Format("{0}_{1}", base.Name, chkClearFirst.Name), chkClearFirst.Checked.ToString());
 		}
 
-		private void chkCardIDForStudentID_CheckedChanged(object sender, EventArgs e)
-		{
-			AppSettings.Current.SaveConfig(string.Format("{0}_{1}", base.Name, chkCardIDForStudentID.Name), chkCardIDForStudentID.Checked.ToString());
-		}
-
 		private void btnOk_Click(object sender, EventArgs e)
 		{
-			cardID4StudentID = chkCardIDForStudentID.Checked;
 			clearFirst = chkClearFirst.Checked;
 			maxStudentPertime = ((txtMaxPertime.IntergerValue <= 0) ? 1 : txtMaxPertime.IntergerValue);
 			students = GetSelectedStudents();
@@ -325,11 +303,9 @@ namespace HH.TiYu.UI
 			this.colID = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colSex = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.colCardID = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colMemo = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.gpStudent = new System.Windows.Forms.GroupBox();
 			this.button2 = new System.Windows.Forms.Button();
-			this.chkCardIDForStudentID = new System.Windows.Forms.CheckBox();
 			this.txtMaxPertime = new LJH.GeneralLibrary.WinformControl.IntergerTextBox(this.components);
 			this.label9 = new System.Windows.Forms.Label();
 			this.chkClearFirst = new System.Windows.Forms.CheckBox();
@@ -374,13 +350,13 @@ namespace HH.TiYu.UI
 			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
 			this.toolStripStatusLabel1.Size = new System.Drawing.Size(59, 17);
 			this.toolStripStatusLabel1.Text = "总共 0 项";
+			this.dataGridView1.Columns.AddRange(this.colSelect, this.colFacility, this.colClassName, this.colID, this.colName, this.colSex, this.colMemo);
 			this.dataGridView1.AllowUserToAddRows = false;
 			this.dataGridView1.AllowUserToDeleteRows = false;
 			this.dataGridView1.AllowUserToResizeRows = false;
 			this.dataGridView1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
 			this.dataGridView1.BackgroundColor = System.Drawing.Color.White;
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.dataGridView1.Columns.AddRange(this.colSelect, this.colFacility, this.colClassName, this.colID, this.colName, this.colSex, this.colCardID, this.colMemo);
 			this.dataGridView1.Location = new System.Drawing.Point(3, 38);
 			this.dataGridView1.Name = "dataGridView1";
 			this.dataGridView1.RowHeadersVisible = false;
@@ -416,9 +392,6 @@ namespace HH.TiYu.UI
 			this.colSex.ReadOnly = true;
 			this.colSex.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
 			this.colSex.Width = 60;
-			this.colCardID.HeaderText = "卡号";
-			this.colCardID.Name = "colCardID";
-			this.colCardID.ReadOnly = true;
 			this.colMemo.HeaderText = "";
 			this.colMemo.MinimumWidth = 100;
 			this.colMemo.Name = "colMemo";
@@ -426,7 +399,6 @@ namespace HH.TiYu.UI
 			this.colMemo.Width = 130;
 			this.gpStudent.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
 			this.gpStudent.Controls.Add(this.button2);
-			this.gpStudent.Controls.Add(this.chkCardIDForStudentID);
 			this.gpStudent.Controls.Add(this.txtMaxPertime);
 			this.gpStudent.Controls.Add(this.label9);
 			this.gpStudent.Controls.Add(this.chkClearFirst);
@@ -443,16 +415,6 @@ namespace HH.TiYu.UI
 			this.button2.Text = "确定（&O）";
 			this.button2.UseVisualStyleBackColor = true;
 			this.button2.Click += new System.EventHandler(btnOk_Click);
-			this.chkCardIDForStudentID.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			this.chkCardIDForStudentID.AutoSize = true;
-			this.chkCardIDForStudentID.ForeColor = System.Drawing.Color.Red;
-			this.chkCardIDForStudentID.Location = new System.Drawing.Point(24, 92);
-			this.chkCardIDForStudentID.Name = "chkCardIDForStudentID";
-			this.chkCardIDForStudentID.Size = new System.Drawing.Size(156, 16);
-			this.chkCardIDForStudentID.TabIndex = 148;
-			this.chkCardIDForStudentID.Text = "将卡号作为学生的学籍号";
-			this.chkCardIDForStudentID.UseVisualStyleBackColor = true;
-			this.chkCardIDForStudentID.CheckedChanged += new System.EventHandler(chkCardIDForStudentID_CheckedChanged);
 			this.txtMaxPertime.ImeMode = System.Windows.Forms.ImeMode.On;
 			this.txtMaxPertime.Location = new System.Drawing.Point(186, 27);
 			this.txtMaxPertime.MaxValue = 100;

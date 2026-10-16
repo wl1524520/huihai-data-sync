@@ -2,11 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using HH.DataCollection.Wifi.Db;
+using HH.TiYu.DAL;
+using HH.TiYu.DAL.LinqProvider;
+using HH.TiYu.Model;
+using LJH.GeneralLibrary.Core.DAL;
 
 namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
-    /// 同步配置,存于本地库 sync_config 表(沿用 unite-data-sync 的配置模型)。
+    /// 同步配置,存于本地库 SyncConfig 表(沿用 unite-data-sync 的配置模型)。
     /// </summary>
     public class SyncConfig
     {
@@ -24,66 +28,36 @@ namespace HH.DataCollection.Wifi.Sync
         public static SyncConfig Load()
         {
             var conf = new SyncConfig();
-            using (var conn = new SQLiteConnection(LocalDb.ConnStr))
+            var result = ProviderFactory.Create<IProvider<SyncConfigEntry, string>>("SQLITE:" + LocalDb.ConnStr).GetItems(null);
+            if (result.Result != ResultCode.Successful) throw new ConfigException("读取同步配置失败: " + result.Message);
+            foreach (var entry in result.QueryObjects)
             {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
+                switch (entry.ID)
                 {
-                    cmd.CommandText = "SELECT config_key, config_value FROM sync_config";
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            string key = Convert.ToString(reader["config_key"]);
-                            string value = Convert.ToString(reader["config_value"]);
-                            switch (key)
-                            {
-                                case "api_url": conf.ApiUrl = value; break;
-                                case "api_token": conf.ApiToken = value; break;
-                                case "source_facility_id": conf.SourceFacilityId = value; break;
-                                case "school_name": conf.SchoolName = value; break;
-                                case "remote_project_id": conf.RemoteProjectId = value; break;
-                                case "remote_project_name": conf.RemoteProjectName = value; break;
-                            }
-                        }
-                    }
+                    case "api_url": conf.ApiUrl = entry.Value; break;
+                    case "api_token": conf.ApiToken = entry.Value; break;
+                    case "source_facility_id": conf.SourceFacilityId = entry.Value; break;
+                    case "school_name": conf.SchoolName = entry.Value; break;
+                    case "remote_project_id": conf.RemoteProjectId = entry.Value; break;
+                    case "remote_project_name": conf.RemoteProjectName = entry.Value; break;
                 }
             }
             conf.ApiUrl = conf.ApiUrl.Trim().TrimEnd('/');
             return conf;
         }
 
+
+
+
+
         public void Save()
         {
-            using (var conn = new SQLiteConnection(LocalDb.ConnStr))
+            ProviderFactory.Create<SyncConfigProvider>("SQLITE:" + LocalDb.ConnStr).SavePairs(new Dictionary<string, string>
             {
-                conn.Open();
-                // 配置项一个事务,避免中途断电留下半截配置
-                using (var tx = conn.BeginTransaction())
-                {
-                    SavePair(conn, tx, "api_url", ApiUrl);
-                    SavePair(conn, tx, "api_token", ApiToken);
-                    SavePair(conn, tx, "source_facility_id", SourceFacilityId);
-                    SavePair(conn, tx, "school_name", SchoolName);
-                    SavePair(conn, tx, "remote_project_id", RemoteProjectId);
-                    SavePair(conn, tx, "remote_project_name", RemoteProjectName);
-                    tx.Commit();
-                }
-            }
-        }
-
-        private static void SavePair(SQLiteConnection conn, SQLiteTransaction tx, string key, string value)
-        {
-            using (var cmd = conn.CreateCommand())
-            {
-                // 捆绑的 SQLite 引擎为 3.8.6,不支持 3.24+ 的 UPSERT(ON CONFLICT...DO UPDATE);
-                // config_key 是主键,用 INSERT OR REPLACE 达到同样的覆盖效果
-                cmd.Transaction = tx;
-                cmd.CommandText = "INSERT OR REPLACE INTO sync_config (config_key, config_value) VALUES (@k, @v)";
-                cmd.Parameters.AddWithValue("@k", key);
-                cmd.Parameters.AddWithValue("@v", value ?? "");
-                cmd.ExecuteNonQuery();
-            }
+                { "api_url", ApiUrl }, { "api_token", ApiToken },
+                { "source_facility_id", SourceFacilityId }, { "school_name", SchoolName },
+                { "remote_project_id", RemoteProjectId }, { "remote_project_name", RemoteProjectName }
+            });
         }
 
         /// <summary>仅校验接口地址与令牌格式(保存设置时、还未取得学校绑定前使用)。</summary>

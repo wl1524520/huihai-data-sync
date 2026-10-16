@@ -194,7 +194,7 @@ namespace HH.TiYu.BLL
             CommandResult commandResult = ProviderFactory.Create<IBatchProvider<Student, Guid>>(base.RepoUri).BatchAdd(students, project.ID, (!ignore) ? ImportOption.Override : ImportOption.Ignore);
             if (commandResult.Result == ResultCode.Successful)
             {
-                project.AddStudents(students);
+                new PhysicalProjectBLL(base.RepoUri).GetFullInfo(project, 项目加载项.学生信息);
             }
             return commandResult;
         }
@@ -239,55 +239,5 @@ namespace HH.TiYu.BLL
             return commandResult;
         }
 
-        public QueryResult<StudentPhoto> GetPhoto(Guid StudentID)
-        {
-            return ProviderFactory.Create<IProvider<StudentPhoto, Guid>>(base.RepoUri).GetByID(StudentID);
-        }
-
-        public CommandResult SavePhoto(Guid StudentID, string path, bool overWrite = true)
-        {
-            StudentPhoto sp = new StudentPhoto(StudentID, path);
-            return SavePhoto(sp, overWrite);
-        }
-
-        public CommandResult SavePhoto(StudentPhoto sp, bool overWrite = true)
-        {
-            StudentPhoto queryObject = GetPhoto(sp.ID).QueryObject;
-            if (queryObject != null)
-            {
-                if (!overWrite)
-                {
-                    return new CommandResult(ResultCode.Successful, "已有照片");
-                }
-                CommandResult commandResult = DeletePhoto(sp.ID);
-                if (commandResult.Result != ResultCode.Successful)
-                {
-                    return commandResult;
-                }
-            }
-            return AddPhoto(sp);
-        }
-
-        public CommandResult AddPhoto(StudentPhoto sp)
-        {
-            return ProviderFactory.Create<IProvider<StudentPhoto, Guid>>(base.RepoUri).Insert(sp);
-        }
-
-        public CommandResult DeletePhoto(Guid studentID)
-        {
-            StudentPhoto studentPhoto = new StudentPhoto();
-            studentPhoto.ID = studentID;
-            return ProviderFactory.Create<IProvider<StudentPhoto, Guid>>(base.RepoUri).Delete(studentPhoto);
-        }
-
-        public CommandResult SavePhotos(PhysicalProject project, List<StudentPhoto> photoes, ImportOption option)
-        {
-            return ProviderFactory.Create<IBatchProvider<StudentPhoto, Guid>>(base.RepoUri).BatchAdd(photoes, project.ID, option);
-        }
-
-        public QueryResultList<StudentPhoto> GetPhotos(StudentSearchCondition con)
-        {
-            return ProviderFactory.Create<IProvider<StudentPhoto, Guid>>(base.RepoUri).GetItems(con);
-        }
     }
 }

@@ -158,7 +158,7 @@ namespace HH.TiYu.UI
 			{
 				return null;
 			}
-			Student studentByID = PhysicalProject.Current.GetStudentByID(item.StudentNumber, true, true);
+			Student studentByID = PhysicalProject.Current.GetStudentByID(item.StudentNumber);
 			if (studentByID != null)
 			{
 				int pid = PhysicalItem.ConvertPhysicalItem(studentByID, item.PhysicalItem);
@@ -299,7 +299,7 @@ namespace HH.TiYu.UI
 				dataGridView1.Rows[0].Tag = record;
 				dataGridView1.Rows[0].DefaultCellStyle.ForeColor = Color.Red;
 				dataGridView1.Rows[0].Cells["colSN"].Value = record.SN;
-				Student s = PhysicalProject.Current.GetStudentByID(record.StudentNumber, true, true);
+				Student s = PhysicalProject.Current.GetStudentByID(record.StudentNumber);
 				dataGridView1.Rows[0].Cells["colStudentID"].Value = record.StudentNumber;
 				dataGridView1.Rows[0].Cells["colName"].Value = ((s != null) ? s.Name : null);
 				dataGridView1.Rows[0].Cells["colSex"].Value = ((s == null) ? string.Empty : ((s.Sex == Sex.Male) ? "男" : "女"));

@@ -6,248 +6,191 @@ using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 using HH.DataCollection.Wifi.Db;
+using HH.DataCollection.Wifi.Sync;
 using HH.TiYu.BLL;
 using HH.TiYu.DAL;
 using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
 using LJH.GeneralLibrary.Core.DAL;
-using Mono.Cecil;
 
 namespace HH.DataCollection.Wifi
 {
-    // LocalDb logging adapter for the isolated verification process.
     internal static class Program
     {
-        internal static void WriteLog(string level, string message)
-        {
-            Console.WriteLine(level + ": " + message);
-        }
+        internal static void WriteLog(string level, string message) { Console.WriteLine(level + ": " + message); }
     }
 }
 
-// Runs only inside a fresh tools/bin/DalVerification/<run>/<variant> directory.
-// The legacy and source variants run in separate processes to avoid assembly identity collisions.
+// Uses only the actual LocalDb schema, in a fresh isolated tools/bin directory.
 internal static class VerifyDal
 {
-    private const string ProjectID = "VERIFY-P";
-    private static readonly Guid StudentID = new Guid("11111111-2222-3333-4444-555555555555");
     private static int checks;
     private static string Uri { get { return "SQLITE:" + LocalDb.ConnStr; } }
-
-    private static int Main(string[] args)
-    {
-        try
-        {
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
-            bool source = args[0] == "source";
-            if (File.Exists(LocalDb.DbPath)) throw new Exception("Refusing to reuse an existing database");
-            if (source) CheckApi(args[1], typeof(ProviderFactory).Assembly.Location);
-            PrepareDatabase(source);
-            CheckFactories();
-            CheckProjectAndStudents();
-            ExpandFixtureSchema(source);
-            CheckStudentWrites();
-            CheckScores();
-            CheckPhotos(source);
-            Console.WriteLine("PASS " + args[0] + ": " + checks + " checks");
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine(ex);
-            return 1;
-        }
-    }
-
-    private static void Require(bool condition, string message)
+    private static void Check(bool condition, string message)
     {
         if (!condition) throw new Exception(message);
         checks++;
     }
-
-    private static string MethodShape(MethodDefinition m)
+    private static object Scalar(string sql)
     {
-        string constraints = string.Join(";", m.GenericParameters.Select(p => p.Attributes + ":" + string.Join(",", p.Constraints.Select(c => c.ConstraintType.FullName))));
-        return m.Name + "`" + m.GenericParameters.Count + "(" + string.Join(",", m.Parameters.Select(p => p.ParameterType.FullName + ":" + p.Attributes)) + "):" + m.ReturnType.FullName + "|" + m.Attributes + "|" + constraints;
-    }
-
-    private static void CheckApi(string originalPath, string sourcePath)
-    {
-        using (var original = AssemblyDefinition.ReadAssembly(originalPath))
-        using (var restored = AssemblyDefinition.ReadAssembly(sourcePath))
+        using (var connection = new SQLiteConnection(LocalDb.ConnStr))
         {
-            Require(original.Name.FullName == restored.Name.FullName, "Assembly identity differs");
-            int types = 0, methods = 0;
-            foreach (var before in original.MainModule.Types.Where(t => t.Namespace.StartsWith("HH.TiYu.DAL")))
+            connection.Open();
+            using (var command = connection.CreateCommand()) { command.CommandText = sql; return command.ExecuteScalar(); }
+        }
+    }
+    private static void Execute(string sql)
+    {
+        using (var connection = new SQLiteConnection(LocalDb.ConnStr))
+        {
+            connection.Open();
+            using (var command = connection.CreateCommand()) { command.CommandText = sql; command.ExecuteNonQuery(); }
+        }
+    }
+    private static int Main()
+    {
+        try
+        {
+            Check(!File.Exists(LocalDb.DbPath), "Refusing to reuse a database");
+            LocalDb.EnsureDatabase();
+            LocalDb.EnsureDatabase();
+            LocalDb.SeedPhysicalItems();
+            AppSettings.Current.LocalDB = Uri;
+            AppSettings.Current.RemoteDB = string.Empty;
+            CheckSchema();
+            CheckFactories();
+            CheckConfig();
+            CheckStudentsAndProjects();
+            Check(typeof(Student).Assembly.GetType("HH.TiYu.Model.StudentPhoto") == null, "Photo model remains");
+            Check(typeof(Student).GetProperty("HasPhoto") == null, "Photo flag remains");
+            Check(!typeof(StudentBLL).GetMethods().Any(m => m.Name.Contains("Photo")), "Photo BLL remains");
+            Check(typeof(ProviderFactory).Assembly.GetType("HH.TiYu.DAL.LinqProvider.StudentPhotoProvider") == null, "Photo provider remains");
+            Check(typeof(LJH.GeneralLibrary.Core.DAL.Linq.ProviderBase<,>).Assembly.GetType("LJH.GeneralLibrary.TempFolderManager") == null, "Photo temp helper remains");
+            Console.WriteLine("PASS current collector DAL: " + checks + " checks; exact eight-table production schema");
+            return 0;
+        }
+        catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
+    }
+    private static void CheckSchema()
+    {
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE type='table'")) == 8, "Expected eight production tables");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name IN ('StudentPhoto','PhysicalScore','sync_config')")) == 0, "Legacy table remains");
+        using (var connection = new SQLiteConnection(LocalDb.ConnStr))
+        {
+            connection.Open();
+            using (var stream = typeof(ProviderFactory).Assembly.GetManifestResourceStream("HH.TiYu.DAL.LinqProvider.DataMapping.xml"))
             {
-                var after = restored.MainModule.Types.SingleOrDefault(t => t.FullName == before.FullName);
-                Require(after != null, "Missing type " + before.FullName);
-                Require(before.Attributes == after.Attributes, "Type flags differ " + before.FullName);
-                Require((before.BaseType == null ? null : before.BaseType.FullName) == (after.BaseType == null ? null : after.BaseType.FullName), "Base type differs " + before.FullName);
-                Require(before.Interfaces.Select(i => i.InterfaceType.FullName).OrderBy(s => s).SequenceEqual(after.Interfaces.Select(i => i.InterfaceType.FullName).OrderBy(s => s)), "Interfaces differ " + before.FullName);
-                foreach (var method in before.Methods.Where(m => m.IsPublic || m.IsFamily || m.IsFamilyOrAssembly))
+                var doc = XDocument.Load(stream); XNamespace ns = doc.Root.Name.Namespace;
+                var tables = doc.Root.Elements(ns + "Table").ToList();
+                Check((string)doc.Root.Attribute("Name") == "HuihaiTiyu", "Database contract name");
+                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Division", "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig" }.OrderBy(n => n)), "Seven-table DAL contract");
+                foreach (var table in tables)
                 {
-                    Require(after.Methods.Any(m => MethodShape(m) == MethodShape(method)), "Method differs: " + method.FullName);
-                    methods++;
+                    string name = (string)table.Attribute("Name"); var columns = new HashSet<string>();
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.CommandText = "PRAGMA table_info([" + name + "])";
+                        using (var reader = command.ExecuteReader()) while (reader.Read()) columns.Add(Convert.ToString(reader["name"]));
+                    }
+                    var mapped = table.Element(ns + "Type").Elements(ns + "Column").Select(c => (string)c.Attribute("Name")).ToList();
+                    Check(mapped.Count == mapped.Distinct().Count(), "Duplicate mapping: " + name);
+                    Check(columns.SetEquals(mapped), "Mapping does not match actual table: " + name);
+                    if (name == "Student") Check(columns.Count == 9, "Student must have only nine persisted fields");
                 }
-                foreach (var field in before.Fields.Where(f => f.IsPublic || f.IsFamily || f.IsFamilyOrAssembly))
-                    Require(after.Fields.Any(f => f.Name == field.Name && f.FieldType.FullName == field.FieldType.FullName && f.Attributes == field.Attributes), "Field differs: " + field.FullName);
-                types++;
-            }
-            var oldMap = ((EmbeddedResource)original.MainModule.Resources.Single(r => r.Name == "HH.TiYu.DAL.LinqProvider.DataMapping.xml")).GetResourceData();
-            var newMap = ((EmbeddedResource)restored.MainModule.Resources.Single(r => r.Name == "HH.TiYu.DAL.LinqProvider.DataMapping.xml")).GetResourceData();
-            Require(oldMap.SequenceEqual(newMap), "Embedded mapping changed");
-            // No SQL table access may survive in the photo compatibility provider.
-            var photo = restored.MainModule.Types.Single(t => t.Name == "StudentPhotoProvider");
-            Require(!photo.Methods.Where(m => m.HasBody).SelectMany(m => m.Body.Instructions).Any(i => i.Operand is MethodReference && ((MethodReference)i.Operand).Name == "GetTable"), "Photo table access survived");
-            Console.WriteLine("API: " + types + " business types, " + methods + " public/protected methods, mapping byte-identical");
-        }
-    }
-
-    private static void PrepareDatabase(bool source)
-    {
-        LocalDb.EnsureDatabase();
-        LocalDb.SeedPhysicalItems();
-        // Unmodified legacy DAL joins photos even when the table is empty.
-        // The source collector must load successfully with the exact eight production tables.
-        if (!source) Execute("CREATE TABLE StudentPhoto (ID uniqueidentifier PRIMARY KEY, Photo image)");
-        Execute("INSERT INTO PhysicalProject(ID,Class,Name,CreateDate) VALUES(@p,1,'验证项目',@date)", "@p", ProjectID, "@date", new DateTime(2026, 10, 16));
-        Execute("INSERT INTO Division(ID,Name,ProjectID) VALUES('D1','验证区域',@p)", "@p", ProjectID);
-        Execute("INSERT INTO Facility(ID,Name,ProjectID,DivisionID) VALUES('F1','验证学校',@p,'D1')", "@p", ProjectID);
-        Execute("INSERT INTO Student(ID,StudentID,ProjectID,Name,Sex,FacilityID,Grade,ClassName,CardID) VALUES(@id,'S001',@p,'学生甲',1,'F1',7,'一班','CARD1')", "@id", StudentID, "@p", ProjectID);
-        Execute("INSERT INTO Student(ID,StudentID,ProjectID,Name,Sex,FacilityID,Grade,Graduation) VALUES(@id,'S002',@p,'毕业学生',2,'F1',8,2025)", "@id", new Guid("22222222-2222-3333-4444-555555555555"), "@p", ProjectID);
-        AppSettings.Current.LocalDB = Uri;
-        AppSettings.Current.RemoteDB = string.Empty;
-    }
-
-    private static void ExpandFixtureSchema(bool source)
-    {
-        // Extend the isolated fixture only, to exercise restored legacy DAL functionality.
-        // Production LocalDb remains the original eight-table schema.
-        using (var stream = typeof(ProviderFactory).Assembly.GetManifestResourceStream("HH.TiYu.DAL.LinqProvider.DataMapping.xml"))
-        {
-            var doc = XDocument.Load(stream);
-            XNamespace ns = doc.Root.Name.Namespace;
-            foreach (var table in doc.Root.Elements(ns + "Table"))
-            {
-                string name = (string)table.Attribute("Name");
-                if (source && name == "StudentPhoto") continue;
-                var columns = table.Element(ns + "Type").Elements(ns + "Column").ToList();
-                string sql = "CREATE TABLE IF NOT EXISTS [" + name + "] (" + string.Join(",", columns.Select(c => "[" + (string)c.Attribute("Name") + "] " + (string)c.Attribute("DbType"))) + ")";
-                Execute(sql);
             }
         }
     }
-
     private static void CheckFactories()
     {
-        int count = 0;
-        foreach (var type in typeof(ProviderFactory).Assembly.GetTypes().Where(t => !t.IsAbstract && t.IsClass && t.Namespace == "HH.TiYu.DAL.LinqProvider"))
+        string[] supported = { "DivisionProvider", "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider" };
+        foreach (var type in typeof(ProviderFactory).Assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract && t.Namespace == "HH.TiYu.DAL.LinqProvider"))
         {
             var contract = type.GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IProvider<,>));
             if (contract == null) continue;
-            object provider = typeof(ProviderFactory).GetMethod("Create").MakeGenericMethod(contract).Invoke(null, new object[] { Uri });
-            Require(provider.GetType() == type, "Factory selected a different provider: " + type.FullName);
-            count++;
+            try
+            {
+                object provider = typeof(ProviderFactory).GetMethod("Create").MakeGenericMethod(contract).Invoke(null, new object[] { Uri });
+                Check(supported.Contains(type.Name) && provider.GetType() == type, "Unexpected enabled provider: " + type.Name);
+            }
+            catch (TargetInvocationException ex)
+            {
+                Check(!supported.Contains(type.Name) && ex.InnerException is NotSupportedException, "Unexpected provider failure: " + type.Name);
+            }
         }
-        Console.WriteLine("FACTORIES: " + count);
     }
-
-    private static void CheckProjectAndStudents()
+    private static void CheckConfig()
     {
-        var bll = new PhysicalProjectBLL(Uri);
-        var projects = bll.GetItems(new PhysicalProjectSearchCondition { Class = null });
-        Require(projects.Result == ResultCode.Successful && projects.QueryObjects.Count == 1, "Legacy BLL project query failed");
-        var project = projects.QueryObjects[0];
+        var initial = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
+        Check(initial.ApiUrl == "" && initial.ApiToken == "", "Empty config defaults");
+        var config = new HH.DataCollection.Wifi.Sync.SyncConfig {
+            ApiUrl = " https://example.invalid/api/hh/ ", ApiToken = "token-'中文", SourceFacilityId = "F1",
+            SchoolName = "测试学校", RemoteProjectId = "remote", RemoteProjectName = "项目"
+        };
+        config.Save();
+        var loaded = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
+        Check(loaded.ApiUrl == "https://example.invalid/api/hh" && loaded.ApiToken == config.ApiToken && loaded.SourceFacilityId == "F1" && loaded.SchoolName == config.SchoolName && loaded.RemoteProjectId == "remote" && loaded.RemoteProjectName == config.RemoteProjectName, "Six config values round trip");
+        loaded.Validate();
+        var provider = ProviderFactory.Create<SyncConfigProvider>(Uri);
+        provider.SavePairs(new Dictionary<string, string> { { "extension", "keep" } });
+        loaded.ApiToken = "updated"; loaded.Save();
+        Check(provider.GetByID("extension").QueryObject.Value == "keep", "Unrelated config lost");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM SyncConfig")) == 7, "Config save duplicated keys");
+        provider.SavePairs(new Dictionary<string, string> { { "nullable", null } });
+        Check(provider.GetByID("nullable").QueryObject.Value == "", "Null config normalization");
+        Execute("CREATE TRIGGER fail_token BEFORE UPDATE ON SyncConfig WHEN NEW.ID='api_token' BEGIN SELECT RAISE(ABORT,'forced verification failure'); END");
+        loaded.ApiUrl = "https://changed.invalid/api/hh"; loaded.ApiToken = "must fail";
+        bool failed = false;
+        try { loaded.Save(); } catch { failed = true; }
+        Check(failed, "Config transaction failure not propagated");
+        var after = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
+        Check(after.ApiUrl == "https://example.invalid/api/hh" && after.ApiToken == "updated", "Partial config transaction committed");
+        Execute("DROP TRIGGER fail_token");
+        loaded.Save();
+        Check(HH.DataCollection.Wifi.Sync.SyncConfig.Load().ApiToken == "must fail", "Config recovery after rollback");
+    }
+    private static void CheckStudentsAndProjects()
+    {
+        var projects = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri);
+        var project = new PhysicalProject { ID = "P'1", Name = "测试项目", CreateDate = DateTime.Now };
+        Check(projects.Insert(project).Result == ResultCode.Successful, "Project insert");
+        var facilities = ProviderFactory.Create<IProvider<Facility, string>>(Uri);
+        Check(facilities.Insert(new Facility { ID = "F1", Name = "学校", ProjectID = project.ID }).Result == ResultCode.Successful, "Facility insert");
+        var divisions = ProviderFactory.Create<IProvider<Division, string>>(Uri);
+        Check(divisions.Insert(new Division { ID = "D1", Name = "区域", ProjectID = project.ID }).Result == ResultCode.Successful, "Division insert");
+        var students = ProviderFactory.Create<IProvider<Student, Guid>>(Uri);
+        var batch = ProviderFactory.Create<IBatchProvider<Student, Guid>>(Uri);
+        string testNo = new string('A', 58) + "'中";
+        var student = new Student { ID = Guid.NewGuid(), StudentID = testNo, ProjectID = project.ID, FacilityID = "F1", Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
+        Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Append).Result == ResultCode.Successful, "Student batch insert");
         PhysicalProject.Current = project;
-        bll.GetFullInfo(project, (项目加载项)23);
-        Require(project.AllDivisions.Count == 1 && project.AllFacilities.Count == 1, "Legacy BLL school/area loading failed");
-        Require(project.AllStudents.Count == 1 && project.AllPhysicalItems.Count > 0, "Legacy BLL student/subject loading failed");
-        var provider = new StudentProvider(Uri, Mapping());
-        var students = provider.GetItems(new StudentSearchCondition { ProjectID = ProjectID, Graduation = false });
-        Require(students.Result == ResultCode.Successful && students.QueryObjects.Count == 1 && students.QueryObjects[0].StudentID == "S001", "Student filters differ");
-        Require(students.QueryObjects[0].HasPhoto != true, "Unexpected photo state");
-        Require(provider.GetItems(new StudentSearchCondition { ProjectID = ProjectID, CardID = "CARD1" }).QueryObjects.Count == 1, "Card filter failed");
-        Require(provider.GetItems(new StudentSearchCondition { ProjectID = ProjectID, School = "missing" }).QueryObjects.Count == 0, "School filter failed");
-        Require(provider.GetByID(StudentID).Result == ResultCode.Successful, "Student GetByID failed");
-        Console.WriteLine("LOAD: project, area, school, active student, subjects, card/school filters");
-    }
-
-    private static System.Data.Linq.Mapping.MappingSource Mapping()
-    {
-        using (var stream = typeof(ProviderFactory).Assembly.GetManifestResourceStream("HH.TiYu.DAL.LinqProvider.DataMapping.xml"))
-            return System.Data.Linq.Mapping.XmlMappingSource.FromStream(stream);
-    }
-
-    private static void CheckStudentWrites()
-    {
-        var provider = new StudentProvider(Uri, Mapping());
-        var added = new Student { ID = new Guid("33333333-2222-3333-4444-555555555555"), StudentID = "S003", ProjectID = ProjectID, FacilityID = "F1", Name = "新增学生", Grade = 7 };
-        Require(provider.BatchAdd(new List<Student> { added }, ProjectID, ImportOption.Append).Result == ResultCode.Successful, "Student import failed");
-        var update = new Student { StudentID = "S003", ProjectID = ProjectID, FacilityID = "F1", Name = "修改学生", Grade = 8 };
-        Require(provider.BatchAdd(new List<Student> { update }, ProjectID, ImportOption.Override).Result == ResultCode.Successful, "Student override failed");
-        Require(provider.GetByID(added.ID).QueryObject.Name == "修改学生", "Student override did not persist");
-        Require(provider.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = added.ID, Key = "Note", Value = "批量备注" } }).Result == ResultCode.Successful, "Student patch failed");
-        Require(provider.GetByID(added.ID).QueryObject.Note == "批量备注", "Student patch did not persist");
-        Require(provider.BatchDelete(new List<Student> { added }, ProjectID).Result == ResultCode.Successful, "Student batch deletion failed");
-        Require(provider.GetByID(added.ID).Result == ResultCode.Fail, "Deleted student still exists");
-        Console.WriteLine("STUDENT: append, override, patch, delete");
-    }
-
-    private static void CheckScores()
-    {
-        var provider = new PhysicalScoreProvider(Uri, Mapping());
-        var score = new PhysicalScore { ID = new Guid("44444444-2222-3333-4444-555555555555"), StudentID = "S001", ProjectID = ProjectID, Grade = 7, PhysicalItem = 1, Score = 170.5m, UpdateDate = new DateTime(2026, 10, 16) };
-        Require(provider.BatchAdd(new List<PhysicalScore> { score }, ProjectID, ImportOption.Append).Result == ResultCode.Successful, "Score append failed");
-        var result = provider.GetItems(new PhysicalScoreSearchCondition { ProjectID = ProjectID, StudentID = "S001", PhysicalItem = 1, Grade = 7 });
-        Require(result.Result == ResultCode.Successful && result.QueryObjects.Count == 1 && result.QueryObjects[0].Score == 170.5m, "SQLite score filtering failed");
-        Require(provider.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = score.ID, Key = "Note", Value = "成绩备注" } }).Result == ResultCode.Successful, "Score patch failed");
-        Require(provider.GetByID(score.ID).QueryObject.Note == "成绩备注", "Score patch did not persist");
-        Require(provider.BatchDelete(provider.GetItems(null).QueryObjects, ProjectID).Result == ResultCode.Successful, "Score delete failed");
-        Require(provider.GetItems(null).QueryObjects.Count == 0, "Deleted score still exists");
-        Console.WriteLine("SCORE: append, SQLite filtering, patch, delete (fixture table only)");
-    }
-
-    private static void CheckPhotos(bool source)
-    {
-        var provider = new StudentPhotoProvider(Uri, Mapping());
-        Require(provider.GetItems(new StudentSearchCondition { ProjectID = ProjectID }).QueryObjects.Count == 0, "Photo compatibility query failed");
-        Require(provider.GetByID(Guid.Empty).Result == ResultCode.Fail, "Photo compatibility lookup failed");
-        if (source)
-        {
-            Require(provider.GetItems(null).Result == ResultCode.Successful, "Null photo search must return empty success");
-            Require(provider.BatchAdd(null, ProjectID, ImportOption.Append).Result == ResultCode.Fail, "Photo batch add must be rejected");
-            Require(provider.BatchDelete(null, ProjectID).Result == ResultCode.Fail, "Photo batch delete must be rejected");
-            Require(provider.BatchPatch(null).Result == ResultCode.Fail, "Photo batch patch must be rejected");
-            var photo = new StudentPhoto { ID = Guid.NewGuid() };
-            Require(provider.Insert(photo).Result == ResultCode.Fail, "Photo insert must be rejected");
-            Require(provider.Update(photo, photo).Result == ResultCode.Fail, "Photo update must be rejected");
-            Require(provider.Delete(photo).Result == ResultCode.Fail, "Photo delete must be rejected");
-            using (var conn = new SQLiteConnection(LocalDb.ConnStr))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='StudentPhoto'";
-                    Require(Convert.ToInt32(cmd.ExecuteScalar()) == 0, "Photo table was created");
-                }
-            }
-        }
-        Console.WriteLine("PHOTO: empty reads" + (source ? ", rejected writes, no photo table" : " (legacy empty fixture table)"));
-    }
-
-    private static void Execute(string sql, params object[] pairs)
-    {
-        using (var conn = new SQLiteConnection(LocalDb.ConnStr))
-        {
-            conn.Open();
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = sql;
-                for (int i = 0; i < pairs.Length; i += 2) cmd.Parameters.AddWithValue((string)pairs[i], pairs[i + 1]);
-                cmd.ExecuteNonQuery();
-            }
-        }
+        new PhysicalProjectBLL(Uri).GetFullInfo(project, (项目加载项)23);
+        Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllFacilities.Count == 1 && project.AllDivisions.Count == 1 && project.AllPhysicalItems.Count > 0, "Production startup load flags 23");
+        Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, StudentIDs = new List<string> { testNo } }).QueryObjects.Count == 1, "test_no filter");
+        Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, School = "absent" }).QueryObjects.Count == 0, "School filter");
+        Check(students.GetItems(new StudentSearchCondition { CardID = "old-card" }).Result == ResultCode.Fail, "Unsupported card filter must fail explicitly");
+        student.Name = "更新"; student.ClassName = "二班"; student.Grade = null;
+        Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Student batch overwrite");
+        var row = students.GetByID(student.ID).QueryObject;
+        Check(row.Name == "更新" && row.ClassName == "二班" && row.Grade == null, "Overwrite current fields including null grade");
+        Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "ClassName", Value = "三班" } }).Result == ResultCode.Successful, "Student mapped field patch");
+        Check(students.GetByID(student.ID).QueryObject.ClassName == "三班", "Student patch persisted");
+        Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "Note", Value = "unsupported" } }).Result == ResultCode.Fail, "Unmapped patch falsely succeeded");
+        Execute("INSERT INTO StudentRawScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Uploaded) VALUES('11111111-2222-3333-4444-555555555555','P''1','raw','student',1,0,'2026-10-16',1)");
+        Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on eight-table schema");
+        Check(students.GetByID(student.ID).Result == ResultCode.Fail && Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore WHERE Uploaded=1")) == 1, "Roster deletion lost collected scores");
+        Execute("CREATE TRIGGER fail_project BEFORE DELETE ON PhysicalProject BEGIN SELECT RAISE(ABORT,'forced deletion failure'); END");
+        Check(projects.Delete(project).Result == ResultCode.Fail, "Project deletion failure must propagate");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 1 && facilities.GetItems(null).QueryObjects.Count == 1, "Project deletion partially committed");
+        Execute("DROP TRIGGER fail_project");
+        Check(projects.Delete(project).Result == ResultCode.Successful, "Project deletion on eight-table schema");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0 && facilities.GetItems(null).QueryObjects.Count == 0 && divisions.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
+        var generated = new PhysicalProject { Name = "新项目", CreateDate = DateTime.Now };
+        Check(projects.Insert(generated).Result == ResultCode.Successful && !string.IsNullOrEmpty(generated.ID), "Project ID must not require legacy numbering table");
+        PhysicalProject.Current = generated;
+        var imported = new Student { StudentID = "imported", FacilityID = "F1", Name = "保留原名", Sex = Sex.Female };
+        Check(new StudentBLL(Uri).AddStudents(generated, new List<Student> { imported }, false).Result == ResultCode.Successful && imported.ID != Guid.Empty && imported.ProjectID == generated.ID, "BLL import identity propagation");
+        var ignored = new Student { StudentID = "imported", FacilityID = "F1", Name = "不应覆盖", Sex = Sex.Male };
+        Check(new StudentBLL(Uri).AddStudents(generated, new List<Student> { ignored }, true).Result == ResultCode.Successful && generated.AllStudents.Values.Single().Name == "保留原名", "Ignored import corrupted in-memory roster");
     }
 }

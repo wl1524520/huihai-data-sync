@@ -2,6 +2,8 @@
 
 日期：2026-10-16。范围依次为 HH.TiYu.SQLite、Device、UI、LJH.GeneralLibrary。
 在 Model/DAL/BLL 恢复基础上，将采集器剩余实际使用的业务依赖接入源码构建。
+> 后续开发已精简 DAL 为七表映射、删除照片兼容 API 及 TempFolderManager，并将同步配置改为 SyncConfig；以 [当前 DAL 说明](../HH.TiYu.DAL/README.md) 为准。以下数量和验证记录描述恢复完成时的历史状态。
+
 没有恢复未用库或通用第三方库，没有恢复照片功能，没有替换原始 lib 基线。
 
 ## 项目与构建

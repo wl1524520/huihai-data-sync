@@ -98,10 +98,14 @@ internal static class VerifyBusiness
             Require(before.Name.FullName == after.Name.FullName, "Assembly identity differs: " + sourcePath);
             var oldTypes = Types(before.MainModule.Types).ToDictionary(t => t.FullName);
             var newTypes = Types(after.MainModule.Types).ToDictionary(t => t.FullName);
+            oldTypes.Remove("HH.TiYu.Model.StudentPhoto");
+            newTypes.Remove("HH.TiYu.Model.SyncConfigEntry");
             Require(oldTypes.Keys.OrderBy(s => s).SequenceEqual(newTypes.Keys.OrderBy(s => s)), "Public/protected type set differs: " + sourcePath);
             foreach (var pair in oldTypes)
             {
                 var oldContract = Contract(pair.Value);
+                if (pair.Key == "HH.TiYu.Model.Student") oldContract = oldContract.Where(c => !c.Contains("HasPhoto")).ToList();
+                if (pair.Key == "HH.TiYu.BLL.StudentBLL") oldContract = oldContract.Where(c => !c.Contains("Photo")).ToList();
                 var newContract = Contract(newTypes[pair.Key]);
                 Require(oldContract.SequenceEqual(newContract), "API differs " + pair.Key + "\nMissing: " + string.Join("\n", oldContract.Except(newContract)) + "\nAdded: " + string.Join("\n", newContract.Except(oldContract)));
                 checks += oldContract.Count;

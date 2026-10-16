@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -167,8 +166,6 @@ namespace HH.TiYu.Model
         public int? Graduation { get; set; }
 
         public bool? IsAbsent { get; set; }
-
-        public bool? HasPhoto { get; set; }
 
         public DateTime? UpdateDate { get; set; }
 

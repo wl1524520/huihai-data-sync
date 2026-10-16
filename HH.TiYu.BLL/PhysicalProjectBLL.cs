@@ -76,8 +76,7 @@ namespace HH.TiYu.BLL
             {
                 QueryResultList<Student> items4 = new StudentBLL(base.RepoUri).GetItems(new StudentSearchCondition
                 {
-                    ProjectID = project.ID,
-                    Graduation = false
+                    ProjectID = project.ID
                 });
                 if (items4.Result == ResultCode.Successful)
                 {
@@ -212,7 +211,6 @@ namespace HH.TiYu.BLL
             QueryResultList<Student> items = new StudentBLL(base.RepoUri).GetItems(new StudentSearchCondition
             {
                 ProjectID = project.ID,
-                Graduation = false,
                 StudentIDs = new List<string> { sid }
             });
             if (items.Result == ResultCode.Successful)

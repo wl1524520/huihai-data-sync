@@ -58,12 +58,12 @@
     <Compile Include="LinqProvider\StandardProvider.cs" />
     <Compile Include="LinqProvider\StudentCheckRecordProvider.cs" />
     <Compile Include="LinqProvider\StudentGroupProvider.cs" />
-    <Compile Include="LinqProvider\StudentPhotoProvider.cs" />
     <Compile Include="LinqProvider\StudentProvider.cs" />
     <Compile Include="LinqProvider\SysparameterProvider.cs" />
     <Compile Include="LinqProvider\StudentGroupPairProvider.cs" />
     <Compile Include="LinqProvider\PhysicalProjectStateProvider.cs" />
     <Compile Include="LinqProvider\DiscussionProvider.cs" />
+    <Compile Include="LinqProvider\SyncConfigProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="LinqProvider\DataMapping.xml">
       <LogicalName>HH.TiYu.DAL.LinqProvider.DataMapping.xml</LogicalName>

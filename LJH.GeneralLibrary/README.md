@@ -14,7 +14,7 @@
 - `WinformControl`：UI 实际使用的串口下拉框、整数/全角输入框及进度条；`StringHelper.cs` 为输入转换依赖。
 - `Core/UI/NPOIExcelHelper.cs`：成绩采集窗口导出 Excel。NPOI 保留为通用第三方 DLL，不逆向其实现。
 - `SoftDog/DTEncrypt.cs`、`SoftDog/DSEncrypt.cs`：Model.Security.Operator 使用的纯托管密码格式兼容算法。虽然原命名空间名为 SoftDog，这两个类不访问加密狗。
-- `TempFolderManager.cs`：已有 Model.StudentPhoto 兼容实体的类型依赖；不增加照片采集或名单照片下发入口。
+- 已删除仅由 StudentPhoto 使用的 TempFolderManager；共用控件仍保留 System.Drawing。
 
 不纳入未使用的授权硬件读写、读卡器、打印机、LED、语音、扫描仪/摄像头、报表主窗体、其他控件及 COM 类型。
 项目没有调用这些模块的本机 DLL。LJH 与 UI 中存在同名 FrmProcessing；采集窗口使用 UI 自己的实现，因此没有恢复 LJH 的同名窗体。

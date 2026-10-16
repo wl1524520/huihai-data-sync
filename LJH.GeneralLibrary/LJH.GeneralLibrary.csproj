@@ -49,7 +49,6 @@
     <Compile Include="SoftDog\DSEncrypt.cs" />
     <Compile Include="SoftDog\DTEncrypt.cs" />
     <Compile Include="StringHelper.cs" />
-    <Compile Include="TempFolderManager.cs" />
     <Compile Include="WinformControl\ComPortComboBox.cs" />
     <Compile Include="WinformControl\DBCTextBox.cs" />
     <Compile Include="WinformControl\IntergerTextBox.cs" />

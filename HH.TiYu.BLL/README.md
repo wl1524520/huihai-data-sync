@@ -21,11 +21,11 @@
 
 ## 已有采集器适配
 
-`PhysicalScoresSavingService.AddScore` 和 `AddScores` 明确为空实现，替代原构建后 `PatchBll.exe` 的 `ret` 补丁。采集器八表精简数据库不含 `PhysicalScore` 表，因此这两个接口不会向后台队列添加正式评分成绩。原始设备成绩仍由外部 `HH.TiYu.SQLite.StudentRawScoresSavingService` 写入 `StudentRawScore`。直接调用 `PhysicalProjectBLL.AddScores` 等正式成绩接口仍执行原逻辑，使用前需要相应完整数据库结构。
+`PhysicalScoresSavingService.AddScore` 和 `AddScores` 明确为空实现，替代原构建后 `PatchBll.exe` 的 `ret` 补丁。采集器八表精简数据库不含 `PhysicalScore` 表，因此这两个接口不会向后台队列添加正式评分成绩。原始设备成绩仍由外部 `HH.TiYu.SQLite.StudentRawScoresSavingService` 写入 `StudentRawScore`。直接调用 `PhysicalProjectBLL.AddScores` 等旧正式成绩接口会被当前 DAL 工厂拒绝。
 
 保存服务的构造函数和原后台循环保留，以维持现有生命周期行为；后台线程没有显式释放接口，这是原始设计的限制。
 
-照片方法保留调用签名，以兼容现有组件；项目集成的 DAL 照片提供程序返回空查询或拒绝写入。未恢复照片功能。
+StudentBLL 的照片方法已全部删除。项目加载学生不再附加 Graduation 筛选；DAL 仅启用采集器七表访问，其他旧 BLL 入口暂保留源码但不支持对应数据库操作。
 
 除上述两个保存入口以外，业务实现按原 DLL 还原；未顺便修复原有空值假设、`PhysicalProject.Current` 全局状态依赖、异常处理和事务边界。反编译得到的局部变量名不是原作者命名。
 
@@ -39,7 +39,7 @@
 
 项目直接引用 Model、DAL、LJH.GeneralLibrary 源码项目；通用 DAL 基类、异常和日志在基础库源码中维护。恢复源码不意味着完整原软件数据库的所有功能都能在采集器八表库中运行。
 
-在仓库根目录运行 `tools/VerifyBusiness.ps1 -Configuration Debug` 检查公开接口与模型行为，运行 `tools/VerifyDal.ps1 -Configuration Debug` 检查全源码数据库调用链；两者也支持 Release。本次两个配置均通过：BLL 的 21 个公开类型接口与原 DLL 一致；保存服务两个入口 IL 仅含空操作/返回；隔离八表库加载及学生、成绩测试通过。测试不访问生产数据库、设备和云接口。
+在仓库根目录运行 `tools/VerifyBusiness.ps1 -Configuration Debug` 检查公开接口与模型行为，运行 `tools/VerifyDal.ps1 -Configuration Debug` 检查全源码数据库调用链；两者也支持 Release。本次两个配置均通过：BLL 的 21 个公开类型保留，照片 API 删除已明确排除出原版契约比较；保存服务两个入口 IL 仅含空操作/返回；隔离八表库加载及学生、配置事务测试通过；不再扩展正式成绩表。测试不访问生产数据库、设备和云接口。
 
 ## 逆向来源与证据
 

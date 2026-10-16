@@ -738,7 +738,7 @@ namespace HH.TiYu.UI
 			{
 				return null;
 			}
-			Student studentByID = PhysicalProject.Current.GetStudentByID(item.StudentNumber, true, true);
+			Student studentByID = PhysicalProject.Current.GetStudentByID(item.StudentNumber);
 			if (studentByID != null)
 			{
 				int pid = PhysicalItem.ConvertPhysicalItem(studentByID, item.PhysicalItem);
@@ -870,7 +870,6 @@ namespace HH.TiYu.UI
 			}
 			List<Student> students = frmStudentDownloadPara.students;
 			int maxStudentPertime = frmStudentDownloadPara.maxStudentPertime;
-			bool cardID4StudentID = frmStudentDownloadPara.cardID4StudentID;
 			bool clearFirst = frmStudentDownloadPara.clearFirst;
 			int num = 0;
 			for (int i = 0; i < dataGridView2.Rows.Count; i++)
@@ -878,7 +877,7 @@ namespace HH.TiYu.UI
 				DataGridViewRow dataGridViewRow2 = dataGridView2.Rows[i];
 				if (dataGridViewRow2.Selected && dataGridViewRow2.Tag == null && Convert.ToBoolean(dataGridViewRow2.Cells["colCheck"].EditedFormattedValue))
 				{
-					UploadStudents(dataGridViewRow2, students, maxStudentPertime, cardID4StudentID);
+					UploadStudents(dataGridViewRow2, students, maxStudentPertime);
 					num++;
 				}
 			}
@@ -906,7 +905,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void UploadStudents(DataGridViewRow row, List<Student> students, int maxStudentPertime, bool cardID4StudentID)
+		private void UploadStudents(DataGridViewRow row, List<Student> students, int maxStudentPertime)
 		{
 			WifiHostInfo hi = row.Cells["colSer"].Tag as WifiHostInfo;
 			HH.Zhongkao.Device.Wifi.StudentDownloader sd = HH.Zhongkao.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
@@ -934,12 +933,11 @@ namespace HH.TiYu.UI
 					{
 						list.Add(new HostStudent
 						{
-							StudentID = ((cardID4StudentID && !string.IsNullOrEmpty(student.CardID)) ? student.CardID : student.StudentID),
+							StudentID = student.StudentID,
 							Name = student.Name,
 							Sex = ((student.Sex == Sex.Male) ? "男" : "女"),
 							Grade = (byte)(student.Grade.HasValue ? ((uint)student.Grade.Value) : 0u),
 							ClassName = student.ClassName,
-							CardID = student.CardID
 						});
 						num++;
 						if (list.Count >= maxStudentPertime || (num == students.Count && list.Count > 0))
@@ -1012,7 +1010,6 @@ namespace HH.TiYu.UI
 							Sex = ((student.Sex == Sex.Male) ? "男" : "女"),
 							Grade = (byte)(student.Grade.HasValue ? ((uint)student.Grade.Value) : 0u),
 							ClassName = student.ClassName,
-							CardID = student.CardID
 						});
 						num++;
 						if (num == students.Count && list.Count > 0)
