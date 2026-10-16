@@ -14,11 +14,13 @@ namespace HH.DataCollection.Wifi.Sync
     ///     身份证多人冲突、学号被他人占用 → 报错中止
     ///   - 无 PhysicalScore 表(本软件不建),学号/年级变更的成绩联动因此跳过,
     ///     原始成绩按设备上报时的学号原样保留
-    ///   - birth 允许为 null(按服务器契约;修正原工具 birth 为空即整页失败的行为)
+    ///   - 2026-10-16 版契约:items[] 仅六字段(student_no/name/id_number/gender/grade/class_name);
+    ///     平台不再下发 birth/nation/origin_id/addr/class_id/mc,本地对应列写 null;
+    ///     免测(mc)已无平台来源,新学生 IsAbsent=0,更新已有学生时不覆盖本地免测标记
     /// </summary>
     public class StudentSync
     {
-        public const int PageSize = 200;
+        public const int PageSize = 1000; // 文档 §3.1:per_page 上限与默认值均为 1000
 
         private readonly SyncApi _api;
         private readonly SyncConfig _conf;
@@ -147,7 +149,7 @@ namespace HH.DataCollection.Wifi.Sync
                                     "@ID, @StudentID, @ProjectID, @Name, @Sex, @FacilityID, @BirthDay, @IDNumber, " +
                                     "@Nation, @District, @Grade, @ClassID, @ClassName, @IsAbsent, @Address, @UpdateDate)";
                                 cmd.Parameters.AddWithValue("@ID", Guid.NewGuid());
-                                AddStudentParams(cmd, st);
+                                AddStudentParams(cmd, st, true);
                                 cmd.Parameters.AddWithValue("@ProjectID", facility.ProjectID);
                                 cmd.Parameters.AddWithValue("@FacilityID", facility.ID);
                                 cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
@@ -160,12 +162,13 @@ namespace HH.DataCollection.Wifi.Sync
                             using (var cmd = conn.CreateCommand())
                             {
                                 cmd.Transaction = tx;
+                                // IsAbsent 不在更新列:平台已不再下发免测,保留本地已有标记
                                 cmd.CommandText =
                                     "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, BirthDay=@BirthDay, " +
                                     "IDNumber=@IDNumber, Nation=@Nation, District=@District, Grade=@Grade, ClassID=@ClassID, " +
-                                    "ClassName=@ClassName, IsAbsent=@IsAbsent, Address=@Address, UpdateDate=@UpdateDate " +
+                                    "ClassName=@ClassName, Address=@Address, UpdateDate=@UpdateDate " +
                                     "WHERE rowid = @rowid";
-                                AddStudentParams(cmd, st);
+                                AddStudentParams(cmd, st, false);
                                 cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
                                 cmd.Parameters.AddWithValue("@rowid", existingRowid);
                                 cmd.ExecuteNonQuery();
@@ -180,20 +183,25 @@ namespace HH.DataCollection.Wifi.Sync
             return Tuple.Create(inserted, updated);
         }
 
-        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st)
+        /// <summary>
+        /// 绑定学生参数。includeIsAbsent=true 仅用于 INSERT(新学生默认免测=0);
+        /// 平台已不再下发 mc,UPDATE 时不绑定该参数以保留本地标记。
+        /// </summary>
+        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st, bool includeIsAbsent)
         {
             cmd.Parameters.AddWithValue("@StudentID", st.StudentNo);
             cmd.Parameters.AddWithValue("@Name", st.Name);
             cmd.Parameters.AddWithValue("@Sex", st.Gender);
-            cmd.Parameters.AddWithValue("@BirthDay", st.BirthDay.HasValue ? (object)st.BirthDay.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@BirthDay", DBNull.Value); // 契约已无 birth,写 null
             cmd.Parameters.AddWithValue("@IDNumber", st.IdNumber);
-            cmd.Parameters.AddWithValue("@Nation", st.Nation);
-            cmd.Parameters.AddWithValue("@District", st.OriginId);
+            cmd.Parameters.AddWithValue("@Nation", DBNull.Value);   // 契约已无 nation
+            cmd.Parameters.AddWithValue("@District", DBNull.Value); // 契约已无 origin_id
             cmd.Parameters.AddWithValue("@Grade", st.Grade);
-            cmd.Parameters.AddWithValue("@ClassID", st.ClassId);
+            cmd.Parameters.AddWithValue("@ClassID", DBNull.Value);  // 契约已无 class_id
             cmd.Parameters.AddWithValue("@ClassName", st.ClassName);
-            cmd.Parameters.AddWithValue("@IsAbsent", st.Mc);
-            cmd.Parameters.AddWithValue("@Address", st.Addr);
+            cmd.Parameters.AddWithValue("@Address", DBNull.Value);  // 契约已无 addr
+            if (includeIsAbsent)
+                cmd.Parameters.AddWithValue("@IsAbsent", 0);
         }
 
         private FacilityTarget GetFacility()
@@ -244,21 +252,18 @@ namespace HH.DataCollection.Wifi.Sync
             public string ProjectName;
         }
 
-        /// <summary>一页中的一条远端学生记录(字段名对齐接口文档)。</summary>
+        /// <summary>
+        /// 一页中的一条远端学生记录:2026-10-16 版契约仅六字段
+        /// (student_no/name/id_number/gender/grade/class_name)。
+        /// </summary>
         private class RemoteStudent
         {
             public string StudentNo;
             public string Name;
             public string IdNumber;
             public int Gender;
-            public DateTime? BirthDay;
-            public string Nation;
-            public string OriginId;
             public int Grade;
-            public string Addr;
-            public string ClassId;
             public string ClassName;
-            public int Mc;
 
             public static RemoteStudent Parse(JObject item)
             {
@@ -268,35 +273,19 @@ namespace HH.DataCollection.Wifi.Sync
                     StudentNo = Text(item["student_no"]),
                     Name = Text(item["name"]),
                     IdNumber = NormalizeIdNumber(Text(item["id_number"])),
-                    Nation = Text(item["nation"]),
-                    OriginId = Text(item["origin_id"]),
-                    Addr = Text(item["addr"]),
-                    ClassId = Text(item["class_id"]),
                     ClassName = Text(item["class_name"]),
                 };
-                string birth = Text(item["birth"]);
-                if (birth.Length > 0)
-                {
-                    DateTime dt;
-                    if (!DateTime.TryParseExact(birth, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                        throw new SyncException("服务端学生数据出生日期格式错误:" + birth);
-                    st.BirthDay = dt;
-                }
-                // birth 允许为空(服务器契约允许 null)
                 var grade = item["grade"];
                 if (grade == null || grade.Type != JTokenType.Integer)
                     throw new SyncException("服务端学生数据缺少必要字段:grade");
                 st.Grade = grade.Value<int>();
                 var gender = item["gender"];
                 st.Gender = gender != null && gender.Type == JTokenType.Integer ? gender.Value<int>() : 0;
-                var mc = item["mc"];
-                st.Mc = mc != null && mc.Type == JTokenType.Integer ? mc.Value<int>() : 0;
 
                 var missing = new System.Text.StringBuilder();
                 if (st.StudentNo.Length == 0) missing.Append("student_no ");
                 if (st.Name.Length == 0) missing.Append("name ");
                 if (st.IdNumber.Length == 0) missing.Append("id_number ");
-                if (st.ClassId.Length == 0) missing.Append("class_id ");
                 if (st.ClassName.Length == 0) missing.Append("class_name");
                 if (missing.Length > 0)
                     throw new SyncException("服务端学生数据缺少必要字段:" + missing);

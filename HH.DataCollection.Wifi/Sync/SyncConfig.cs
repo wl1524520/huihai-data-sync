@@ -16,6 +16,10 @@ namespace HH.DataCollection.Wifi.Sync
         public string SourceFacilityId = "";
         /// <summary>学校名称(用于在本地库建立 Facility 行)</summary>
         public string SchoolName = "";
+        /// <summary>保存设置时平台当前项目 ID(每轮上传前比对,变更即停轮提示核对)</summary>
+        public string RemoteProjectId = "";
+        /// <summary>保存设置时平台当前项目名称(仅用于提示文案)</summary>
+        public string RemoteProjectName = "";
 
         public static SyncConfig Load()
         {
@@ -38,6 +42,8 @@ namespace HH.DataCollection.Wifi.Sync
                                 case "api_token": conf.ApiToken = value; break;
                                 case "source_facility_id": conf.SourceFacilityId = value; break;
                                 case "school_name": conf.SchoolName = value; break;
+                                case "remote_project_id": conf.RemoteProjectId = value; break;
+                                case "remote_project_name": conf.RemoteProjectName = value; break;
                             }
                         }
                     }
@@ -52,13 +58,15 @@ namespace HH.DataCollection.Wifi.Sync
             using (var conn = new SQLiteConnection(LocalDb.ConnStr))
             {
                 conn.Open();
-                // 四条配置一个事务,避免中途断电留下半截配置
+                // 配置项一个事务,避免中途断电留下半截配置
                 using (var tx = conn.BeginTransaction())
                 {
                     SavePair(conn, tx, "api_url", ApiUrl);
                     SavePair(conn, tx, "api_token", ApiToken);
                     SavePair(conn, tx, "source_facility_id", SourceFacilityId);
                     SavePair(conn, tx, "school_name", SchoolName);
+                    SavePair(conn, tx, "remote_project_id", RemoteProjectId);
+                    SavePair(conn, tx, "remote_project_name", RemoteProjectName);
                     tx.Commit();
                 }
             }

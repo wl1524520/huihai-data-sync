@@ -74,9 +74,13 @@ namespace HH.DataCollection.Wifi.Sync
                 // 学校落到当前项目下的 Facility 行,返回的 ID 即 source_facility_id
                 conf.SchoolName = info.SchoolName;
                 conf.SourceFacilityId = SyncConfig.EnsureFacility(info.SchoolName, PhysicalProject.Current.ID);
+                // 记录平台当前项目作为基线:此后每轮上传前比对,平台换项目即停轮提示核对
+                conf.RemoteProjectId = info.ProjectId;
+                conf.RemoteProjectName = info.ProjectName;
                 conf.Save();
                 MessageBox.Show("设置已保存,绑定学校:" + info.SchoolName +
                     (info.SchoolId.Length > 0 ? "(平台ID:" + info.SchoolId + ")" : "") +
+                    "\r\n平台当前项目:" + info.ProjectName +
                     "\r\n正在运行的同步任务从下一轮起使用新设置。", "同步设置",
                     MessageBoxButtons.OK, MessageBoxIcon.None); // 不用 Information 图标,避免系统提示音
                 DialogResult = DialogResult.OK;
