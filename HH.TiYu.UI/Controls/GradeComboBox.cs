@@ -73,7 +73,6 @@ namespace HH.TiYu.UI.Controls
 		{
 			base.Items.Clear();
 			base.Items.Add(string.Empty);
-			GradeHelper gradeHelper = new GradeHelper();
 			for (int i = 0; i <= GradeHelper.大四; i++)
 			{
 				if ((!AppSettings.Current.MinGrade.HasValue || !(i < AppSettings.Current.MinGrade)) && (!AppSettings.Current.MaxGrade.HasValue || !(i > AppSettings.Current.MaxGrade)))

@@ -1,14 +1,7 @@
 ﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using System.Xml;
-using LJH.GeneralLibrary;
 using LJH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
@@ -24,10 +17,6 @@ namespace HH.TiYu.Model
         private Dictionary<string, Facility> _Facilities;
 
         private Dictionary<string, Student> _Students;
-
-        private Dictionary<string, Student> _Cards;
-
-        private Dictionary<string, Student> _IDNumberStudents;
 
         public static PhysicalProject Current { get; set; }
 
@@ -97,42 +86,13 @@ namespace HH.TiYu.Model
             return null;
         }
 
-        public Student GetStudentByID(string sid, bool includeCard = false, bool includeIDNumber = false)
+        /// <summary>按学号(平台 test_no)取学生,忽略大小写。卡号与身份证索引已随对应字段移除。</summary>
+        public Student GetStudentByID(string sid)
         {
             sid = sid.ToUpper();
             if (_Students != null && _Students.ContainsKey(sid))
             {
                 return _Students[sid];
-            }
-            if (includeIDNumber && _IDNumberStudents != null && _IDNumberStudents.ContainsKey(sid))
-            {
-                return _IDNumberStudents[sid];
-            }
-            if (includeCard && _Cards != null && _Cards.ContainsKey(sid))
-            {
-                return _Cards[sid];
-            }
-            if (includeCard)
-            {
-                uint result = 0u;
-                if (uint.TryParse(sid, out result))
-                {
-                    byte[] array = SEBinaryConverter.IntToBytes((int)result);
-                    Array.Reverse(array, 0, array.Length);
-                    sid = SEBinaryConverter.BytesToUint(array).ToString();
-                    if (_Cards != null && _Cards.ContainsKey(sid))
-                    {
-                        return _Cards[sid];
-                    }
-                }
-            }
-            if (includeIDNumber && sid.Length > 18)
-            {
-                string key = sid.Substring(0, 18);
-                if (_IDNumberStudents != null && _IDNumberStudents.ContainsKey(key))
-                {
-                    return _IDNumberStudents[key];
-                }
             }
             return null;
         }
@@ -147,14 +107,6 @@ namespace HH.TiYu.Model
             {
                 _Students = new Dictionary<string, Student>();
             }
-            if (_IDNumberStudents == null)
-            {
-                _IDNumberStudents = new Dictionary<string, Student>();
-            }
-            if (_Cards == null)
-            {
-                _Cards = new Dictionary<string, Student>();
-            }
             foreach (Student student in students)
             {
                 if (student == null)
@@ -162,14 +114,6 @@ namespace HH.TiYu.Model
                     continue;
                 }
                 _Students[student.StudentID.ToUpper()] = student;
-                if (!string.IsNullOrEmpty(student.CardID))
-                {
-                    _Cards[student.CardID.ToUpper()] = student;
-                }
-                if (!string.IsNullOrEmpty(student.IDNumber))
-                {
-                    _IDNumberStudents[student.IDNumber.ToUpper()] = student;
-                }
             }
         }
 

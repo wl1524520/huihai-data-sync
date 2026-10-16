@@ -130,12 +130,21 @@ namespace HH.TiYu.UI
 		private void ShowStudentInfo(DataGridViewRow row, Student s)
 		{
 			row.Tag = s;
-			Facility facility = ((_Facilitys != null && _Facilitys.Count > 0) ? _Facilitys.SingleOrDefault((Facility it) => it.ID == s.FacilityID) : null);
-			row.Cells["colFacility"].Value = ((facility != null) ? facility.Name : s.FacilityID);
+			row.Cells["colFacility"].Value = FacilityDisplayName(s);
 			row.Cells["colID"].Value = s.StudentID;
 			row.Cells["colClassName"].Value = s.ClassName;
 			row.Cells["colName"].Value = s.Name;
 			row.Cells["colSex"].Value = ((s.Sex == Sex.Male) ? "男" : "女");
+		}
+
+		/// <summary>
+		/// 学校列的显示文本;查不到学校时回退到学校 ID。排序键也用它,
+		/// 保证列表顺序与屏幕上看到的名字一致。
+		/// </summary>
+		private string FacilityDisplayName(Student s)
+		{
+			Facility facility = ((_Facilitys != null && _Facilitys.Count > 0) ? _Facilitys.SingleOrDefault((Facility it) => it.ID == s.FacilityID) : null);
+			return ((facility != null) ? facility.Name : s.FacilityID);
 		}
 
 		private List<Student> GetSelectedStudents()
@@ -215,7 +224,7 @@ namespace HH.TiYu.UI
 				if (list != null && list.Count > 0)
 				{
 					list = (from s in list
-						orderby s.FacilityName, s.Grade, s.ClassName, s.StudentID
+						orderby FacilityDisplayName(s), s.Grade, s.ClassName, s.StudentID
 						select s).ToList();
 					foreach (Student item in list)
 					{

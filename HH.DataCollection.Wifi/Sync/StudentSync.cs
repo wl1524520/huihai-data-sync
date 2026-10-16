@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Globalization;
+using HH.TiYu.Model;
 using Newtonsoft.Json.Linq;
 
 namespace HH.DataCollection.Wifi.Sync
@@ -21,6 +23,8 @@ namespace HH.DataCollection.Wifi.Sync
     ///     (身份证统一大写是平台侧规则,学号的大小写与前导零保留)
     ///   - 平台不再下发 birth/nation/origin_id/addr/class_id/mc:本地只写 9 个真值列,
     ///     Student 表仅保留当前同步和采集实际使用的九个字段
+    ///   - grade 按契约 §3.2 的年级编码表校验(11-44)。越界只报告不阻断:整页照常落库,
+    ///     新增按无年级(NULL)写入,更新保留本地原年级,避免平台的脏值覆盖本地好数据
     /// </summary>
     public class StudentSync
     {
@@ -48,6 +52,7 @@ namespace HH.DataCollection.Wifi.Sync
             int page = 1, synced = 0, inserted = 0, updated = 0;
             Tuple<int, int> expectedProject = null;
             Tuple<int, int, int> expectedPagination = null;
+            var gradeIssues = new List<string>();
 
             while (!stopRequested())
             {
@@ -71,7 +76,7 @@ namespace HH.DataCollection.Wifi.Sync
                     throw new SyncException("同步过程中学生分页总数或页码范围已变更,请重新同步");
                 }
 
-                var summary = UpsertPage(studentPage.Items, facility);
+                var summary = UpsertPage(studentPage.Items, facility, gradeIssues);
                 synced += studentPage.Items.Count;
                 inserted += summary.Item1;
                 updated += summary.Item2;
@@ -82,14 +87,30 @@ namespace HH.DataCollection.Wifi.Sync
                 page++;
             }
 
+            ReportGradeIssues(gradeIssues, report);
+
             if (stopRequested())
                 report("学生信息同步已停止");
             else
                 report(string.Format("学生信息同步完成:{0} 条;新增 {1} 条,更新 {2} 条", synced, inserted, updated));
         }
 
-        /// <summary>整页单事务 upsert,返回 (新增数, 更新数)。</summary>
-        private Tuple<int, int> UpsertPage(JArray items, FacilityTarget facility)
+        /// <summary>
+        /// 平台年级越界只报告不阻断(同 ScoreUpload.ReportUnknownIdentifiers 的口径:
+        /// 逐条最多 20 行加一行总计),让现场去核对平台侧的年级设置。
+        /// </summary>
+        private static void ReportGradeIssues(List<string> issues, Action<string> report)
+        {
+            if (issues.Count == 0) return;
+            for (int i = 0; i < issues.Count && i < 20; i++)
+                report("平台下发的年级不在 11-44 范围内(本机按无年级处理):" + issues[i]);
+            report(string.Format(
+                "共 {0} 条学生的平台年级不在 11-44 范围内(新增按无年级落库,更新保留本地原年级;" +
+                "请核对平台年级设置)", issues.Count));
+        }
+
+        /// <summary>整页单事务 upsert,返回 (新增数, 更新数);越界年级记入 gradeIssues 由 Run 统一报告。</summary>
+        private Tuple<int, int> UpsertPage(JArray items, FacilityTarget facility, List<string> gradeIssues)
         {
             int inserted = 0, updated = 0;
             using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
@@ -100,6 +121,8 @@ namespace HH.DataCollection.Wifi.Sync
                     foreach (var token in items)
                     {
                         var st = RemoteStudent.Parse((JObject)token);
+                        if (st.GradeOutOfRange)
+                            gradeIssues.Add(string.Format("{0} 年级={1}", st.TestNo, st.RawGrade));
                         string existingRowid = null;
                         using (var cmd = conn.CreateCommand())
                         {
@@ -126,7 +149,7 @@ namespace HH.DataCollection.Wifi.Sync
                                     "@ID, @StudentID, @ProjectID, @Name, @Sex, @FacilityID, " +
                                     "@Grade, @ClassName, @UpdateDate)";
                                 cmd.Parameters.AddWithValue("@ID", Guid.NewGuid());
-                                AddStudentParams(cmd, st);
+                                AddStudentParams(cmd, st, true);
                                 cmd.Parameters.AddWithValue("@ProjectID", facility.ProjectID);
                                 cmd.Parameters.AddWithValue("@FacilityID", facility.ID);
                                 cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
@@ -139,11 +162,14 @@ namespace HH.DataCollection.Wifi.Sync
                             using (var cmd = conn.CreateCommand())
                             {
                                 cmd.Transaction = tx;
-                                cmd.CommandText =
-                                    "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, " +
-                                    "Grade=@Grade, ClassName=@ClassName, UpdateDate=@UpdateDate " +
-                                    "WHERE rowid = @rowid";
-                                AddStudentParams(cmd, st);
+                                // 年级越界时不写 Grade 列:保留本地原年级,不让平台的脏值覆盖
+                                cmd.CommandText = st.GradeOutOfRange
+                                    ? "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, " +
+                                      "ClassName=@ClassName, UpdateDate=@UpdateDate WHERE rowid = @rowid"
+                                    : "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, " +
+                                      "Grade=@Grade, ClassName=@ClassName, UpdateDate=@UpdateDate " +
+                                      "WHERE rowid = @rowid";
+                                AddStudentParams(cmd, st, !st.GradeOutOfRange);
                                 cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
                                 cmd.Parameters.AddWithValue("@rowid", existingRowid);
                                 cmd.ExecuteNonQuery();
@@ -161,13 +187,19 @@ namespace HH.DataCollection.Wifi.Sync
         /// <summary>
         /// 绑定学生参数:只绑定 9 个真值列里的可写项。其余列(含 DAL 列映射强制要求的
         /// 旧字段)不出现在 INSERT/UPDATE 的列清单里，也不再由新库创建。
+        /// includeGrade 为 false 时(年级越界的更新)不绑定 @Grade，让列保持原值。
         /// </summary>
-        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st)
+        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st, bool includeGrade)
         {
             cmd.Parameters.AddWithValue("@StudentID", st.TestNo);
             cmd.Parameters.AddWithValue("@Name", st.Name);
             cmd.Parameters.AddWithValue("@Sex", st.Gender);
-            cmd.Parameters.AddWithValue("@Grade", st.Grade);
+            if (includeGrade)
+            {
+                // 显式声明类型:AddWithValue 传 null 时的类型推断不可靠,无年级必须写 DBNull
+                cmd.Parameters.Add("@Grade", System.Data.DbType.Int32).Value =
+                    st.Grade.HasValue ? (object)st.Grade.Value : DBNull.Value;
+            }
             cmd.Parameters.AddWithValue("@ClassName", st.ClassName);
         }
 
@@ -217,7 +249,12 @@ namespace HH.DataCollection.Wifi.Sync
             public string TestNo;
             public string Name;
             public int Gender;
-            public int Grade;
+            /// <summary>年级;平台值越界时为 null(见 GradeOutOfRange)。</summary>
+            public int? Grade;
+            /// <summary>平台下发的年级不在合约定的 11-44 内;置位后 Grade 为 null,且更新时不覆盖本地原年级。</summary>
+            public bool GradeOutOfRange;
+            /// <summary>平台下发的原始年级值,仅用于越界报告。</summary>
+            public int RawGrade;
             public string ClassName;
 
             public static RemoteStudent Parse(JObject item)
@@ -232,7 +269,19 @@ namespace HH.DataCollection.Wifi.Sync
                 var grade = item["grade"];
                 if (grade == null || grade.Type != JTokenType.Integer)
                     throw new SyncException("服务端学生数据缺少必要字段:grade");
-                st.Grade = grade.Value<int>();
+                int rawGrade = grade.Value<int>();
+                // 契约 §3.2 年级编码表只有小学一至六年级(11-16)、初中(21-23)、
+                // 高中(31-33)、大学(41-44);越界属契约违规,不落库、不阻断整页
+                if (rawGrade >= GradeHelper.一年级 && rawGrade <= GradeHelper.大四)
+                {
+                    st.Grade = rawGrade;
+                }
+                else
+                {
+                    st.Grade = null;
+                    st.GradeOutOfRange = true;
+                    st.RawGrade = rawGrade;
+                }
                 var gender = item["gender"];
                 st.Gender = gender != null && gender.Type == JTokenType.Integer ? gender.Value<int>() : 0;
 

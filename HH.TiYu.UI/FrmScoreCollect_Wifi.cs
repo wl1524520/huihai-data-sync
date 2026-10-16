@@ -153,10 +153,6 @@ namespace HH.TiYu.UI
 			if (studentByID != null)
 			{
 				int pid = PhysicalItem.ConvertPhysicalItem(studentByID, item.PhysicalItem);
-				if (pid == PhysicalItem._引体向上 && studentByID.包函考试科目(PhysicalItem._斜体引体向上.ToString()) && !studentByID.包函考试科目(PhysicalItem._引体向上.ToString()))
-				{
-					pid = PhysicalItem._斜体引体向上;
-				}
 				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == pid);
 				if (physicalItem != null)
 				{
@@ -210,7 +206,7 @@ namespace HH.TiYu.UI
 								decimal num2 = num;
 								if ((max.GetValueOrDefault() < num2) & max.HasValue)
 								{
-									goto IL_043b;
+									goto IL_04b9;
 								}
 							}
 							physicalScore = new PhysicalScore
@@ -225,20 +221,8 @@ namespace HH.TiYu.UI
 							};
 						}
 					}
-					goto IL_043b;
+					goto IL_04b9;
 				}
-			}
-			goto IL_04b9;
-			IL_043b:
-			if (physicalScore != null)
-			{
-				physicalScore.SetProperty(ScoreNote.成绩来源, 成绩来源.汇海200型主机.ToString());
-				physicalScore.SetProperty(ScoreNote.主机号, item.HostID.ToString());
-				physicalScore.SetProperty(ScoreNote.成绩序号, item.SN.ToString());
-				PhysicalScore physicalScore2 = physicalScore;
-				string 设备号 = ScoreNote.设备号;
-				HostWifiReader reader = Reader;
-				physicalScore2.SetProperty(设备号, (reader != null) ? reader.HostSN : null);
 			}
 			goto IL_04b9;
 			IL_04b9:

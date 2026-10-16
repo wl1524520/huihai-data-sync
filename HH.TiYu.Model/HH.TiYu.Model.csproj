@@ -47,12 +47,10 @@
     <Compile Include="PhysicalProjectClass.cs" />
     <Compile Include="PhysicalProjectHelper.cs" />
     <Compile Include="PhysicalScore.cs" />
-    <Compile Include="ScoreNote.cs" />
     <Compile Include="ProjectPhysicalItem.cs" />
     <Compile Include="Sex.cs" />
     <Compile Include="SpecialScoreType.cs" />
     <Compile Include="Student.cs" />
-    <Compile Include="StudentNote.cs" />
     <Compile Include="成绩来源.cs" />
     <Compile Include="项目加载项.cs" />
     <Compile Include="Security\Operator.cs" />

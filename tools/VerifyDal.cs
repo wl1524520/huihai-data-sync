@@ -206,7 +206,6 @@ internal static class VerifyDal
         Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllFacilities.Count == 1 && project.AllDivisions.Count == 1 && project.AllPhysicalItems.Count > 0, "Production startup load flags 23");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, StudentIDs = new List<string> { testNo } }).QueryObjects.Count == 1, "test_no filter");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, School = "absent" }).QueryObjects.Count == 0, "School filter");
-        Check(students.GetItems(new StudentSearchCondition { CardID = "old-card" }).Result == ResultCode.Fail, "Unsupported card filter must fail explicitly");
         student.Name = "更新"; student.ClassName = "二班"; student.Grade = null;
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Student batch overwrite");
         var row = students.GetByID(student.ID).QueryObject;

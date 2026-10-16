@@ -664,11 +664,6 @@ namespace HH.TiYu.UI
 								continue;
 							}
 						}
-						PhysicalScore score = GetScoreFrom(record);
-						if (score != null)
-						{
-							score.SetProperty(ScoreNote.设备号, reader.HostSN);
-						}
 						if (StudentRawScoresSavingService.Current != null)
 						{
 							StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, 成绩来源.汇海200型主机, reader.HostSN);
@@ -723,10 +718,6 @@ namespace HH.TiYu.UI
 			if (studentByID != null)
 			{
 				int pid = PhysicalItem.ConvertPhysicalItem(studentByID, item.PhysicalItem);
-				if (pid == PhysicalItem._引体向上 && studentByID.包函考试科目(PhysicalItem._斜体引体向上.ToString()) && !studentByID.包函考试科目(PhysicalItem._引体向上.ToString()))
-				{
-					pid = PhysicalItem._斜体引体向上;
-				}
 				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == pid);
 				if (physicalItem != null)
 				{
@@ -780,7 +771,7 @@ namespace HH.TiYu.UI
 								decimal num2 = num;
 								if ((max.GetValueOrDefault() < num2) & max.HasValue)
 								{
-									goto IL_043b;
+									goto IL_049b;
 								}
 							}
 							physicalScore = new PhysicalScore
@@ -796,16 +787,8 @@ namespace HH.TiYu.UI
 							// 采集器只存原始成绩，不做评分：原 CalResult 调用已移除。
 						}
 					}
-					goto IL_043b;
+					goto IL_049b;
 				}
-			}
-			goto IL_049b;
-			IL_043b:
-			if (physicalScore != null)
-			{
-				physicalScore.SetProperty(ScoreNote.成绩来源, 成绩来源.汇海200型主机.ToString());
-				physicalScore.SetProperty(ScoreNote.主机号, item.HostID.ToString());
-				physicalScore.SetProperty(ScoreNote.成绩序号, item.SN.ToString());
 			}
 			goto IL_049b;
 			IL_049b:

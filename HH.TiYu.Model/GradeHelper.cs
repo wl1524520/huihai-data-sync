@@ -1,17 +1,14 @@
 ﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Windows.Forms;
-using System.Xml;
-using LJH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
 {
+    /// <summary>
+    /// 年级码字典。11-44 为平台证书约定的年级编码(小学一至六年级/初中一至三年级/
+    /// 高中一至三年级/大学一至四年级),也是本软件实际使用的取值域。
+    /// 101-110 的社会人群年龄段编码不属该约定:原先只有 <c>Student.Grade</c> 的
+    /// "按出生日期回退"在用,该回退已移除,这里仅保留码到名的翻译以免旧数据失去显示名。
+    /// </summary>
     public sealed class GradeHelper
     {
         private static GradeHelper _Instance;
@@ -48,26 +45,6 @@ namespace HH.TiYu.Model
 
         public static readonly int 大四 = 44;
 
-        public static readonly int 年龄20_24 = 101;
-
-        public static readonly int 年龄25_29 = 102;
-
-        public static readonly int 年龄30_34 = 103;
-
-        public static readonly int 年龄35_39 = 104;
-
-        public static readonly int 年龄40_44 = 105;
-
-        public static readonly int 年龄45_49 = 106;
-
-        public static readonly int 年龄50_54 = 107;
-
-        public static readonly int 年龄55_59 = 108;
-
-        public static readonly int 年龄60_64 = 109;
-
-        public static readonly int 年龄65_69 = 110;
-
         private Dictionary<int, string> _Grades = null;
 
         public static GradeHelper Instance
@@ -101,16 +78,16 @@ namespace HH.TiYu.Model
             _Grades.Add(42, "大二");
             _Grades.Add(43, "大三");
             _Grades.Add(44, "大四");
-            _Grades.Add(年龄20_24, "年龄20_24");
-            _Grades.Add(年龄25_29, "年龄25_29");
-            _Grades.Add(年龄30_34, "年龄30_34");
-            _Grades.Add(年龄35_39, "年龄35_39");
-            _Grades.Add(年龄40_44, "年龄40_44");
-            _Grades.Add(年龄45_49, "年龄45_49");
-            _Grades.Add(年龄50_54, "年龄50_54");
-            _Grades.Add(年龄55_59, "年龄55_59");
-            _Grades.Add(年龄60_64, "年龄60_64");
-            _Grades.Add(年龄65_69, "年龄65_69");
+            _Grades.Add(101, "年龄20_24");
+            _Grades.Add(102, "年龄25_29");
+            _Grades.Add(103, "年龄30_34");
+            _Grades.Add(104, "年龄35_39");
+            _Grades.Add(105, "年龄40_44");
+            _Grades.Add(106, "年龄45_49");
+            _Grades.Add(107, "年龄50_54");
+            _Grades.Add(108, "年龄55_59");
+            _Grades.Add(109, "年龄60_64");
+            _Grades.Add(110, "年龄65_69");
         }
 
         public bool TryParse(string grade, out int m_Grade)

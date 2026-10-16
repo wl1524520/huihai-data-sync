@@ -26,6 +26,7 @@ internal static class VerifyBusiness
         "HH.TiYu.Model.StudentGroupPair", "HH.TiYu.Model.StudentHistoryRecord", "HH.TiYu.Model.SysParameter",
         "HH.TiYu.Model.ThirdSyncPlateForm", "HH.TiYu.Model.TotalCalType", "HH.TiYu.Model.UserSettings",
         "HH.TiYu.Model.StudentState",
+        "HH.TiYu.Model.StudentNote", "HH.TiYu.Model.ScoreNote",
         "HH.TiYu.Model.学生来源码Helper", "HH.TiYu.Model.身份证籍贯地址Helper",
         "HH.TiYu.Model.身高体重对应表", "HH.TiYu.Model.身高体重对应表项",
         "HH.TiYu.Model.身高体重评分项", "HH.TiYu.Model.SpecialScoreItem",
@@ -91,6 +92,47 @@ internal static class VerifyBusiness
         "HH.TiYu.Model.StudentNote:考试时间","HH.TiYu.Model.StudentNote:考场","HH.TiYu.Model.StudentNote:备注",
         "HH.TiYu.Model.StudentNote:学校代码","HH.TiYu.Model.StudentNote:中国美院照片上传时间","HH.TiYu.Model.StudentNote:院系",
         "HH.TiYu.Model.StudentNote:专业","HH.TiYu.Model.StudentNote:特殊学生类型","HH.TiYu.Model.StudentNote:平时成绩",
+        // Student 本轮瘦身:非持久化字段、年龄回退、位置索引与扩展位整套移除
+        // (九列持久字段 ID/StudentID/ProjectID/Name/Sex/FacilityID/Grade/ClassName/UpdateDate 之外无成员)。
+        "HH.TiYu.Model.Student:get_CardID","HH.TiYu.Model.Student:set_CardID","HH.TiYu.Model.Student:CardID",
+        "HH.TiYu.Model.Student:get_IDNumber","HH.TiYu.Model.Student:set_IDNumber","HH.TiYu.Model.Student:IDNumber",
+        "HH.TiYu.Model.Student:get_BirthDay","HH.TiYu.Model.Student:set_BirthDay","HH.TiYu.Model.Student:BirthDay",
+        "HH.TiYu.Model.Student:get_Nation","HH.TiYu.Model.Student:set_Nation","HH.TiYu.Model.Student:Nation",
+        "HH.TiYu.Model.Student:get_District","HH.TiYu.Model.Student:set_District","HH.TiYu.Model.Student:District",
+        "HH.TiYu.Model.Student:get_ClassID","HH.TiYu.Model.Student:set_ClassID","HH.TiYu.Model.Student:ClassID",
+        "HH.TiYu.Model.Student:get_Address","HH.TiYu.Model.Student:set_Address","HH.TiYu.Model.Student:Address",
+        "HH.TiYu.Model.Student:get_Graduation","HH.TiYu.Model.Student:set_Graduation","HH.TiYu.Model.Student:Graduation",
+        "HH.TiYu.Model.Student:get_IsAbsent","HH.TiYu.Model.Student:set_IsAbsent","HH.TiYu.Model.Student:IsAbsent",
+        "HH.TiYu.Model.Student:get_GroupID","HH.TiYu.Model.Student:set_GroupID","HH.TiYu.Model.Student:GroupID",
+        "HH.TiYu.Model.Student:get_Channel","HH.TiYu.Model.Student:set_Channel","HH.TiYu.Model.Student:Channel",
+        "HH.TiYu.Model.Student:get_Note","HH.TiYu.Model.Student:set_Note","HH.TiYu.Model.Student:Note",
+        "HH.TiYu.Model.Student:get_Age","HH.TiYu.Model.Student:Age",
+        "HH.TiYu.Model.Student:get_FacilityName","HH.TiYu.Model.Student:FacilityName",
+        "HH.TiYu.Model.Student:get_DivisionName","HH.TiYu.Model.Student:DivisionName",
+        "HH.TiYu.Model.Student:get_考试科目","HH.TiYu.Model.Student:考试科目",
+        "HH.TiYu.Model.Student:增加考试科目","HH.TiYu.Model.Student:清空考试科目","HH.TiYu.Model.Student:包函考试科目",
+        "HH.TiYu.Model.Student:Clone",
+        // StudentSearchCondition:只保留仍能表达的筛选(项目/学校/标识集合);卡号与毕业状态原值一旦设置即抛异常。
+        "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_CardID","HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_CardID","HH.TiYu.Model.SearchCondition.StudentSearchCondition:CardID",
+        "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_Graduation","HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_Graduation","HH.TiYu.Model.SearchCondition.StudentSearchCondition:Graduation",
+        "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_WriteCard","HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_WriteCard","HH.TiYu.Model.SearchCondition.StudentSearchCondition:WriteCard",
+        // PhysicalScore:Note JSON 扩展位只写不读且无处落库,同一批数据由 StudentRawScore 的独立列承载。
+        "HH.TiYu.Model.PhysicalScore:get_Note","HH.TiYu.Model.PhysicalScore:set_Note","HH.TiYu.Model.PhysicalScore:Note",
+        "HH.TiYu.Model.PhysicalScore:GetProperty","HH.TiYu.Model.PhysicalScore:SetProperty","HH.TiYu.Model.PhysicalScore:Clone",
+        // GradeHelper:101-110 年龄码不属平台契约(§3.2 只到 11-44),随 Student 年龄回退一并移除;
+        // 码到名的翻译条目保留,以免旧数据失去显示名。
+        "HH.TiYu.Model.GradeHelper:年龄20_24","HH.TiYu.Model.GradeHelper:年龄25_29","HH.TiYu.Model.GradeHelper:年龄30_34",
+        "HH.TiYu.Model.GradeHelper:年龄35_39","HH.TiYu.Model.GradeHelper:年龄40_44","HH.TiYu.Model.GradeHelper:年龄45_49",
+        "HH.TiYu.Model.GradeHelper:年龄50_54","HH.TiYu.Model.GradeHelper:年龄55_59","HH.TiYu.Model.GradeHelper:年龄60_64",
+        "HH.TiYu.Model.GradeHelper:年龄65_69",
+        // PhysicalProject:GetStudentByID 由 (String, Boolean, Boolean) 收窄为 (String),见 ChangedMembers。
+        "HH.TiYu.Model.PhysicalProject:GetStudentByID",
+    };
+    // 允许"签名收窄"的成员:原始契约里的同名成员被新签名取代。只放行此表登记的名字,
+    // 其余在源码里新增的契约行一律报错(CheckApi 的 added 检查)。
+    private static readonly string[] ChangedMembers =
+    {
+        "HH.TiYu.Model.PhysicalProject:GetStudentByID",
     };
     private static void Require(bool ok, string message) { if (!ok) throw new Exception(message); checks++; }
     private static string MemberName(string contractLine)
@@ -115,6 +157,7 @@ internal static class VerifyBusiness
                 {
                     Require(bll.MainModule.Types.All(t => t.Name != "PhysicalScoresSavingService"), "Legacy formal score saving service must be removed");
                 }
+                CheckDeliberateRemovals();
             }
             Require(Path.GetFileName(AppSettings.Current.StudentRawScoreDB) == (source ? "HuihaiTiyu.db" : "HHRawScore.db"), "Raw score database path differs");
             CheckBehavior();
@@ -195,8 +238,9 @@ internal static class VerifyBusiness
                 if (pair.Key == "HH.TiYu.BLL.StudentBLL") oldContract = oldContract.Where(c => !c.Contains("Photo")).ToList();
                 var newContract = Contract(newTypes[pair.Key]);
                 var allowed = new HashSet<string>(RemovedMembers.Where(m => m.StartsWith(pair.Key + ":", StringComparison.Ordinal)).Select(m => m.Substring(pair.Key.Length + 1)), StringComparer.Ordinal);
+                var changed = new HashSet<string>(ChangedMembers.Where(m => m.StartsWith(pair.Key + ":", StringComparison.Ordinal)).Select(m => m.Substring(pair.Key.Length + 1)), StringComparer.Ordinal);
                 var missing = oldContract.Except(newContract).Where(c => !allowed.Contains(MemberName(c))).ToList();
-                var added = newContract.Except(oldContract).ToList();
+                var added = newContract.Except(oldContract).Where(c => !changed.Contains(MemberName(c))).ToList();
                 Require(!missing.Any(), "Unexpected API removal in " + pair.Key + "\n" + string.Join("\n", missing));
                 Require(!added.Any(), "Unexpected API addition in " + pair.Key + "\n" + string.Join("\n", added));
                 checks += newContract.Count;
@@ -230,14 +274,34 @@ internal static class VerifyBusiness
             foreach (int id in new[] { PhysicalItem._800米, PhysicalItem._1000米, 1 }) Observe("item/" + sex + "/" + id, PhysicalItem.ConvertPhysicalItem(new Student { Sex = sex }, id));
             foreach (var p in PhysicalProjectHelper.创建学生体测项目(sex)) Observe("formula/" + sex + "/" + p.Grade, p.PhysicalItems + "|" + p.TotalFormula);
         }
-        // 学生扩展位本轮精简为仅剩 考试科目（StudentNote 其余成员与 Student 的
-        // Memo/院系/平时成绩/Upgrade/字符串键 GetProperty·SetProperty·RemoveProperty 已移除）。
-        var student = new Student { Name = "验证", Grade = 7 };
-        student.增加考试科目(1); student.增加考试科目(2); student.增加考试科目(1);
-        Observe("student/note", student.Note); Observe("student/items", string.Join(",", student.考试科目)); Observe("student/includes", student.包函考试科目("1,2"));
-        var clone = student.Clone(); clone.增加考试科目(3);
-        Observe("student/original", student.Note); Observe("student/clone", clone.Note);
-        Require(student.考试科目.Length == 2 && clone.考试科目.Length == 3, "Student clone properties alias original");
-        clone.清空考试科目(); Observe("student/clear", clone.考试科目 == null);
+        // Student 的 Note JSON 扩展位(考试科目/引体向上改判)已随本轮瘦身整体移除:
+        // 依赖的 Note 列既不落库也无写入方,行为快照里不再有学生扩展位相关的观察项。
+    }
+
+    /// <summary>
+    /// 只在 source 变体执行的负向断言。契约 diff 只比较"少了什么/多了什么",
+    /// 把已删除的成员按原签名加回来两个方向都不会报错,所以对"故意不存在"的成员
+    /// 在这里显式钉住,防止后续被无声恢复。
+    /// </summary>
+    private static void CheckDeliberateRemovals()
+    {
+        Require(string.Join(",", typeof(Student).GetProperties().Select(p => p.Name)
+                .OrderBy(n => n, StringComparer.Ordinal).ToArray())
+            == "ClassName,FacilityID,Grade,ID,Name,ProjectID,Sex,StudentID,UpdateDate",
+            "Student 的公开属性应恰为九个持久字段");
+        Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.StudentNote") == null, "StudentNote 枚举应保持删除");
+        Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.ScoreNote") == null, "ScoreNote 应保持删除");
+
+        var score = typeof(PhysicalScore);
+        Require(score.GetProperty("Note") == null && score.GetMethod("GetProperty") == null
+                && score.GetMethod("SetProperty") == null && score.GetMethod("Clone") == null,
+            "PhysicalScore 的 Note 扩展位应保持删除");
+        Require(typeof(GradeHelper).GetField("年龄20_24") == null && typeof(GradeHelper).GetField("年龄65_69") == null,
+            "GradeHelper 的年龄码常量应保持删除");
+
+        var condition = typeof(HH.TiYu.Model.SearchCondition.StudentSearchCondition);
+        Require(condition.GetProperty("CardID") == null && condition.GetProperty("Graduation") == null
+                && condition.GetProperty("WriteCard") == null,
+            "StudentSearchCondition 的卡号/毕业状态/写卡开关应保持删除");
     }
 }

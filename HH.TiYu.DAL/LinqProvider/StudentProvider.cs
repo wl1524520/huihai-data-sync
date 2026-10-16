@@ -33,8 +33,6 @@ namespace HH.TiYu.DAL.LinqProvider
                 {
                     queryable = queryable.Where((Student item) => item.FacilityID == con.School);
                 }
-                if (con.Graduation.HasValue || !string.IsNullOrEmpty(con.CardID))
-                    throw new NotSupportedException("采集器不支持毕业状态或卡号筛选");
                 if (!string.IsNullOrEmpty(con.ProjectID))
                 {
                     queryable = queryable.Where((Student item) => item.ProjectID == con.ProjectID);
