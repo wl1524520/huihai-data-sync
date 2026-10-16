@@ -11,13 +11,16 @@
 - `CommPort.cs`、`Net/LJHSocket.cs`、`Net/NetTool.cs`：Wifi 设备路径使用的串口、Socket 和本机 IP 工具。
 - `SEBinaryConverter.cs`、`BCDConverter.cs`、`HexStringConverter.cs`：协议字节转换；`DecimalExtention.cs`：模型及成绩窗口使用的 decimal 扩展方法。
 - `LOG/FileLog.cs`、`ExceptionHandling/ExceptionPolicy.cs`：业务异常与设备日志。
-- `WinformControl`：UI 实际使用的串口下拉框、整数/全角输入框及进度条；`StringHelper.cs` 为输入转换依赖。
-- `Core/UI/NPOIExcelHelper.cs`：成绩采集窗口导出 Excel。NPOI 保留为通用第三方 DLL，不逆向其实现。
-- `SoftDog/DTEncrypt.cs`、`SoftDog/DSEncrypt.cs`：Model.Security.Operator 使用的纯托管密码格式兼容算法。虽然原命名空间名为 SoftDog，这两个类不访问加密狗。
-- 已删除仅由 StudentPhoto 使用的 TempFolderManager；共用控件仍保留 System.Drawing。
+- `WinformControl`：UI 实际使用的串口下拉框、整数/全角输入框及进度条；`StringHelper.cs` 为输入转换依赖（只保留 `ToDBC`）。
+- `Core/UI/NPOIExcelHelper.cs`：成绩采集窗口导出 Excel（只保留 `Export`）。NPOI 保留为通用第三方 DLL，不逆向其实现。
 
 不纳入未使用的授权硬件读写、读卡器、打印机、LED、语音、扫描仪/摄像头、报表主窗体、其他控件及 COM 类型。
 项目没有调用这些模块的本机 DLL。LJH 与 UI 中存在同名 FrmProcessing；采集窗口使用 UI 自己的实现，因此没有恢复 LJH 的同名窗体。
+
+本轮精简删除的成员见 `../docs/general-library-cleanup-result.md`：加密狗（`SoftDog/DSEncrypt`、`DTEncrypt`）、
+各未使用方法（`SEBinaryConverter.LongToBytes`/`UintToBytes`/`BytesToShort`、`HexStringConverter.StringToHex`/`HexEquals`、
+`StringHelper.ToSBC`、`NetTool.GetLocalIP`/`GetLocalMAC`/`GetHostName`、`NPOIExcelHelper.Import`、`LJHSocket.OnClosed`）。
+`System.Management` 与 `System.ServiceModel` 引用随之移除（后者在库内从无类型级使用）。
 
 ## 证据与恢复方法
 
@@ -39,7 +42,8 @@ DecimalExtention.Trim 原来依赖当前 CultureInfo，均保持原行为。网�
 & .\tools\VerifyGeneralLibrary.ps1 -Configuration Release
 ```
 
-每个配置分别编译，并在独立进程中运行源码与原 DLL，比较 436 条离线观察：BCD 全字节范围及越界、整数转换端点、
-3 种文化环境的 decimal Trim、密码格式兼容、全角转换、连接 URI 与查询结果默认值。Debug/Release 均已一致。
+每个配置分别编译，并在独立进程中运行源码与原 DLL，比较 418 条离线观察：BCD 全字节范围及越界、整数转换端点、
+3 种文化环境的 decimal Trim、全角转换、连接 URI 与查询结果默认值。Debug/Release 均已一致。
+（观察项由 436 降至 418，删去的是 6 组输入上的 `DSEncrypt`/`DTEncrypt` 调用。）
 脚本输出写入忽略的 `tools/bin/GeneralLibraryVerification`，不使用真实数据库或设备，不触发网络连接。
 数据库行为由 VerifyDal/VerifySQLite 验证；设备协议由 VerifyDevice 验证。串口和网络实机交互仍须设备验收。

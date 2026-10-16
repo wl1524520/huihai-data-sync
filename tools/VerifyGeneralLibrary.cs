@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using LJH.GeneralLibrary;
 using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.SoftDog;
 
 internal static class VerifyGeneralLibrary
 {
@@ -34,10 +33,14 @@ internal static class VerifyGeneralLibrary
             Record(delegate { return SEBinaryConverter.BytesToInt(SEBinaryConverter.IntToBytes(value)); });
             Record(delegate { return SEBinaryConverter.BytesToUint(SEBinaryConverter.IntToBytes(value)); });
         }
-        foreach (long i in new[] { long.MinValue, -1L, 0L, 1L, long.MaxValue })
+        // LongToBytes 已随本轮精简移除，改为直接观察 BytesToLong 的输入输出。
+        foreach (byte[] i in new[] {
+            new byte[] { 0 }, new byte[] { 0xFF },
+            new byte[] { 0, 0, 0, 0, 0, 0, 0, 0x80 }, new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F },
+            new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } })
         {
-            long value = i;
-            Record(delegate { return SEBinaryConverter.BytesToLong(SEBinaryConverter.LongToBytes(value)); });
+            byte[] value = i;
+            Record(delegate { return SEBinaryConverter.BytesToLong(value); });
         }
         foreach (string culture in new[] { "en-US", "zh-CN", "de-DE" })
         {
@@ -49,13 +52,11 @@ internal static class VerifyGeneralLibrary
             }
         }
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        // DSEncrypt/DTEncrypt（加密狗）已随本轮精简移除。
         foreach (string input in new[] { "", "password", "AbC123!", "中文", "A B", "１２３ＡＢＣ" })
         {
             string value = input;
-            Record(delegate { return new DSEncrypt().Encrypt(value); });
-            Record(delegate { return new DSEncrypt("abc").Encrypt(value); });
             Record(delegate { return StringHelper.ToDBC(value); });
-            Record(delegate { return new DTEncrypt().DSEncrypt(new DTEncrypt().Encrypt(value)); });
         }
         foreach (string uri in new[] { null, "", "Data Source=test.db", "SQLITE:Data Source=test.db", "MSSQL:Server=(local)", ":value" })
         {

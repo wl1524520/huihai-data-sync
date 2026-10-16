@@ -9,10 +9,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Data.SQLite"><HintPath>..\lib\System.Data.SQLite.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="NPOI"><HintPath>..\lib\NPOI.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="NPOI.OOXML"><HintPath>..\lib\NPOI.OOXML.dll</HintPath><Private>False</Private></Reference>
@@ -46,8 +44,6 @@
     <Compile Include="Net\LJHSocket.cs" />
     <Compile Include="Net\NetTool.cs" />
     <Compile Include="SEBinaryConverter.cs" />
-    <Compile Include="SoftDog\DSEncrypt.cs" />
-    <Compile Include="SoftDog\DTEncrypt.cs" />
     <Compile Include="StringHelper.cs" />
     <Compile Include="WinformControl\ComPortComboBox.cs" />
     <Compile Include="WinformControl\DBCTextBox.cs" />

@@ -1,47 +1,20 @@
 ﻿using System;
-using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Data.Linq;
-using System.Data.Linq.Mapping;
-using System.Data.SqlClient;
-using System.Data.SQLite;
-using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Globalization;
 using System.IO;
-using System.IO.Ports;
 using System.Linq;
-using System.Management;
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Resources;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Security.Cryptography;
-using System.ServiceModel;
-using System.ServiceModel.Channels;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Windows.Forms;
-using System.Xml.Serialization;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
-using LJH.GeneralLibrary.SoftDog;
-using LJH.GeneralLibrary.WinformControl;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
+
 namespace LJH.GeneralLibrary.Core.UI
 {
+	/// <summary>
+	/// 成绩表导出。原库还提供 Import 及其专用的 GetValue 单元格读取，
+	/// 采集器只导出不上传 Excel（学生导入走同步接口），已移除。
+	/// </summary>
 	public class NPOIExcelHelper
 	{
 		private static DataTable GetData(DataGridView Dgv, bool forText)
@@ -81,90 +54,6 @@ namespace LJH.GeneralLibrary.Core.UI
 				where col.Visible
 				orderby col.DisplayIndex
 				select col.Name).ToList();
-		}
-
-		private static object GetValue(ICell cell)
-		{
-			if (cell == null)
-			{
-				return null;
-			}
-			switch (cell.CellType)
-			{
-			case CellType.Blank:
-				return null;
-			case CellType.Boolean:
-				return cell.BooleanCellValue;
-			case CellType.Numeric:
-				if (DateUtil.IsCellDateFormatted(cell))
-				{
-					return cell.DateCellValue;
-				}
-				return cell.NumericCellValue;
-			case CellType.String:
-				return cell.StringCellValue;
-			case CellType.Error:
-				return cell.ErrorCellValue;
-			default:
-				return "=" + cell.CellFormula;
-			}
-		}
-
-		public static DataTable Import(string strFileName)
-		{
-			DataTable dataTable = new DataTable();
-			string text = Path.GetExtension(strFileName.ToLower()).Trim();
-			using (FileStream inputStream = new FileStream(strFileName, FileMode.Open, FileAccess.Read))
-			{
-				IWorkbook workbook = WorkbookFactory.Create((Stream)inputStream);
-				ISheet sheetAt = workbook.GetSheetAt(0);
-				IRow row = sheetAt.GetRow(sheetAt.FirstRowNum);
-				List<int> list = new List<int>();
-				for (int i = 0; i < row.LastCellNum; i++)
-				{
-					object value = GetValue(row.GetCell(i));
-					if (value == null || value.ToString() == string.Empty)
-					{
-						dataTable.Columns.Add(new DataColumn(i.ToString(), typeof(string)));
-					}
-					else
-					{
-						dataTable.Columns.Add(new DataColumn(value.ToString()));
-					}
-					list.Add(i);
-				}
-				for (int j = sheetAt.FirstRowNum + 1; j <= sheetAt.LastRowNum; j++)
-				{
-					IRow row2 = sheetAt.GetRow(j);
-					try
-					{
-						if (row2 == null)
-						{
-							continue;
-						}
-						DataRow dataRow = dataTable.NewRow();
-						bool flag = false;
-						foreach (int item in list)
-						{
-							dataRow[item] = GetValue(row2.GetCell(item));
-							if (dataRow[item] != null && dataRow[item].ToString() != string.Empty)
-							{
-								flag = true;
-							}
-						}
-						if (flag)
-						{
-							dataTable.Rows.Add(dataRow);
-						}
-					}
-					catch (Exception ex)
-					{
-						string message = string.Format("数据读出出错:{0} 行号:{1}", ex.Message, j + 1);
-						throw new Exception(message, ex);
-					}
-				}
-			}
-			return dataTable;
 		}
 
 		public static void Export(DataTable dt, string fileName)
