@@ -42,7 +42,6 @@
     <Compile Include="Controls\FacilityComboBox.cs" />
     <Compile Include="FrmAddHost_USB.cs" />
     <Compile Include="FrmDateRange.cs" />
-    <Compile Include="FrmHostParameters.cs" />
     <Compile Include="FrmHosts.cs" />
     <Compile Include="FrmProcessing.cs" />
     <Compile Include="FrmScoreCollectStatitics.cs" />

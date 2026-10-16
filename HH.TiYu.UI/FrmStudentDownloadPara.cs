@@ -121,7 +121,6 @@ namespace HH.TiYu.UI
 
 		private FacilityComboBox cmbFacility;
 
-		private CheckBox chk只显示已分组学生;
 
 		public FrmStudentDownloadPara()
 		{
@@ -172,7 +171,7 @@ namespace HH.TiYu.UI
 			if (allStudents != null && allStudents.Count > 0)
 			{
 				List<Student> list = null;
-				list = (chk只显示已分组学生.Checked ? PhysicalProject.Current.获取所有已分组学生() : allStudents.Values.ToList());
+				list = allStudents.Values.ToList();
 				if (!string.IsNullOrEmpty(txtStudentID1.Text))
 				{
 					list = ((!string.IsNullOrEmpty(txtStudentID2.Text)) ? list.Where((Student item) => string.Compare(item.StudentID, txtStudentID1.Text) >= 0 && string.Compare(item.StudentID, txtStudentID2.Text) <= 0).ToList() : list.Where((Student item) => item.StudentID.Contains(txtStudentID1.Text)).ToList());
@@ -333,7 +332,6 @@ namespace HH.TiYu.UI
 			this.btnAll = new System.Windows.Forms.Button();
 			this.btnNone = new System.Windows.Forms.Button();
 			this.btnRevert = new System.Windows.Forms.Button();
-			this.chk只显示已分组学生 = new System.Windows.Forms.CheckBox();
 			this.statusStrip1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)this.dataGridView1).BeginInit();
 			this.gpStudent.SuspendLayout();
@@ -442,7 +440,6 @@ namespace HH.TiYu.UI
 			this.chkClearFirst.Visible = false;
 			this.chkClearFirst.CheckedChanged += new System.EventHandler(chkClearFirst_CheckedChanged);
 			this.gpStep1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			this.gpStep1.Controls.Add(this.chk只显示已分组学生);
 			this.gpStep1.Controls.Add(this.cmbDivision);
 			this.gpStep1.Controls.Add(this.cmbFacility);
 			this.gpStep1.Controls.Add(this.label4);
@@ -621,15 +618,6 @@ namespace HH.TiYu.UI
 			this.btnRevert.Text = "反选(&R)";
 			this.btnRevert.UseVisualStyleBackColor = true;
 			this.btnRevert.Click += new System.EventHandler(btnRevert_Click);
-			this.chk只显示已分组学生.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			this.chk只显示已分组学生.AutoSize = true;
-			this.chk只显示已分组学生.ForeColor = System.Drawing.Color.Red;
-			this.chk只显示已分组学生.Location = new System.Drawing.Point(71, 279);
-			this.chk只显示已分组学生.Name = "chk只显示已分组学生";
-			this.chk只显示已分组学生.Size = new System.Drawing.Size(120, 16);
-			this.chk只显示已分组学生.TabIndex = 207;
-			this.chk只显示已分组学生.Text = "只显示已分组学生";
-			this.chk只显示已分组学生.UseVisualStyleBackColor = true;
 			base.AutoScaleDimensions = new System.Drawing.SizeF(6f, 12f);
 			base.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			base.ClientSize = new System.Drawing.Size(1118, 602);

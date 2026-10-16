@@ -1,24 +1,14 @@
 ﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
-using HH.TiYu.Model.Security;
-using Jurassic;
-using LJH.GeneralLibrary;
 using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.SoftDog;
 using Newtonsoft.Json;
 
 namespace HH.TiYu.Model
@@ -89,41 +79,6 @@ namespace HH.TiYu.Model
                 _Externals[key.ToString()] = value;
             }
             Note = JsonConvert.SerializeObject(_Externals);
-        }
-
-        public bool 需要上传到平台(ThirdSyncPlateForm pf)
-        {
-            string property = GetProperty(pf.ToString());
-            if (string.IsNullOrEmpty(property))
-            {
-                return true;
-            }
-            DateTime result;
-            if (DateTime.TryParse(property, out result))
-            {
-                DateTime value = result;
-                DateTime? updateDate = UpdateDate;
-                if (!(value < updateDate))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        public void 设置上传到平台时间(ThirdSyncPlateForm pf, DateTime? dt)
-        {
-            SetProperty(pf.ToString(), dt.HasValue ? dt.Value.ToString("yyyy-MM-dd HH:mm:ss") : null);
-        }
-
-        public void 设置上传到平台错误信息(ThirdSyncPlateForm pf, string msg)
-        {
-            SetProperty(string.Format("{0}_msg", pf.ToString()), msg);
-        }
-
-        public string 获取上传到平台错误信息(ThirdSyncPlateForm pf)
-        {
-            return GetProperty(string.Format("{0}_msg", pf.ToString()));
         }
 
         public PhysicalScore Clone()

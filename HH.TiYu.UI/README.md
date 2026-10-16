@@ -1,4 +1,4 @@
-# 采集界面源码维护
+﻿# 采集界面源码维护
 
 本项目从 `lib/UI.dll` 恢复采集器实际使用的界面闭包，输出仍为 `UI.dll`，版本 `1.0.0.0`，目标为 .NET Framework 4.0 / C# 4 / x86。原始 DLL 保留作分析基线。它不恢复旧软件的整个 UI 程序集。
 
@@ -6,16 +6,15 @@
 
 | 源码 | 职责 |
 | --- | --- |
-| `FrmHosts.cs` | 主机发现、集中/实时采集、名单下发、时间同步、参数入口、通信质量检测与关闭主机 |
+| `FrmHosts.cs` | 主机发现、集中/实时采集、名单下发、时间同步、通信质量检测与关闭主机 |
 | `FrmScoreCollect_Wifi.cs` | 实时成绩展示、原始成绩入队、成绩转换与导出 |
-| `FrmHostParameters.cs` | 主机参数读取和写入 |
 | `FrmStudentDownloadPara.cs` | 学生筛选、名单下发参数 |
 | `FrmAddHost_USB.cs` | 原 Wifi 协议的串口接入入口，不是 TSN USB 协议 |
 | `FrmDateRange.cs`、`FrmSerialRange.cs`、`FrmStudentIDRange.cs` | 集中采集筛选范围 |
 | `FrmProcessing.cs`、`FrmScoreCollectStatitics.cs` | 操作进度与采集统计 |
 | `Controls/`、`UserControl/`、`DivisionHelper.cs` | 学校、区域、年级、班级选择依赖 |
 
-保留 15 个业务类型：10 个窗口、4 个控件和 1 个辅助类。保留原公开类型命名空间，供采集器继续使用 `new FrmHosts()`。
+保留 14 个业务类型：9 个窗口、4 个控件和 1 个辅助类。保留原公开类型命名空间，供采集器继续使用 `new FrmHosts()`。
 
 `Resources/` 仅恢复 `FrmHosts`、`FrmProcessing`、`FrmScoreCollect_Wifi` 实际使用的 3 份资源，以可编辑 `.resx` 保存；使用原清单资源名。其他窗口的布局已在 `InitializeComponent` 中直接恢复，不需要嵌入其未被读取的旧资源。没有恢复程序集的全局图片资源、报表资源或旧平台资源。
 

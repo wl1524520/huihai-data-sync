@@ -81,8 +81,6 @@ namespace HH.TiYu.UI
 
 		private ToolStripMenuItem 指定序列号段的数据ToolStripMenuItem;
 
-		private ToolStripMenuItem mnu参数设置;
-
 		private Button btnRevert;
 
 		private Button btnNone;
@@ -272,11 +270,6 @@ namespace HH.TiYu.UI
 					}
 				}
 			}
-		}
-
-		private void Form1_Load(object sender, EventArgs e)
-		{
-			mnu参数设置.Enabled = Operator.Current.ID == Operator.DefaultLogID;
 		}
 
 		protected override void OnClientSizeChanged(EventArgs e)
@@ -800,7 +793,7 @@ namespace HH.TiYu.UI
 								Score = num,
 								UpdateDate = (item.RecordDate.HasValue ? item.RecordDate : new DateTime?(DateTime.Now))
 							};
-							PhysicalProject.Current.CalResult(studentByID, physicalScore);
+							// 采集器只存原始成绩，不做评分：原 CalResult 调用已移除。
 						}
 					}
 					goto IL_043b;
@@ -1245,38 +1238,6 @@ namespace HH.TiYu.UI
 			frmP.Show();
 		}
 
-		private void 参数设置ToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			for (int i = 0; i < dataGridView2.Rows.Count; i++)
-			{
-				DataGridViewRow dataGridViewRow = dataGridView2.Rows[i];
-				if (dataGridViewRow.Selected && dataGridViewRow.Tag == null && Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue) && dataGridViewRow.Tag == null)
-				{
-					SetParameter(dataGridViewRow);
-				}
-			}
-		}
-
-		private void SetParameter(DataGridViewRow row)
-		{
-			WifiHostInfo wifiHostInfo = row.Cells["colSer"].Tag as WifiHostInfo;
-			WifiHost host = WifiHost.CreateInstance(wifiHostInfo.HostID, wifiHostInfo.IP, wifiHostInfo.LocalIP);
-			host.Log = chkLog.Checked;
-			row.Tag = host;
-			row.Cells["colOperation"].Value = "参数设置";
-			FrmHostParameters frmHostParameters = new FrmHostParameters();
-			frmHostParameters.MdiParent = this;
-			frmHostParameters.Host = host;
-			frmHostParameters.Text = string.Format("主机{0}_{1} 参数设置", wifiHostInfo.HostID, row.Cells["colSer"].Value);
-			frmHostParameters.FormClosed += delegate
-			{
-				row.Tag = null;
-				row.Cells["colOperation"].Value = null;
-				host.Dispose();
-			};
-			frmHostParameters.Show();
-		}
-
 		private void 增加主机USBToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			FrmAddHost_USB frmAddHost_USB = new FrmAddHost_USB();
@@ -1333,7 +1294,6 @@ namespace HH.TiYu.UI
 			this.mnu下载学生名单 = new System.Windows.Forms.ToolStripMenuItem();
 			this.清空学生名单ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-			this.mnu参数设置 = new System.Windows.Forms.ToolStripMenuItem();
 			this.同步时间ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.通讯质量检测ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.关机ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -1413,10 +1373,10 @@ namespace HH.TiYu.UI
 			this.colOperation.ReadOnly = true;
 			this.colOperation.Resizable = System.Windows.Forms.DataGridViewTriState.True;
 			this.colOperation.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[15]
+			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[14]
 			{
 				this.增加主机USBToolStripMenuItem, this.toolStripSeparator3, this.mnu_开始实时采集, this.结束实时采集ToolStripMenuItem, this.mnu_集中采集所有数据, this.高级集中采集ToolStripMenuItem, this.toolStripSeparator1, this.mnu下载学生名单, this.清空学生名单ToolStripMenuItem,
-				this.toolStripSeparator2, this.mnu参数设置, this.同步时间ToolStripMenuItem, this.通讯质量检测ToolStripMenuItem, this.关机ToolStripMenuItem, this.toolStripSeparator4
+				this.toolStripSeparator2, this.同步时间ToolStripMenuItem, this.通讯质量检测ToolStripMenuItem, this.关机ToolStripMenuItem, this.toolStripSeparator4
 			});
 			this.contextMenuStrip2.Name = "contextMenuStrip1";
 			resources.ApplyResources(this.contextMenuStrip2, "contextMenuStrip2");
@@ -1459,9 +1419,6 @@ namespace HH.TiYu.UI
 			this.清空学生名单ToolStripMenuItem.Click += new System.EventHandler(清空学生名单ToolStripMenuItem_Click);
 			this.toolStripSeparator2.Name = "toolStripSeparator2";
 			resources.ApplyResources(this.toolStripSeparator2, "toolStripSeparator2");
-			this.mnu参数设置.Name = "mnu参数设置";
-			resources.ApplyResources(this.mnu参数设置, "mnu参数设置");
-			this.mnu参数设置.Click += new System.EventHandler(参数设置ToolStripMenuItem_Click);
 			this.同步时间ToolStripMenuItem.Name = "同步时间ToolStripMenuItem";
 			resources.ApplyResources(this.同步时间ToolStripMenuItem, "同步时间ToolStripMenuItem");
 			this.同步时间ToolStripMenuItem.Click += new System.EventHandler(同步时间ToolStripMenuItem_Click);
@@ -1479,7 +1436,6 @@ namespace HH.TiYu.UI
 			base.IsMdiContainer = true;
 			base.Name = "FrmHosts";
 			base.FormClosing += new System.Windows.Forms.FormClosingEventHandler(FrmHosts_FormClosing);
-			base.Load += new System.EventHandler(Form1_Load);
 			this.panel1.ResumeLayout(false);
 			this.panel1.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)this.dataGridView2).EndInit();

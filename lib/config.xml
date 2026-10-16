@@ -1,13 +1,10 @@
 <?xml version="1.0"?>
 <configuration>
   <appSettings>
-    <add key="ConnectString" value="/NPxT?%5RU$0.\)&lt;UYz6a?Rx/~Po 5b?=Y?HOU7 -]&lt;{EzDR*6Q^~Yud#?~x9,*%y+et^]MmS,c^Lr|s?JFrkBFA?;ex8Cv&gt;N?^&amp;/8FH]aK :VHB0uw(|\cgs6USx]l=wR3xp]!&amp;/e|H^iJd&gt;" />
-    <add key="DatabaseNeedUpgrade" value="True" />
-    <add key="RememberLogID" value="True" />
-    <add key="RemoteServer" value="" />
-    <add key="RemotePort" value="" />
-    <add key="RemoteDB" value="" />
+    <!-- 采集器运行配置。原发布包的硬件/远程库开关（ConnectString、DatabaseNeedUpgrade、
+         RememberLogID、RemoteServer、RemotePort、RemoteDB、导出上报文件类型）已随本轮精简移除：
+         采集器固定使用本机 SQLite 单库，这些键在代码中不再有任何读取方。
+         仅保留当前项目 ID；本文件由 HH.DataCollection.Wifi.csproj 的 AfterBuild 复制到输出目录。 -->
     <add key="PhysicalProject.Current" value="P0013" />
-    <add key="导出上报文件类型" value="8" />
   </appSettings>
 </configuration>

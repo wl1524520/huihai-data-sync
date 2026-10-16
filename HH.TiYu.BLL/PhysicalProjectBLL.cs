@@ -109,21 +109,6 @@ namespace HH.TiYu.BLL
             }
         }
 
-        public void GetStudentInfo(PhysicalProject project, string sid)
-        {
-            QueryResultList<Student> items = new StudentBLL(base.RepoUri).GetItems(new StudentSearchCondition
-            {
-                ProjectID = project.ID,
-                StudentIDs = new List<string> { sid }
-            });
-            if (items.Result == ResultCode.Successful)
-            {
-                project.ClearStudents();
-                List<Student> queryObjects = items.QueryObjects;
-                project.AddStudents(queryObjects);
-            }
-        }
-
         public CommandResult SavePhysicalItems(PhysicalProject project, Sex sex, List<ProjectPhysicalItem> items)
         {
             CommandResult commandResult = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, Guid>>(base.RepoUri).BatchAdd(items, project.ID, ImportOption.Override);
@@ -132,67 +117,6 @@ namespace HH.TiYu.BLL
                 GetFullInfo(project, 项目加载项.测试科目);
             }
             return commandResult;
-        }
-
-        public CommandResult<PhysicalProject> CreateOrGetProject_学生体测(int year)
-        {
-            PhysicalProject p = null;
-            string name = string.Format("{0}年度学生体测", year);
-            List<PhysicalProject> queryObjects = new PhysicalProjectBLL(AppSettings.Current.ConnStr).GetItems(new PhysicalProjectSearchCondition
-            {
-                Class = PhysicalProjectClass.学生体测,
-                Name = name
-            }).QueryObjects;
-            if (queryObjects != null && queryObjects.Count > 0)
-            {
-                p = queryObjects[0];
-            }
-            if (p != null && year >= 2019)
-            {
-                List<ProjectPhysicalItem> list = PhysicalProjectHelper.创建学生体测项目(Sex.Male);
-                list.ForEach(delegate(ProjectPhysicalItem it)
-                {
-                    it.ProjectID = p.ID;
-                });
-                new PhysicalProjectBLL(AppSettings.Current.ConnStr).SavePhysicalItems(p, Sex.Male, list);
-                list = PhysicalProjectHelper.创建学生体测项目(Sex.Female);
-                list.ForEach(delegate(ProjectPhysicalItem it)
-                {
-                    it.ProjectID = p.ID;
-                });
-                new PhysicalProjectBLL(AppSettings.Current.ConnStr).SavePhysicalItems(p, Sex.Female, list);
-            }
-            if (p == null)
-            {
-                p = new PhysicalProject();
-                p.Class = PhysicalProjectClass.学生体测;
-                p.Name = name;
-                p.CreateDate = DateTime.Now;
-                p.StartDate = new DateTime(year, 8, 1);
-                p.EndDate = p.StartDate.Value.AddYears(1);
-                p.TemplateProjectID = PhysicalProject.默认学生体测项目;
-                CommandResult commandResult = new PhysicalProjectBLL(AppSettings.Current.ConnStr).Add(p);
-                if (commandResult.Result != ResultCode.Successful)
-                {
-                    return new CommandResult<PhysicalProject>(ResultCode.Fail, commandResult.Message, null);
-                }
-                if (year >= 2019)
-                {
-                    List<ProjectPhysicalItem> list2 = PhysicalProjectHelper.创建学生体测项目(Sex.Male);
-                    list2.ForEach(delegate(ProjectPhysicalItem it)
-                    {
-                        it.ProjectID = p.ID;
-                    });
-                    new PhysicalProjectBLL(AppSettings.Current.ConnStr).SavePhysicalItems(p, Sex.Male, list2);
-                    list2 = PhysicalProjectHelper.创建学生体测项目(Sex.Female);
-                    list2.ForEach(delegate(ProjectPhysicalItem it)
-                    {
-                        it.ProjectID = p.ID;
-                    });
-                    new PhysicalProjectBLL(AppSettings.Current.ConnStr).SavePhysicalItems(p, Sex.Female, list2);
-                }
-            }
-            return new CommandResult<PhysicalProject>(ResultCode.Successful, string.Empty, p);
         }
 
         public QueryResultList<PhysicalProject> 获取学生体测项目(PhysicalProjectSearchCondition con)
@@ -219,59 +143,5 @@ namespace HH.TiYu.BLL
             return items;
         }
 
-        public CommandResult<PhysicalProject> CreateOrGetProject_抽测(int year)
-        {
-            PhysicalProject physicalProject = null;
-            string name = string.Format("{0}年度学生抽测", year);
-            List<PhysicalProject> queryObjects = new PhysicalProjectBLL(AppSettings.Current.ConnStr).GetItems(new PhysicalProjectSearchCondition
-            {
-                Class = PhysicalProjectClass.学生体测,
-                Name = name
-            }).QueryObjects;
-            if (queryObjects != null && queryObjects.Count > 0)
-            {
-                physicalProject = queryObjects[0];
-            }
-            if (physicalProject == null)
-            {
-                physicalProject = new PhysicalProject();
-                physicalProject.Class = PhysicalProjectClass.学生体测;
-                physicalProject.Name = name;
-                physicalProject.CreateDate = DateTime.Now;
-                physicalProject.StartDate = new DateTime(year, 1, 1);
-                physicalProject.EndDate = physicalProject.StartDate.Value.AddYears(1);
-                physicalProject.TemplateProjectID = PhysicalProject.默认学生体测项目;
-                CommandResult commandResult = new PhysicalProjectBLL(AppSettings.Current.ConnStr).Add(physicalProject);
-                if (commandResult.Result != ResultCode.Successful)
-                {
-                    return new CommandResult<PhysicalProject>(ResultCode.Fail, commandResult.Message, null);
-                }
-            }
-            return new CommandResult<PhysicalProject>(ResultCode.Successful, string.Empty, physicalProject);
-        }
-
-        public QueryResultList<PhysicalProject> 获取学生抽测项目(PhysicalProjectSearchCondition con)
-        {
-            if (con != null)
-            {
-                con.Class = PhysicalProjectClass.学生体测;
-            }
-            else
-            {
-                con = new PhysicalProjectSearchCondition
-                {
-                    Class = PhysicalProjectClass.学生体测
-                };
-            }
-            QueryResultList<PhysicalProject> items = new PhysicalProjectBLL(AppSettings.Current.ConnStr).GetItems(con);
-            if (items.QueryObjects != null && items.QueryObjects.Count > 0)
-            {
-                items.QueryObjects = (from item in items.QueryObjects
-                    where item.ID != PhysicalProject.默认学生体测项目 && item.ID != PhysicalProject.默认中考项目 && item.ID != PhysicalProject.默认国民体测项目 && item.Name.Contains("年度学生抽测")
-                    orderby item.Name descending
-                    select item).ToList();
-            }
-            return items;
-        }
     }
 }

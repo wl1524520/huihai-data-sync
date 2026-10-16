@@ -52,8 +52,8 @@ namespace HH.DataCollection.Wifi
             try
             {
                 // 1) 本地精简库:不存在则自建(建表),再补科目字典种子
+                //    采集器固定单库,ConnStr 恒等于 LocalDB(已移除 RemoteDB 覆盖开关)
                 AppSettings.Current.LocalDB = "SQLITE:Data Source=" + LocalDb.DbPath;
-                AppSettings.Current.RemoteDB = string.Empty; // ConnStr 走本地库
                 LocalDb.EnsureDatabase();
                 LocalDb.SeedPhysicalItems();
 

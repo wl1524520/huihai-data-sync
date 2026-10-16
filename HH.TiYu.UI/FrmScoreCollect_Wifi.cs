@@ -55,7 +55,6 @@ namespace HH.TiYu.UI
 
 		private DataGridViewTextBoxColumn colSex;
 
-		private DataGridViewTextBoxColumn colGroup;
 
 		private DataGridViewTextBoxColumn colPhysicalItem;
 
@@ -63,7 +62,6 @@ namespace HH.TiYu.UI
 
 		private DataGridViewTextBoxColumn colScore;
 
-		private DataGridViewTextBoxColumn colResult;
 
 		private DataGridViewTextBoxColumn colRecordDate;
 
@@ -225,7 +223,6 @@ namespace HH.TiYu.UI
 								Score = num,
 								UpdateDate = (item.RecordDate.HasValue ? item.RecordDate : new DateTime?(DateTime.Now))
 							};
-							PhysicalProject.Current.CalResult(studentByID, physicalScore);
 						}
 					}
 					goto IL_043b;
@@ -261,15 +258,10 @@ namespace HH.TiYu.UI
 				dataGridView1.Rows[0].Cells["colStudentID"].Value = score.StudentID;
 				dataGridView1.Rows[0].Cells["colName"].Value = ((s != null) ? s.Name : null);
 				dataGridView1.Rows[0].Cells["colSex"].Value = ((s == null) ? string.Empty : ((s.Sex == Sex.Male) ? "男" : "女"));
-				dataGridView1.Rows[0].Cells["colGroup"].Value = PhysicalProject.Current.获取学生组别名称(s.StudentID);
 				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == PhysicalItem.ConvertPhysicalItem(s, score.PhysicalItem));
 				dataGridView1.Rows[0].Cells["colPhysicalItem"].Value = string.Format("{0}", physicalItem.Name);
 				dataGridView1.Rows[0].Cells["colUnit"].Value = physicalItem.Unit;
 				dataGridView1.Rows[0].Cells["colScore"].Value = ((!score.SpecialType.HasValue) ? physicalItem.ConvertToStr(score.Score) : score.SpecialType.ToString());
-				if (Operator.Current.Permit(Permission.总分, PermissionActions.Read))
-				{
-					dataGridView1.Rows[0].Cells["colResult"].Value = (score.Result.HasValue ? score.Result.Value.Trim().ToString() : string.Empty);
-				}
 				dataGridView1.Rows[0].Cells["colRecordDate"].Value = (score.UpdateDate.HasValue ? score.UpdateDate.Value.ToString("yyyy-MM-dd HH:mm") : string.Empty);
 				if (s != null)
 				{
@@ -296,7 +288,6 @@ namespace HH.TiYu.UI
 				dataGridView1.Rows[0].Cells["colStudentID"].Value = record.StudentNumber;
 				dataGridView1.Rows[0].Cells["colName"].Value = ((s != null) ? s.Name : null);
 				dataGridView1.Rows[0].Cells["colSex"].Value = ((s == null) ? string.Empty : ((s.Sex == Sex.Male) ? "男" : "女"));
-				dataGridView1.Rows[0].Cells["colGroup"].Value = ((s != null) ? PhysicalProject.Current.获取学生组别名称(s.StudentID) : string.Empty);
 				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == PhysicalItem.ConvertPhysicalItem(s, record.PhysicalItem));
 				if (physicalItem != null)
 				{
@@ -508,11 +499,9 @@ namespace HH.TiYu.UI
 			this.colStudentID = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colSex = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.colGroup = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colPhysicalItem = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colUnit = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colScore = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.colResult = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colRecordDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colFacility = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -532,7 +521,7 @@ namespace HH.TiYu.UI
 			this.dataGridView1.AllowUserToResizeRows = false;
 			resources.ApplyResources(this.dataGridView1, "dataGridView1");
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.dataGridView1.Columns.AddRange(this.colSN, this.colStudentID, this.colName, this.colSex, this.colGroup, this.colPhysicalItem, this.colUnit, this.colScore, this.colResult, this.colRecordDate, this.colFacility);
+			this.dataGridView1.Columns.AddRange(this.colSN, this.colStudentID, this.colName, this.colSex, this.colPhysicalItem, this.colUnit, this.colScore, this.colRecordDate, this.colFacility);
 			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
 			this.dataGridView1.Name = "dataGridView1";
 			this.dataGridView1.RowHeadersVisible = false;
@@ -552,10 +541,6 @@ namespace HH.TiYu.UI
 			resources.ApplyResources(this.colSex, "colSex");
 			this.colSex.Name = "colSex";
 			this.colSex.ReadOnly = true;
-			this.colGroup.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-			resources.ApplyResources(this.colGroup, "colGroup");
-			this.colGroup.Name = "colGroup";
-			this.colGroup.ReadOnly = true;
 			resources.ApplyResources(this.colPhysicalItem, "colPhysicalItem");
 			this.colPhysicalItem.Name = "colPhysicalItem";
 			this.colPhysicalItem.ReadOnly = true;
@@ -566,9 +551,6 @@ namespace HH.TiYu.UI
 			resources.ApplyResources(this.colScore, "colScore");
 			this.colScore.Name = "colScore";
 			this.colScore.ReadOnly = true;
-			resources.ApplyResources(this.colResult, "colResult");
-			this.colResult.Name = "colResult";
-			this.colResult.ReadOnly = true;
 			resources.ApplyResources(this.colRecordDate, "colRecordDate");
 			this.colRecordDate.Name = "colRecordDate";
 			this.colRecordDate.ReadOnly = true;

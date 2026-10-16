@@ -52,15 +52,8 @@ namespace HH.TiYu.DAL.LinqProvider
         protected override void InsertingItem(PhysicalProject info, DataContext dc)
         {
             if (string.IsNullOrEmpty(info.ID)) info.ID = Guid.NewGuid().ToString();
-            if (!string.IsNullOrEmpty(info.TemplateProjectID))
-            {
-                var source = dc.GetTable<ProjectPhysicalItem>().Where(i => i.ProjectID == info.TemplateProjectID).ToList();
-                foreach (var item in source)
-                {
-                    var copy = item.Clone(); copy.ID = Guid.NewGuid(); copy.ProjectID = info.ID;
-                    dc.GetTable<ProjectPhysicalItem>().InsertOnSubmit(copy);
-                }
-            }
+            // 采集器不使用"模板项目拷贝科目"功能（见 Program.cs EnsureCurrentYearProject 注释），
+            // 原此处按 info.TemplateProjectID 复制 ProjectPhysicalItem 的分支已移除。
             base.InsertingItem(info, dc);
         }
 

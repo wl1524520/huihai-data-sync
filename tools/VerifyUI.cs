@@ -23,13 +23,12 @@ internal static class VerifyUI
             Application.EnableVisualStyles();
             HH.DataCollection.Wifi.Db.LocalDb.EnsureDatabase();
             AppSettings.Current.LocalDB = "SQLITE:" + HH.DataCollection.Wifi.Db.LocalDb.ConnStr;
-            AppSettings.Current.RemoteDB = string.Empty;
             PhysicalProject.Current = new PhysicalProject();
             Assembly assembly = typeof(FrmHosts).Assembly;
             Type[] types = assembly.GetTypes().Where(t => t.IsPublic && !t.IsNested).ToArray();
             string[] retained =
             {
-                "FrmAddHost_USB", "FrmDateRange", "FrmHostParameters", "FrmHosts", "FrmProcessing",
+                "FrmAddHost_USB", "FrmDateRange", "FrmHosts", "FrmProcessing",
                 "FrmScoreCollectStatitics", "FrmScoreCollect_Wifi", "FrmSerialRange", "FrmStudentDownloadPara", "FrmStudentIDRange",
                 "ClassNameCombox", "DivisionComboBox", "FacilityComboBox", "GradeComboBox", "DivisionHelper"
             };
@@ -55,18 +54,20 @@ internal static class VerifyUI
                         Check(type.GetField("mnu_学生测试", BindingFlags.NonPublic | BindingFlags.Instance) == null, "Legacy student-group menu field retained");
                         Check(type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance).All(f => f.Name.IndexOf("学生分组", StringComparison.Ordinal) < 0 && f.Name.IndexOf("组人员实时显示", StringComparison.Ordinal) < 0), "Legacy group download field retained");
                         var menu = (ContextMenuStrip)type.GetField("contextMenuStrip2", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(control);
-                        Check(menu != null && menu.Items.Count == 15, "FrmHosts context menu entry count changed");
+                        Check(menu != null && menu.Items.Count == 14, "FrmHosts context menu entry count changed");
+                        Check(menu.Items.OfType<ToolStripItem>().All(i => i.Name != "mnu参数设置"), "Disabled parameter menu retained");
                         Check(menu.Items.OfType<ToolStripItem>().All(i => i.Name != "mnu_学生测试"), "Legacy student-group menu entry retained");
                     }
                     if (type == typeof(FrmScoreCollect_Wifi))
                     {
                         DataGridView grid = (DataGridView)control.Controls.Find("dataGridView1", true).Single();
-                        Check(grid.Columns.Count == 11, "Score grid columns missing");
+                        // 组别列（colGroup）与得分列（colResult）随本轮精简移除：数据源恒空/权限恒 false。
+                        Check(grid.Columns.Count == 9 && !grid.Columns.Contains("colGroup") && !grid.Columns.Contains("colResult"), "Score grid columns missing");
                         Check(grid.Columns["colStudentID"].HeaderText.Length > 0, "Score grid resource captions missing");
                     }
                 }
             }
-            Check(forms == 10 && controls == 4, "Window/control closure changed");
+            Check(forms == 9 && controls == 4, "Window/control closure changed");
             Check(typeof(FrmStudentDownloadPara).GetField("DownloadPhoto") == null, "Photo download option retained");
             Check(typeof(FrmStudentDownloadPara).GetField("cardID4StudentID") == null, "Card identity replacement option retained");
             using (var form = new FrmStudentDownloadPara())

@@ -57,7 +57,6 @@ internal static class VerifyDal
             LocalDb.EnsureDatabase();
             LocalDb.SeedPhysicalItems();
             AppSettings.Current.LocalDB = Uri;
-            AppSettings.Current.RemoteDB = string.Empty;
             CheckSchema();
             CheckFactories();
             CheckConfig();
@@ -227,9 +226,10 @@ internal static class VerifyDal
         var generated = new PhysicalProject { Name = "新项目", CreateDate = DateTime.Now };
         Check(projects.Insert(generated).Result == ResultCode.Successful && !string.IsNullOrEmpty(generated.ID), "Project ID must not require legacy numbering table");
         PhysicalProject.Current = generated;
+        // 学生导入由 StudentSync 直接 SQL 完成，BLL 导入路径已随本轮精简移除；
+        // 此处改为直接验证内存名册的 AddStudents 行为。
         var imported = new Student { StudentID = "imported", FacilityID = "F1", Name = "保留原名", Sex = Sex.Female };
-        Check(new StudentBLL(Uri).AddStudents(generated, new List<Student> { imported }, false).Result == ResultCode.Successful && imported.ID != Guid.Empty && imported.ProjectID == generated.ID, "BLL import identity propagation");
-        var ignored = new Student { StudentID = "imported", FacilityID = "F1", Name = "不应覆盖", Sex = Sex.Male };
-        Check(new StudentBLL(Uri).AddStudents(generated, new List<Student> { ignored }, true).Result == ResultCode.Successful && generated.AllStudents.Values.Single().Name == "保留原名", "Ignored import corrupted in-memory roster");
+        generated.AddStudents(new List<Student> { imported });
+        Check(generated.AllStudents.ContainsKey("IMPORTED") && generated.AllStudents["IMPORTED"].Name == "保留原名", "In-memory roster import");
     }
 }

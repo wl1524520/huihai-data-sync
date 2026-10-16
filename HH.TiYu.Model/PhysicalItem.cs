@@ -1,25 +1,14 @@
 ﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
-using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
-using HH.TiYu.Model.Security;
-using Jurassic;
-using LJH.GeneralLibrary;
 using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.SoftDog;
-using Newtonsoft.Json;
 
 namespace HH.TiYu.Model
 {
@@ -138,15 +127,8 @@ namespace HH.TiYu.Model
 
         public decimal Convert(decimal value, int 小数位数)
         {
-            if (UserSettings.Current != null && UserSettings.Current.成绩舍入模式 == 1)
-            {
-                return Math.Round(value, 小数位数);
-            }
-            if (UserSettings.Current != null && UserSettings.Current.成绩舍入模式 == 2)
-            {
-                double num = Math.Floor((double)(value * System.Convert.ToDecimal(Math.Pow(10.0, 小数位数)))) / Math.Pow(10.0, 小数位数);
-                return (decimal)num;
-            }
+            // 采集器不使用评分相关的舍入模式：原 UserSettings.Current 在采集端恒为 null，
+            // 两个分支恒不执行，保留其实际生效的默认行为（向上取整）。
             double num2 = Math.Ceiling((double)(value * System.Convert.ToDecimal(Math.Pow(10.0, 小数位数)))) / Math.Pow(10.0, 小数位数);
             return (decimal)num2;
         }
