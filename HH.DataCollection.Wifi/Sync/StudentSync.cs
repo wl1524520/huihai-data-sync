@@ -32,7 +32,7 @@ namespace HH.DataCollection.Wifi.Sync
         public void Run(Action<string> report, Func<bool> stopRequested)
         {
             report("开始同步学生信息");
-            var info = _api.GetSyncInfo(false);
+            var info = _api.GetSyncInfo(true); // 与成绩上传一致允许重试,一次网络抖动不至于整轮失败
             report(info.ToString());
 
             var facility = GetFacility();
@@ -119,7 +119,7 @@ namespace HH.DataCollection.Wifi.Sync
                             }
                         }
                         if (matchCount > 1)
-                            throw new SyncException("本地身份证冲突:身份证 " + st.IdNumber + " 对应多条学生记录");
+                            throw new SyncException("本地身份证冲突:身份证 " + MaskIdNumber(st.IdNumber) + " 对应多条学生记录");
 
                         if (existingRowid == null)
                         {
@@ -135,7 +135,8 @@ namespace HH.DataCollection.Wifi.Sync
                                 if (conflict != null)
                                     throw new SyncException(string.Format(
                                         "本地学号冲突:学号 {0} 已关联身份证 {1},无法同步身份证 {2}",
-                                        st.StudentNo, NormalizeIdNumber(Convert.ToString(conflict)), st.IdNumber));
+                                        st.StudentNo, MaskIdNumber(NormalizeIdNumber(Convert.ToString(conflict))),
+                                        MaskIdNumber(st.IdNumber)));
                             }
                             using (var cmd = conn.CreateCommand())
                             {
@@ -225,6 +226,14 @@ namespace HH.DataCollection.Wifi.Sync
         private static string NormalizeIdNumber(string value)
         {
             return (value ?? "").Trim().Replace('x', 'X');
+        }
+
+        /// <summary>身份证打码(前 6 后 4),完整证件号不进入日志(接口文档 §1.2)。</summary>
+        internal static string MaskIdNumber(string idNumber)
+        {
+            if (string.IsNullOrEmpty(idNumber)) return "";
+            if (idNumber.Length <= 10) return new string('*', idNumber.Length);
+            return idNumber.Substring(0, 6) + new string('*', idNumber.Length - 10) + idNumber.Substring(idNumber.Length - 4);
         }
 
         private class FacilityTarget

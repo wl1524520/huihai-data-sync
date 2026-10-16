@@ -112,5 +112,7 @@
     <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)BLL.dll&quot;" />
     <!-- 补丁:把输出目录 Model.dll 拷贝件中硬编码的 HHRawScore.db 改为 HuihaiTiyu.db(原始成绩落主库,单库方案) -->
     <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)Model.dll&quot;" />
+    <!-- 补丁:摘除输出目录 DAL.dll 拷贝件对 StudentPhoto 表的全部依赖(精简库不建该表) -->
+    <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)DAL.dll&quot;" />
   </Target>
 </Project>

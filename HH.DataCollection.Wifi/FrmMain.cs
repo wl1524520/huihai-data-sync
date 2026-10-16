@@ -175,6 +175,18 @@ namespace HH.DataCollection.Wifi
         private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (e.CloseReason != CloseReason.UserClosing) return;
+            // 采集窗不挂主界面为所有者,主窗关闭时它可能还在收成绩;退出前必须确认,
+            // 否则未落盘的成绩只剩程序退出时的短暂 flush 窗口
+            if (_collectForm != null && !_collectForm.IsDisposed)
+            {
+                if (MessageBox.Show("数据采集窗口仍在进行,退出可能导致未落盘的成绩丢失。\r\n确定要退出吗?",
+                        "确认退出", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) != DialogResult.OK)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+                _collectForm.Close();
+            }
             if (MessageBox.Show("确定要退出采集程序吗?", "退出确认",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                 e.Cancel = true;
@@ -189,6 +201,13 @@ namespace HH.DataCollection.Wifi
             if (_collectForm != null && !_collectForm.IsDisposed)
             {
                 _collectForm.Activate();
+                return;
+            }
+            // 同步任务(尤其下发名单)会改写内存学生名单,与采集下发主机读同一份数据,错峰进行
+            if (FrmSyncTasks.IsBusy)
+            {
+                MessageBox.Show("同步任务正在执行,请等待任务结束后再开始采集。", "任务进行中",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             _collectForm = new FrmHosts { StartPosition = FormStartPosition.CenterScreen };
@@ -207,6 +226,8 @@ namespace HH.DataCollection.Wifi
             }
             catch
             {
+                // 打开失败:释放窗体并置空字段,避免泄漏后下次进入误判为"已打开"
+                _collectForm.Dispose();
                 _collectForm = null;
                 throw;
             }
@@ -270,6 +291,16 @@ namespace HH.DataCollection.Wifi
             {
                 Cursor.Current = pre;
             }
+            // 学校绑定跟随切换后的项目,否则同步下来的学生会写进旧项目
+            try
+            {
+                var rebind = SyncConfig.RebindFacilityForProject(PhysicalProject.Current.ID);
+                if (rebind != null) Program.WriteLog("INFO", "切换项目:" + rebind);
+            }
+            catch (Exception ex)
+            {
+                Program.WriteLog("WARN", "切换项目后重建学校绑定失败:" + ex.Message);
+            }
             ReloadAll();
         }
 
@@ -315,7 +346,7 @@ namespace HH.DataCollection.Wifi
             try
             {
                 var counts = ScoreUpload.CountByUploaded(PhysicalProject.Current.ID);
-                _lblPending.Text = string.Format("待上传 {0} 条 / 已上传 {1} 条", counts.Item1, counts.Item2);
+                _lblPending.Text = string.Format("待上传 {0} 条 / 已上传 {1} 条(可上传口径)", counts.Item1, counts.Item2);
             }
             catch { _lblPending.Text = ""; }
         }
@@ -370,8 +401,9 @@ namespace HH.DataCollection.Wifi
                     string keyword = _txtSearch.Text.Trim();
                     if (keyword.Length > 0)
                     {
-                        sql += " AND (StudentID LIKE @k OR Name LIKE @k)";
-                        cmd.Parameters.AddWithValue("@k", "%" + keyword + "%");
+                        // ESCAPE '\':用户输入的 %/_ 按字面匹配,不当作 LIKE 通配符
+                        sql += " AND (StudentID LIKE @k ESCAPE '\\' OR Name LIKE @k ESCAPE '\\')";
+                        cmd.Parameters.AddWithValue("@k", "%" + EscapeLike(keyword) + "%");
                     }
                     sql += " ORDER BY ClassName, StudentID";
                     cmd.CommandText = sql;
@@ -419,12 +451,24 @@ namespace HH.DataCollection.Wifi
             _gridScores.DataSource = table;
         }
 
+        /// <summary>转义 LIKE 关键字中的通配符(配合 ESCAPE '\' 使用)。</summary>
+        private static string EscapeLike(string keyword)
+        {
+            return keyword.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
+        }
+
         /// <summary>从嵌入资源加载工具栏图标(提取自原软件 GuojiaTiZhi.exe)。</summary>
         private static Image LoadIcon(string name)
         {
-            var stream = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream("HH.DataCollection.Wifi.Resources." + name + ".png");
-            return stream != null ? Image.FromStream(stream) : null;
+            using (var stream = Assembly.GetExecutingAssembly()
+                .GetManifestResourceStream("HH.DataCollection.Wifi.Resources." + name + ".png"))
+            {
+                if (stream == null) return null;
+                // Image.FromStream 要求流在 Image 生命周期内保持打开(MSDN);
+                // 拷贝成独立 Bitmap 后流即可安全释放
+                using (var img = Image.FromStream(stream))
+                    return new Bitmap(img);
+            }
         }
     }
 }

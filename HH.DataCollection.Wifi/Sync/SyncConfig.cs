@@ -31,7 +31,7 @@ namespace HH.DataCollection.Wifi.Sync
                         while (reader.Read())
                         {
                             string key = Convert.ToString(reader["config_key"]);
-                            string value = Convert.ToString(reader["config_value"]) ?? "";
+                            string value = Convert.ToString(reader["config_value"]);
                             switch (key)
                             {
                                 case "api_url": conf.ApiUrl = value; break;
@@ -52,19 +52,25 @@ namespace HH.DataCollection.Wifi.Sync
             using (var conn = new SQLiteConnection(LocalDb.ConnStr))
             {
                 conn.Open();
-                SavePair(conn, "api_url", ApiUrl);
-                SavePair(conn, "api_token", ApiToken);
-                SavePair(conn, "source_facility_id", SourceFacilityId);
-                SavePair(conn, "school_name", SchoolName);
+                // 四条配置一个事务,避免中途断电留下半截配置
+                using (var tx = conn.BeginTransaction())
+                {
+                    SavePair(conn, tx, "api_url", ApiUrl);
+                    SavePair(conn, tx, "api_token", ApiToken);
+                    SavePair(conn, tx, "source_facility_id", SourceFacilityId);
+                    SavePair(conn, tx, "school_name", SchoolName);
+                    tx.Commit();
+                }
             }
         }
 
-        private static void SavePair(SQLiteConnection conn, string key, string value)
+        private static void SavePair(SQLiteConnection conn, SQLiteTransaction tx, string key, string value)
         {
             using (var cmd = conn.CreateCommand())
             {
                 // 捆绑的 SQLite 引擎为 3.8.6,不支持 3.24+ 的 UPSERT(ON CONFLICT...DO UPDATE);
                 // config_key 是主键,用 INSERT OR REPLACE 达到同样的覆盖效果
+                cmd.Transaction = tx;
                 cmd.CommandText = "INSERT OR REPLACE INTO sync_config (config_key, config_value) VALUES (@k, @v)";
                 cmd.Parameters.AddWithValue("@k", key);
                 cmd.Parameters.AddWithValue("@v", value ?? "");
@@ -123,6 +129,34 @@ namespace HH.DataCollection.Wifi.Sync
                 }
                 return id;
             }
+        }
+
+        /// <summary>
+        /// 确保学校绑定落在当前项目下:source_facility_id 指向的 Facility 不属于当前项目时
+        /// (跨学年/切换项目后,学生若写进旧项目则新项目永远看不到),按学校名在当前项目下
+        /// 查找或重建 Facility 并更新绑定。绑定发生变化的返回描述文本(供记日志),
+        /// 未变化或未绑定过返回 null。
+        /// </summary>
+        public static string RebindFacilityForProject(string projectID)
+        {
+            var conf = Load();
+            if (string.IsNullOrWhiteSpace(conf.SourceFacilityId) || string.IsNullOrWhiteSpace(conf.SchoolName))
+                return null;
+            using (var conn = new SQLiteConnection(LocalDb.ConnStr))
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SELECT ProjectID FROM Facility WHERE ID = @id LIMIT 1";
+                    cmd.Parameters.AddWithValue("@id", conf.SourceFacilityId);
+                    object row = cmd.ExecuteScalar();
+                    if (row != null && Convert.ToString(row) == projectID)
+                        return null; // 绑定已在当前项目下
+                }
+            }
+            conf.SourceFacilityId = EnsureFacility(conf.SchoolName, projectID);
+            conf.Save();
+            return "学校绑定已跟随当前项目重建:" + conf.SchoolName;
         }
     }
 

@@ -89,8 +89,7 @@ namespace HH.DataCollection.Wifi.Sync
                 {
                     cmd.CommandText =
                         "SELECT HEX(ID) AS Mono, StudentID, TestID, Score, CreateTime FROM StudentRawScore " +
-                        "WHERE ProjectID = @p AND Uploaded = 0 AND SpecialType IS NULL AND Score IS NOT NULL " +
-                        "AND TestID IN (" + string.Join(",", UploadableItems) + ") " +
+                        "WHERE ProjectID = @p AND Uploaded = 0 AND " + UploadableWhere + " " +
                         "ORDER BY CreateTime";
                     cmd.Parameters.AddWithValue("@p", _projectID);
                     using (var reader = cmd.ExecuteReader())
@@ -153,7 +152,15 @@ namespace HH.DataCollection.Wifi.Sync
             }
         }
 
-        /// <summary>重置上传标记:清当前项目全部 Uploaded,用于补传。</summary>
+        /// <summary>
+        /// 可上传成绩的过滤条件,与 UploadableItems 白名单同一份来源:
+        /// 白名单科目 + 非特殊成绩 + 有成绩值。统计/重置必须与上传同口径,
+        /// 否则永不上传的行(白名单外科目、特殊成绩)会永远计入"待上传"误导现场。
+        /// </summary>
+        private static readonly string UploadableWhere =
+            "SpecialType IS NULL AND Score IS NOT NULL AND TestID IN (" + string.Join(",", UploadableItems) + ")";
+
+        /// <summary>重置上传标记:清当前项目全部可上传成绩的 Uploaded,用于补传。</summary>
         public static int ResetUploaded(string projectID)
         {
             using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
@@ -161,34 +168,33 @@ namespace HH.DataCollection.Wifi.Sync
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "UPDATE StudentRawScore SET Uploaded = 0 WHERE ProjectID = @p";
+                    cmd.CommandText = "UPDATE StudentRawScore SET Uploaded = 0 WHERE ProjectID = @p AND " + UploadableWhere;
                     cmd.Parameters.AddWithValue("@p", projectID);
                     return cmd.ExecuteNonQuery();
                 }
             }
         }
 
-        /// <summary>统计当前项目待上传/已上传条数(界面展示用)。</summary>
+        /// <summary>统计当前项目待上传/已上传条数(与上传同口径,界面展示用)。</summary>
         public static Tuple<int, int> CountByUploaded(string projectID)
         {
             using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
             {
                 conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT Uploaded, COUNT(*) FROM StudentRawScore WHERE ProjectID = @p GROUP BY Uploaded";
-                    cmd.Parameters.AddWithValue("@p", projectID);
-                    int pending = 0, done = 0;
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            if (Convert.ToInt32(reader[0]) == 0) pending = Convert.ToInt32(reader[1]);
-                            else done = Convert.ToInt32(reader[1]);
-                        }
-                    }
-                    return Tuple.Create(pending, done);
-                }
+                int pending = CountUploadable(conn, projectID, 0);
+                int done = CountUploadable(conn, projectID, 1);
+                return Tuple.Create(pending, done);
+            }
+        }
+
+        private static int CountUploadable(SQLiteConnection conn, string projectID, int uploaded)
+        {
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COUNT(*) FROM StudentRawScore WHERE ProjectID = @p " +
+                                  "AND Uploaded = " + uploaded + " AND " + UploadableWhere;
+                cmd.Parameters.AddWithValue("@p", projectID);
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
 

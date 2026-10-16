@@ -52,12 +52,17 @@ namespace HH.DataCollection.Wifi.Db
         public static void SeedPhysicalItems()
         {
             string script = Path.Combine(Application.StartupPath, "DbUpdate_Sqlite.sql");
-            if (!File.Exists(script)) return;
+            if (!File.Exists(script))
+            {
+                Program.WriteLog("WARN", "科目字典种子脚本缺失:" + script + "(采集界面将没有科目可选)");
+                return;
+            }
             string sql;
             using (var reader = new StreamReader(script, Encoding.GetEncoding(936)))
             {
                 sql = reader.ReadToEnd();
             }
+            int seeded = 0, failed = 0;
             using (var conn = new SQLiteConnection(ConnStr))
             {
                 conn.Open();
@@ -68,10 +73,13 @@ namespace HH.DataCollection.Wifi.Db
                     try
                     {
                         Execute(conn, s);
+                        seeded++;
                     }
-                    catch { /* 单条失败忽略,与原软件升级行为的容错一致 */ }
+                    catch { failed++; /* 单条失败忽略,与原软件升级行为的容错一致 */ }
                 }
             }
+            if (seeded == 0)
+                Program.WriteLog("WARN", "科目字典种子为空(成功 0 条,失败 " + failed + " 条),采集界面将没有科目可选");
         }
 
         /// <summary>

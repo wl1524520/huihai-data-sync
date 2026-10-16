@@ -69,12 +69,27 @@ namespace HH.DataCollection.Wifi.Sync
             Controls.Add(_txtLog);
 
             Load += (s, e) => RefreshPendingCount();
-            FormClosing += (s, e) => _stopRequested = true;
+            FormClosing += FrmSyncTasks_FormClosing;
+        }
+
+        /// <summary>
+        /// 任务进行中禁止关窗(后台回调对已销毁窗体 BeginInvoke 会崩进程);
+        /// 关窗请求先置停止标记,任务收尾后下次关闭才放行。
+        /// </summary>
+        private void FrmSyncTasks_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _stopRequested = true;
+            if (IsBusy)
+            {
+                e.Cancel = true;
+                MessageBox.Show("同步任务正在执行,已请求停止;请等待任务结束后再关闭。",
+                    "任务进行中", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void BtnReset_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("确定要清除当前项目的全部上传标记吗?\r\n清除后所有成绩将在下次上传时重新上传(平台按暂存身份幂等接收,不会重复计分)。",
+            if (MessageBox.Show("确定要清除当前项目全部可上传成绩的上传标记吗?\r\n清除后这些成绩将在下次上传时重新上传(平台按暂存身份幂等接收,不会重复计分)。",
                     "重置上传标记", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
                 return;
             int n = ScoreUpload.ResetUploaded(PhysicalProject.Current.ID);
@@ -88,6 +103,12 @@ namespace HH.DataCollection.Wifi.Sync
             {
                 _stopRequested = true;
                 Log("正在停止自动上传……");
+                return;
+            }
+            // 别的任务在跑时不进入"停止自动上传"状态,避免按钮停在错误状态
+            if (_worker != null && _worker.IsAlive)
+            {
+                MessageBox.Show("已有同步任务在执行,请先停止。", "任务进行中", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             _autoUpload = true;
@@ -124,6 +145,18 @@ namespace HH.DataCollection.Wifi.Sync
                 try
                 {
                     upload.RunOnce(report, stop);
+                }
+                catch (SyncAuthException ex)
+                {
+                    // 令牌失效:按接口文档 401 停止,不用同一坏令牌无限重试
+                    report("身份认证失败,自动上传已停止(请到同步设置检查令牌):" + ex.Message);
+                    break;
+                }
+                catch (SyncFatalException ex)
+                {
+                    // 学校/项目不存在:重试无意义,直接停止
+                    report("配置错误,自动上传已停止(请到同步设置重新保存):" + ex.Message);
+                    break;
                 }
                 catch (SyncException ex)
                 {
@@ -175,12 +208,20 @@ namespace HH.DataCollection.Wifi.Sync
                 {
                     _autoUpload = false;
                     IsBusy = false;
-                    BeginInvoke(new Action(() =>
+                    // 窗体可能已被销毁(关窗被拒的缝隙场景也存在),回调前先防御
+                    try
                     {
-                        SetButtonsEnabled(true);
-                        _btnAutoUpload.Text = "开始自动上传";
-                        RefreshPendingCount();
-                    }));
+                        if (!IsDisposed && IsHandleCreated)
+                        {
+                            BeginInvoke(new Action(() =>
+                            {
+                                SetButtonsEnabled(true);
+                                _btnAutoUpload.Text = "开始自动上传";
+                                RefreshPendingCount();
+                            }));
+                        }
+                    }
+                    catch (InvalidOperationException) { /* 窗体已销毁,放弃收尾刷新(含 ObjectDisposedException) */ }
                 }
             });
             _worker.IsBackground = true;
@@ -201,18 +242,24 @@ namespace HH.DataCollection.Wifi.Sync
             try
             {
                 var counts = ScoreUpload.CountByUploaded(PhysicalProject.Current.ID);
-                _lblPending.Text = string.Format("当前项目成绩:待上传 {0} 条,已上传 {1} 条", counts.Item1, counts.Item2);
+                _lblPending.Text = string.Format("当前项目可上传成绩:待上传 {0} 条,已上传 {1} 条", counts.Item1, counts.Item2);
             }
             catch { _lblPending.Text = ""; }
         }
 
         private void Log(string message)
         {
-            if (InvokeRequired)
+            // 后台线程回调:窗体已销毁时直接丢弃,不向已释放句柄 BeginInvoke(会崩进程)
+            if (IsDisposed) return;
+            try
             {
-                BeginInvoke(new Action(() => Log(message)));
-                return;
+                if (InvokeRequired)
+                {
+                    BeginInvoke(new Action(() => Log(message)));
+                    return;
+                }
             }
+            catch (InvalidOperationException) { return; } // 窗体已销毁(含 ObjectDisposedException)
             // 日志限长,防止长时间运行撑爆文本框
             if (_txtLog.Lines.Length > 500)
             {
