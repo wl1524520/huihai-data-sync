@@ -11,7 +11,8 @@ namespace HH.DataCollection.Wifi.Db
     /// 库文件为程序目录下的 HuihaiTiyu.db,首次启动时创建,只含采集+同步必需的 8 张表:
     /// PhysicalProject / Facility / Division / PhysicalItem / ProjectPhysicalItems /
     /// Student / StudentRawScore(唯一成绩表,带 Uploaded 上传标记) / sync_config。
-    /// 表结构与 Guojiatizhi 原库保持一致(DAL 列映射编译死在 DLL 内,列名类型不能改)。
+    /// 表结构与原模型保持兼容；DAL 映射源码位于 HH.TiYu.DAL/LinqProvider/DataMapping.xml。
+    /// 修改列名/类型时须同步考虑实体模型、映射和已有数据库迁移。
     /// </summary>
     public static class LocalDb
     {
@@ -200,7 +201,7 @@ namespace HH.DataCollection.Wifi.Db
             //   已去首尾空白,最多 60 字符)。链路闭环:
             //   平台 test_no → 本列 → 下发主机的 HostStudent.StudentID → 主机回传
             //   PhysicalRecord.StudentNumber → StudentRawScore.StudentID → 上传 test_no
-            // 以下 10 列为"兼容占位列":原软件 DAL.dll 内嵌 DataMapping.xml 的 Student 列映射
+            // 以下 10 列为"兼容占位列":HH.TiYu.DAL 的 DataMapping.xml 中 Student 列映射
             // 强制要求它们物理存在(缺失会让 GetFullInfo(23) 的学生 SELECT 直接报错),但平台不给、
             // 本地也不产生,故一律恒 NULL、同步层永不写入:
             //   CardID BirthDay IDNumber Nation District ClassID IsAbsent Graduation Note Address

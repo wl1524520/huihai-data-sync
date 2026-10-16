@@ -56,10 +56,6 @@
       <HintPath>$(HuiHaiDir)BLL.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="DAL">
-      <HintPath>$(HuiHaiDir)DAL.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UI">
       <HintPath>$(HuiHaiDir)UI.dll</HintPath>
       <Private>False</Private>
@@ -102,17 +98,26 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HH.TiYu.DAL\HH.TiYu.DAL.csproj">
+      <Project>{C4E3D764-8282-4A96-B44E-289346D9EF50}</Project>
+      <Name>HH.TiYu.DAL</Name>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <!-- 把运行所需的全部 DLL、配置文件从本仓库 lib 复制到输出目录(仅更新较新文件) -->
-    <Exec Command="xcopy &quot;$(HuiHaiDir)*.dll&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
+    <!-- 从本仓库 lib 复制运行依赖和配置；DAL 使用源码项目的构建产物。 -->
+    <!-- DAL 由源码项目构建，禁止旧 lib/DAL.dll 覆盖项目引用的产物。 -->
+    <ItemGroup>
+      <RuntimeLibraries Include="$(HuiHaiDir)*.dll" Exclude="$(HuiHaiDir)DAL.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RuntimeLibraries)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)config.xml&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)DbUpdate_SQLITE.sql&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
     <!-- 补丁:摘空输出目录 BLL.dll 拷贝件中 PhysicalScoresSavingService.AddScore/AddScores,主库成绩表不写 -->
     <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)BLL.dll&quot;" />
     <!-- 补丁:把输出目录 Model.dll 拷贝件中硬编码的 HHRawScore.db 改为 HuihaiTiyu.db(原始成绩落主库,单库方案) -->
     <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)Model.dll&quot;" />
-    <!-- 补丁:摘除输出目录 DAL.dll 拷贝件对 StudentPhoto 表的全部依赖(精简库不建该表) -->
-    <Exec Command="&quot;$(SolutionDir)tools\PatchBll.exe&quot; &quot;$(TargetDir)DAL.dll&quot;" />
   </Target>
 </Project>

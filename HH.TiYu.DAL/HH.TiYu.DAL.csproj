@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{C4E3D764-8282-4A96-B44E-289346D9EF50}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>HH.TiYu.DAL</RootNamespace>
+    <AssemblyName>DAL</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>4</LangVersion>
+    <FileAlignment>512</FileAlignment>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Model">
+      <HintPath>..\lib\Model.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="LJH.GeneralLibrary">
+      <HintPath>..\lib\LJH.GeneralLibrary.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data.SQLite">
+      <HintPath>..\lib\System.Data.SQLite.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="IBatchProvider.cs" />
+    <Compile Include="ProviderFactory.cs" />
+    <Compile Include="LinqProvider\AlarmProvider.cs" />
+    <Compile Include="LinqProvider\AppraiseTemplateProvider.cs" />
+    <Compile Include="LinqProvider\AutoNumberCreater.cs" />
+    <Compile Include="LinqProvider\AutoCreateNumber.cs" />
+    <Compile Include="LinqProvider\DivisionProvider.cs" />
+    <Compile Include="LinqProvider\FacilityProvider.cs" />
+    <Compile Include="LinqProvider\OperatorProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalItemProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalProjectProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalScoreProvider.cs" />
+    <Compile Include="LinqProvider\ProjectPhysicalItemProvider.cs" />
+    <Compile Include="LinqProvider\RoleProvider.cs" />
+    <Compile Include="LinqProvider\SportsProvider.cs" />
+    <Compile Include="LinqProvider\SportsStudentPairProvider.cs" />
+    <Compile Include="LinqProvider\SportSuggestionProvider.cs" />
+    <Compile Include="LinqProvider\StandardProvider.cs" />
+    <Compile Include="LinqProvider\StudentCheckRecordProvider.cs" />
+    <Compile Include="LinqProvider\StudentGroupProvider.cs" />
+    <Compile Include="LinqProvider\StudentPhotoProvider.cs" />
+    <Compile Include="LinqProvider\StudentProvider.cs" />
+    <Compile Include="LinqProvider\SysparameterProvider.cs" />
+    <Compile Include="LinqProvider\StudentGroupPairProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalProjectStateProvider.cs" />
+    <Compile Include="LinqProvider\DiscussionProvider.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="LinqProvider\DataMapping.xml">
+      <LogicalName>HH.TiYu.DAL.LinqProvider.DataMapping.xml</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
