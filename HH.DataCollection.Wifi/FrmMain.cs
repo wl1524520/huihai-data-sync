@@ -271,7 +271,7 @@ namespace HH.DataCollection.Wifi
                 return;
             }
             var projectBLL = new PhysicalProjectBLL(AppSettings.Current.ConnStr);
-            var projects = projectBLL.获取学生体测项目(new PhysicalProjectSearchCondition { Class = null }).QueryObjects;
+            var projects = projectBLL.GetStudentPhysicalProjects(new PhysicalProjectSearchCondition { Class = null }).QueryObjects;
             if (projects == null || projects.Count == 0) return;
             using (var frm = new FrmSelectProject(projects))
             {
@@ -285,7 +285,7 @@ namespace HH.DataCollection.Wifi
             try
             {
                 // 重载内存名单与科目,供采集下发主机使用(与启动时同一加载项组合)
-                projectBLL.GetFullInfo(PhysicalProject.Current, (项目加载项)23);
+                projectBLL.GetFullInfo(PhysicalProject.Current, (ProjectLoadOptions)23);
             }
             finally
             {

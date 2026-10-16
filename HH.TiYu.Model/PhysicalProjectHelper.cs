@@ -14,7 +14,7 @@ namespace HH.TiYu.Model
 {
     public static class PhysicalProjectHelper
     {
-        public static List<ProjectPhysicalItem> 创建学生体测项目(Sex sex)
+        public static List<ProjectPhysicalItem> CreateStudentPhysicalProjects(Sex sex)
         {
             List<ProjectPhysicalItem> list = new List<ProjectPhysicalItem>();
             list.Add(CreateDefaultFormula(GradeHelper.一年级, sex));

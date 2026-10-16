@@ -221,6 +221,7 @@ internal static class VerifyBusiness
         using (var before = AssemblyDefinition.ReadAssembly(originalPath))
         using (var after = AssemblyDefinition.ReadAssembly(sourcePath))
         {
+            LegacyApiNames.Normalize(before);
             Require(before.Name.FullName == after.Name.FullName, "Assembly identity differs: " + sourcePath);
             var oldTypes = Types(before.MainModule.Types).ToDictionary(t => t.FullName);
             var newTypes = Types(after.MainModule.Types).ToDictionary(t => t.FullName);
@@ -272,7 +273,7 @@ internal static class VerifyBusiness
         foreach (Sex sex in new[] { Sex.Male, Sex.Female })
         {
             foreach (int id in new[] { PhysicalItem._800米, PhysicalItem._1000米, 1 }) Observe("item/" + sex + "/" + id, PhysicalItem.ConvertPhysicalItem(new Student { Sex = sex }, id));
-            foreach (var p in PhysicalProjectHelper.创建学生体测项目(sex)) Observe("formula/" + sex + "/" + p.Grade, p.PhysicalItems + "|" + p.TotalFormula);
+            foreach (var p in PhysicalProjectHelper.CreateStudentPhysicalProjects(sex)) Observe("formula/" + sex + "/" + p.Grade, p.PhysicalItems + "|" + p.TotalFormula);
         }
         // Student 的 Note JSON 扩展位(考试科目/引体向上改判)已随本轮瘦身整体移除:
         // 依赖的 Note 列既不落库也无写入方,行为快照里不再有学生扩展位相关的观察项。

@@ -41,7 +41,7 @@ namespace HH.TiYu.SQLite
 
 		public DateTime CreateTime { get; set; }
 
-		public 成绩来源 ScoreFrom { get; set; }
+		public ScoreSource ScoreFrom { get; set; }
 
 		public string HostSn { get; set; }
 

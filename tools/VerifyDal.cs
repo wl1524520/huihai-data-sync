@@ -202,7 +202,7 @@ internal static class VerifyDal
         var student = new Student { ID = Guid.NewGuid(), StudentID = testNo, ProjectID = project.ID, FacilityID = "F1", Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Append).Result == ResultCode.Successful, "Student batch insert");
         PhysicalProject.Current = project;
-        new PhysicalProjectBLL(Uri).GetFullInfo(project, (项目加载项)23);
+        new PhysicalProjectBLL(Uri).GetFullInfo(project, (ProjectLoadOptions)23);
         Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllFacilities.Count == 1 && project.AllDivisions.Count == 1 && project.AllPhysicalItems.Count > 0, "Production startup load flags 23");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, StudentIDs = new List<string> { testNo } }).QueryObjects.Count == 1, "test_no filter");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, School = "absent" }).QueryObjects.Count == 0, "School filter");

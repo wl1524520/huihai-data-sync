@@ -76,7 +76,7 @@ class VerifyDevice
           new HostStudent{StudentID="1234567890123456789012345",Name="测试学生",Sex="男",Grade=5,ClassName="一年级一班",CardID="987654321012345"},
           new HostStudent{StudentID="AB123",Name="",Sex="0",Grade=0,ClassName=null,CardID=null}
         };
-        foreach(string method in new[]{"CreateDownloadStudentsCmd","Create下载测试学生Cmd"}) {
+        foreach(string method in new[]{"CreateDownloadStudentsCmd","CreateDownloadTestStudentsCmd"}) {
           object cmd=Call(downloader,method,(byte)7,students);
           foreach(var f in cmd.GetType().GetFields(All).OrderBy(f=>f.Name))Observe(method+"."+f.Name,f.GetValue(cmd));
         }

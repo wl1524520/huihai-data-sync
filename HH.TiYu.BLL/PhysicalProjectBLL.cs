@@ -12,8 +12,8 @@ namespace HH.TiYu.BLL
     public class PhysicalProjectBLL : BLLBase<string, PhysicalProject>
     {
         /// <summary>本轮精简已移除的加载项；调用方传入即明确报不支持，避免静默成功后拿不到数据。</summary>
-        private const 项目加载项 已移除加载项 = 项目加载项.学生成绩 | 项目加载项.评分标准 | 项目加载项.运动会分组
-            | 项目加载项.综合评价 | 项目加载项.运动建议 | 项目加载项.学生分组;
+        private const ProjectLoadOptions 已移除加载项 = ProjectLoadOptions.学生成绩 | ProjectLoadOptions.评分标准 | ProjectLoadOptions.运动会分组
+            | ProjectLoadOptions.综合评价 | ProjectLoadOptions.运动建议 | ProjectLoadOptions.学生分组;
 
         public PhysicalProjectBLL(string repoUri)
             : base(repoUri)
@@ -29,13 +29,13 @@ namespace HH.TiYu.BLL
             return base.Delete(info);
         }
 
-        public void GetFullInfo(PhysicalProject project, 项目加载项 items)
+        public void GetFullInfo(PhysicalProject project, ProjectLoadOptions items)
         {
-            if ((items & 已移除加载项) > (项目加载项)0)
+            if ((items & 已移除加载项) > (ProjectLoadOptions)0)
             {
                 throw new NotSupportedException("采集器不再支持以下项目加载项: 正式学生成绩、评分标准、运动会分组、综合评价、运动建议、学生分组");
             }
-            if ((items & 项目加载项.区域信息) > (项目加载项)0)
+            if ((items & ProjectLoadOptions.区域信息) > (ProjectLoadOptions)0)
             {
                 if (project.AllDivisions == null)
                 {
@@ -51,7 +51,7 @@ namespace HH.TiYu.BLL
                     project.AllDivisions.AddRange(items2.QueryObjects.OrderBy((Division it) => it.Name));
                 }
             }
-            if ((items & 项目加载项.学校信息) > (项目加载项)0)
+            if ((items & ProjectLoadOptions.学校信息) > (ProjectLoadOptions)0)
             {
                 if (project.AllFacilities == null)
                 {
@@ -68,7 +68,7 @@ namespace HH.TiYu.BLL
                     project.AllFacilities.AddRange(items3.QueryObjects.OrderBy((Facility it) => it.Name));
                 }
             }
-            if ((items & 项目加载项.学生信息) > (项目加载项)0)
+            if ((items & ProjectLoadOptions.学生信息) > (ProjectLoadOptions)0)
             {
                 QueryResultList<Student> items4 = new StudentBLL(base.RepoUri).GetItems(new StudentSearchCondition
                 {
@@ -81,7 +81,7 @@ namespace HH.TiYu.BLL
                     project.AddStudents(queryObjects);
                 }
             }
-            if ((items & 项目加载项.测试科目) > (项目加载项)0)
+            if ((items & ProjectLoadOptions.测试科目) > (ProjectLoadOptions)0)
             {
                 if (project.AllPhysicalItems == null)
                 {
@@ -114,12 +114,12 @@ namespace HH.TiYu.BLL
             CommandResult commandResult = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, Guid>>(base.RepoUri).BatchAdd(items, project.ID, ImportOption.Override);
             if (commandResult.Result == ResultCode.Successful)
             {
-                GetFullInfo(project, 项目加载项.测试科目);
+                GetFullInfo(project, ProjectLoadOptions.测试科目);
             }
             return commandResult;
         }
 
-        public QueryResultList<PhysicalProject> 获取学生体测项目(PhysicalProjectSearchCondition con)
+        public QueryResultList<PhysicalProject> GetStudentPhysicalProjects(PhysicalProjectSearchCondition con)
         {
             if (con != null)
             {

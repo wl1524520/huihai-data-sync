@@ -123,7 +123,7 @@ namespace HH.TiYu.UI
 							}
 							if (StudentRawScoresSavingService.Current != null)
 							{
-								StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, 成绩来源.汇海200型主机, _Reader.HostSN);
+								StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.汇海200型主机, _Reader.HostSN);
 							}
 						}
 						FileLog.Log("原始采集记录", record.ToString());
@@ -350,7 +350,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 查看统计信息ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void ViewStatisticsMenuItem_Click(object sender, EventArgs e)
 		{
 			int startSN = 0;
 			int num = 0;
@@ -553,7 +553,7 @@ namespace HH.TiYu.UI
 			this.保存所有记录ToolStripMenuItem.Click += new System.EventHandler(btnExport_Click);
 			this.查看统计信息ToolStripMenuItem.Name = "查看统计信息ToolStripMenuItem";
 			resources.ApplyResources(this.查看统计信息ToolStripMenuItem, "查看统计信息ToolStripMenuItem");
-			this.查看统计信息ToolStripMenuItem.Click += new System.EventHandler(查看统计信息ToolStripMenuItem_Click);
+			this.查看统计信息ToolStripMenuItem.Click += new System.EventHandler(ViewStatisticsMenuItem_Click);
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[1] { this.lblCount });
 			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";

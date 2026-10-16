@@ -13,7 +13,7 @@ using LJH.GeneralLibrary.Core.DAL;
 namespace HH.TiYu.Model
 {
     [Flags]
-    public enum 项目加载项
+    public enum ProjectLoadOptions
     {
         区域信息 = 1,
         学校信息 = 2,

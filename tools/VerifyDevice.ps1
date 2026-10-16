@@ -14,6 +14,7 @@ foreach($variant in @('source','legacy')){
   $ljh=Join-Path $repo "LJH.GeneralLibrary\bin\$Configuration\LJH.GeneralLibrary.dll"
   if(Test-Path $ljh){Copy-Item $ljh $dir -Force}
  }
+ if($variant -eq 'legacy'){ & (Join-Path $PSScriptRoot 'PrepareLegacyApi.ps1') -Directory $dir }
  & (Join-Path $framework 'csc.exe') /nologo /target:exe /platform:x86 /langversion:4 /codepage:65001 "/out:$dir\VerifyDevice.exe" /reference:System.Core.dll "/reference:$dir\Device.dll" (Join-Path $PSScriptRoot 'VerifyDevice.cs')
  if($LASTEXITCODE -ne 0){throw 'Device verification compile failed'}
  Push-Location $dir

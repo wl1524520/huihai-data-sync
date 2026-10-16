@@ -27,6 +27,7 @@ internal static class VerifySQLite
     {
         using(var old=AssemblyDefinition.ReadAssembly(original)) using(var now=AssemblyDefinition.ReadAssembly(typeof(StudentRawScore).Assembly.Location))
         {
+            LegacyApiNames.Normalize(old);
             Check(old.Name.FullName==now.Name.FullName,"identity");
             foreach(var t in old.MainModule.Types.Where(t=>t.IsPublic))
             {
@@ -46,7 +47,7 @@ internal static class VerifySQLite
             // Both processes use source Model's production path; only the SQLite assembly varies.
             var svc=new StudentRawScoresSavingService();
             int?[] specials={null,160,161,162,999};
-            for(int i=0;i<specials.Length;i++) { var rec=Record(i);rec.SpecialResult=specials[i];svc.AddScore("P1",rec,(成绩来源)0,"HOST"); }
+            for(int i=0;i<specials.Length;i++) { var rec=Record(i);rec.SpecialResult=specials[i];svc.AddScore("P1",rec,(ScoreSource)0,"HOST"); }
             var list=(List<StudentRawScore>)typeof(StudentRawScoresSavingService).GetField("_UnsavedItems",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(svc);
             Observe(list);
             Check(Provider().BatchAdd(list,"P1").Result==ResultCode.Successful,"batch insert");
@@ -65,23 +66,23 @@ internal static class VerifySQLite
             svc=new StudentRawScoresSavingService();
             // More than one 500-row batch, with a different current project.
             PhysicalProject.Current=new PhysicalProject{ID="UNRELATED"};
-            for(int i=0;i<650;i++) svc.AddScore(i%2==0?"P1":"P2",Record(i),(成绩来源)0,"HOST");
+            for(int i=0;i<650;i++) svc.AddScore(i%2==0?"P1":"P2",Record(i),(ScoreSource)0,"HOST");
             Check(svc.Flush(TimeSpan.FromSeconds(20)),"flush multi-project batches");
             Check(svc.PendingCount==0 && All().Count==650,"drained after commit");
             var producers=new List<Thread>();
-            for(int j=0;j<4;j++) { int k=j;var t=new Thread(()=>{for(int i=0;i<25;i++)svc.AddScore("P3",Record(1000+k*25+i),(成绩来源)0,"HOST");});producers.Add(t);t.Start(); }
+            for(int j=0;j<4;j++) { int k=j;var t=new Thread(()=>{for(int i=0;i<25;i++)svc.AddScore("P3",Record(1000+k*25+i),(ScoreSource)0,"HOST");});producers.Add(t);t.Start(); }
             foreach(var t in producers)t.Join();
             Check(svc.Stop(TimeSpan.FromSeconds(20)),"cooperative stop");
             Check(svc.PendingCount==0 && All().Count==750,"concurrent records saved");
-            bool rejected=false;try{svc.AddScore("P1",Record(9999),(成绩来源)0,"HOST");}catch(InvalidOperationException){rejected=true;}Check(rejected,"reject after stop");
+            bool rejected=false;try{svc.AddScore("P1",Record(9999),(ScoreSource)0,"HOST");}catch(InvalidOperationException){rejected=true;}Check(rejected,"reject after stop");
             // An explicit restart is allowed, and an absent device timestamp is captured once.
-            svc.Start();var noTime=Record(8888);noTime.RecordDate=null;var beforeTime=DateTime.Now;svc.AddScore("NULLTIME",noTime,(成绩来源)0,"HOST");
+            svc.Start();var noTime=Record(8888);noTime.RecordDate=null;var beforeTime=DateTime.Now;svc.AddScore("NULLTIME",noTime,(ScoreSource)0,"HOST");
             Check(svc.Stop(TimeSpan.FromSeconds(10)),"restart and null timestamp");
             var fallback=All().Single(x=>x.ProjectID=="NULLTIME");
             Check(fallback.CreateTime>=beforeTime && fallback.CreateTime<=DateTime.Now,"fallback timestamp");
             Check(fallback.Key.EndsWith(fallback.CreateTime.ToString("yyyyMMddHHmmss")),"key uses same timestamp");
             Execute("ALTER TABLE StudentRawScore RENAME TO UnavailableRawScore");
-            svc=new StudentRawScoresSavingService();svc.AddScore("FAIL",Record(9999),(成绩来源)0,"HOST");
+            svc=new StudentRawScoresSavingService();svc.AddScore("FAIL",Record(9999),(ScoreSource)0,"HOST");
             Check(!svc.Stop(TimeSpan.FromMilliseconds(150)),"failure timeout");Check(svc.PendingCount==1,"failed batch retained");
             Execute("ALTER TABLE UnavailableRawScore RENAME TO StudentRawScore");
             Check(svc.Stop(TimeSpan.FromSeconds(10)),"retry after repair");Check(All().Count==752,"recovered record saved");

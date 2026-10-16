@@ -12,7 +12,7 @@ foreach($name in $projects.Keys){
 $run=Join-Path $PSScriptRoot ('bin\RecoveredApiVerification\'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $run -Force | Out-Null
 Copy-Item (Join-Path $PSScriptRoot 'Mono.Cecil.dll') $run
-& (Join-Path $framework 'csc.exe') /nologo /target:exe /platform:x86 /langversion:4 /codepage:65001 "/out:$run\VerifyRecoveredApi.exe" /reference:System.Core.dll "/reference:$run\Mono.Cecil.dll" (Join-Path $PSScriptRoot 'VerifyRecoveredApi.cs')
+& (Join-Path $framework 'csc.exe') /nologo /main:VerifyRecoveredApi /target:exe /platform:x86 /langversion:4 /codepage:65001 "/out:$run\VerifyRecoveredApi.exe" /reference:System.Core.dll "/reference:$run\Mono.Cecil.dll" (Join-Path $PSScriptRoot 'VerifyRecoveredApi.cs') (Join-Path $PSScriptRoot 'LegacyApiNames.cs')
 if($LASTEXITCODE -ne 0){throw 'API verification compile failed'}
 & (Join-Path $run 'VerifyRecoveredApi.exe') (Join-Path $repo 'lib') $output
 if($LASTEXITCODE -ne 0){throw 'Recovered API verification failed'}

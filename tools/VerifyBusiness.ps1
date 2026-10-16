@@ -20,11 +20,13 @@ foreach ($variant in @('source', 'legacy')) {
     # redirects that reference. Both processes use the production binding policy.
     Copy-Item -LiteralPath (Join-Path $repo 'HH.DataCollection.Wifi\App.config') -Destination (Join-Path $dir 'VerifyBusiness.exe.config')
     if ($variant -eq 'source') { Get-ChildItem -LiteralPath $output -Filter '*.dll' -File | Copy-Item -Destination $dir -Force }
+    if ($variant -eq 'legacy') { & (Join-Path $PSScriptRoot 'PrepareLegacyApi.ps1') -Directory $dir }
     $references = @('System.dll', 'System.Core.dll', 'System.Data.dll', 'System.Drawing.dll', 'System.Windows.Forms.dll', 'System.Runtime.Serialization.dll')
     $references += @('Model.dll', 'BLL.dll', 'LJH.GeneralLibrary.dll', 'Mono.Cecil.dll') | ForEach-Object { Join-Path $dir $_ }
     $compilerArgs = @('/nologo', '/target:exe', '/platform:x86', '/langversion:4', '/codepage:65001', "/out:$dir\VerifyBusiness.exe")
     $compilerArgs += $references | ForEach-Object { '/reference:' + $_ }
-    $compilerArgs += Join-Path $PSScriptRoot 'VerifyBusiness.cs'
+    $compilerArgs += @( (Join-Path $PSScriptRoot 'VerifyBusiness.cs'), (Join-Path $PSScriptRoot 'LegacyApiNames.cs') )
+    $compilerArgs += '/main:VerifyBusiness'
     & (Join-Path $framework 'csc.exe') @compilerArgs
     if ($LASTEXITCODE -ne 0) { throw "Verification compile failed: $variant" }
     Push-Location $dir

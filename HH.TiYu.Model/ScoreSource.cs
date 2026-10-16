@@ -12,7 +12,7 @@ using LJH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
 {
-    public enum 成绩来源
+    public enum ScoreSource
     {
         汇海200型主机 = 1,
         汇海100型主机,

@@ -51,8 +51,8 @@
     <Compile Include="Sex.cs" />
     <Compile Include="SpecialScoreType.cs" />
     <Compile Include="Student.cs" />
-    <Compile Include="成绩来源.cs" />
-    <Compile Include="项目加载项.cs" />
+    <Compile Include="ScoreSource.cs" />
+    <Compile Include="ProjectLoadOptions.cs" />
     <Compile Include="Security\Operator.cs" />
     <Compile Include="SearchCondition\DivisionSearchCondition.cs" />
     <Compile Include="SearchCondition\FacilitySearchCondition.cs" />

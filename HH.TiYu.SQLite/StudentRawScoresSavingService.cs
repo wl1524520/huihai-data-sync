@@ -135,7 +135,7 @@ namespace HH.TiYu.SQLite
             if (!Stop(TimeSpan.FromSeconds(10))) throw new TimeoutException("原始成绩未全部保存，待保存数量：" + PendingCount);
         }
 
-		public void AddScore(string projectID, PhysicalRecord record, 成绩来源 scoreFrom, string hostSN = null)
+		public void AddScore(string projectID, PhysicalRecord record, ScoreSource scoreFrom, string hostSN = null)
 		{
 			lock (_UnsavedRecordsLocker)
 			{

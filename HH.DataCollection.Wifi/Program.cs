@@ -73,7 +73,7 @@ namespace HH.DataCollection.Wifi
                 {
                     // 只加载 区域|学校|学生|科目(1+2+4+16=23),不含成绩(8)/评分标准(32)/综合评价(64)/
                     // 运动建议(128)/分组(256):本软件不评分,PhysicalScore 与分组表均不存在
-                    projectBLL.GetFullInfo(PhysicalProject.Current, (项目加载项)23);
+                    projectBLL.GetFullInfo(PhysicalProject.Current, (ProjectLoadOptions)23);
                 }
                 finally
                 {
@@ -143,7 +143,7 @@ namespace HH.DataCollection.Wifi
         /// 取当前学年(8 月 1 日起算)的项目,没有则按原软件规则自建一个。
         /// 学年唯一(一个学年只有一个项目),当前学年即最新项目。
         /// 预设 ID 不依赖任何编号表;不写 TemplateProjectID 绕开模板拷贝;
-        /// 科目关联用 PhysicalProjectHelper.创建学生体测项目 种子(与原软件 year>=2019 的行为一致)。
+        /// 科目关联用 PhysicalProjectHelper.CreateStudentPhysicalProjects 种子(与原软件 year>=2019 的行为一致)。
         /// </summary>
         private static PhysicalProject EnsureCurrentYearProject(PhysicalProjectBLL projectBLL)
         {
@@ -151,7 +151,7 @@ namespace HH.DataCollection.Wifi
             int year = today.Month >= 8 ? today.Year : today.Year - 1;
             string name = year + "年度学生体测";
 
-            var existing = projectBLL.获取学生体测项目(new PhysicalProjectSearchCondition { Class = null }).QueryObjects;
+            var existing = projectBLL.GetStudentPhysicalProjects(new PhysicalProjectSearchCondition { Class = null }).QueryObjects;
             // 同名或同预设 ID 都算已存在:库里可能已有原软件建的 P{year} 项目(异名),
             // 此时直接沿用,避免 INSERT 主键冲突导致启动失败
             var found = existing != null ? existing.Find(p => p.Name == name || p.ID == "P" + year) : null;
@@ -186,7 +186,7 @@ namespace HH.DataCollection.Wifi
             foreach (int sexValue in new[] { 1, 2 })
             {
                 var sex = (Sex)sexValue;
-                var items = PhysicalProjectHelper.创建学生体测项目(sex);
+                var items = PhysicalProjectHelper.CreateStudentPhysicalProjects(sex);
                 foreach (var it in items)
                 {
                     it.ProjectID = project.ID;

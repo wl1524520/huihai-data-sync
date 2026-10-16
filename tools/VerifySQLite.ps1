@@ -15,12 +15,13 @@ foreach($variant in @('source','legacy')){
     Copy-Item (Join-Path $PSScriptRoot 'Mono.Cecil.dll') $dir
     Copy-Item (Join-Path $repo 'HH.DataCollection.Wifi\App.config') (Join-Path $dir 'VerifySQLite.exe.config')
     if($variant -eq 'legacy'){Copy-Item (Join-Path $repo 'lib\HH.TiYu.SQLite.dll') $dir -Force}
+    if($variant -eq 'legacy'){ & (Join-Path $PSScriptRoot 'PrepareLegacyApi.ps1') -Directory $dir }
     $refs=@('System.dll','System.Core.dll','System.Data.dll','System.Data.Linq.dll','System.Xml.Linq.dll','System.Windows.Forms.dll')
     $refs+=@('Model.dll','HH.TiYu.SQLite.dll','Device.dll','LJH.GeneralLibrary.dll','System.Data.SQLite.dll','Mono.Cecil.dll') | ForEach-Object{Join-Path $dir $_}
-    $compilerArgs=@('/nologo','/target:exe','/platform:x86','/langversion:4','/codepage:65001',"/out:$dir\VerifySQLite.exe")
+    $compilerArgs=@('/main:VerifySQLite','/nologo','/target:exe','/platform:x86','/langversion:4','/codepage:65001',"/out:$dir\VerifySQLite.exe")
     if($variant -eq 'source'){$compilerArgs+='/define:SOURCE'}
     $compilerArgs+=$refs | ForEach-Object{'/reference:'+$_}
-    $compilerArgs+=@( (Join-Path $PSScriptRoot 'VerifySQLite.cs'),(Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs'))
+    $compilerArgs+=@( (Join-Path $PSScriptRoot 'VerifySQLite.cs'),(Join-Path $PSScriptRoot 'LegacyApiNames.cs'),(Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs'))
     & (Join-Path $framework 'csc.exe') @compilerArgs
     if($LASTEXITCODE -ne 0){throw "Compile failed: $variant"}
     Push-Location $dir

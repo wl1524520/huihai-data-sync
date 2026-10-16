@@ -14,6 +14,7 @@ internal static class VerifyRecoveredApi {
        foreach(string name in new[]{"HH.TiYu.SQLite","Device","UI","LJH.GeneralLibrary"}){
         using(var before=AssemblyDefinition.ReadAssembly(Path.Combine(original,name+".dll")))
         using(var after=AssemblyDefinition.ReadAssembly(Path.Combine(output,name+".dll"))){
+          LegacyApiNames.Normalize(before);
           Require(before.Name.FullName==after.Name.FullName,"Assembly identity: "+name);
           var oldTypes=Types(before.MainModule.Types).ToDictionary(t=>t.FullName);
           var newTypes=Types(after.MainModule.Types).ToList();
@@ -50,6 +51,11 @@ internal static class VerifyRecoveredApi {
        foreach(string path in Directory.GetFiles(output,"*.dll").Concat(Directory.GetFiles(output,"HH.DataCollection.Wifi.exe"))){
         if(!recovered.Contains(Path.GetFileNameWithoutExtension(path)) && !path.EndsWith("HH.DataCollection.Wifi.exe"))continue;
         using(var assembly=AssemblyDefinition.ReadAssembly(path,new ReaderParameters{AssemblyResolver=resolver})){
+         foreach(var definition in AllDefinedTypes(assembly.MainModule.Types)){
+          Require(!HasChinese(definition.Name),"Chinese type name: "+definition.FullName);
+          foreach(var method in definition.Methods.Where(m=>!m.IsGetter && !m.IsSetter && !m.IsAddOn && !m.IsRemoveOn))
+           Require(!HasChinese(method.Name),"Chinese method name: "+method.FullName);
+         }
          foreach(var type in assembly.MainModule.GetTypeReferences()){
           TypeReference root=type;while(root is TypeSpecification)root=((TypeSpecification)root).ElementType;
           var scope=root.Scope as AssemblyNameReference;
@@ -66,6 +72,18 @@ internal static class VerifyRecoveredApi {
        }
        Console.WriteLine("PASS restored API/consumer references: "+checks);return 0;
       }catch(Exception ex){Console.Error.WriteLine(ex);return 1;}
+    }
+    private static bool HasChinese(string name)
+    {
+        return System.Text.RegularExpressions.Regex.IsMatch(name, @"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]");
+    }
+    private static IEnumerable<TypeDefinition> AllDefinedTypes(IEnumerable<TypeDefinition> types)
+    {
+        foreach (var type in types)
+        {
+            yield return type;
+            foreach (var nested in AllDefinedTypes(type.NestedTypes)) yield return nested;
+        }
     }
     private static string Constant(object value)
     {

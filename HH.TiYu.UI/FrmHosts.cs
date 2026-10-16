@@ -465,12 +465,12 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void mnu_开始实时采集_Click(object sender, EventArgs e)
+		private void StartRealtimeCollectionMenuItem_Click(object sender, EventArgs e)
 		{
 			StartCollect(true, null);
 		}
 
-		private void 结束实时采集ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void StopRealtimeCollectionMenuItem_Click(object sender, EventArgs e)
 		{
 			foreach (DataGridViewRow selectedRow in dataGridView2.SelectedRows)
 			{
@@ -487,7 +487,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void mnu_开始集中采集_Click(object sender, EventArgs e)
+		private void CollectAllDataMenuItem_Click(object sender, EventArgs e)
 		{
 			HostWifiReaderPara para = new HostWifiReaderPara
 			{
@@ -499,7 +499,7 @@ namespace HH.TiYu.UI
 				DataGridViewRow dataGridViewRow = dataGridView2.Rows[i];
 				if (dataGridViewRow.Selected && dataGridViewRow.Tag == null && Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue))
 				{
-					Start集中采集(dataGridViewRow, para);
+					StartBatchCollection(dataGridViewRow, para);
 					num++;
 				}
 			}
@@ -509,7 +509,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 集中采集剩余数据ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void CollectRemainingDataMenuItem_Click(object sender, EventArgs e)
 		{
 			HostWifiReaderPara para = new HostWifiReaderPara
 			{
@@ -521,7 +521,7 @@ namespace HH.TiYu.UI
 				DataGridViewRow dataGridViewRow = dataGridView2.Rows[i];
 				if (dataGridViewRow.Selected && dataGridViewRow.Tag == null && Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue))
 				{
-					Start集中采集(dataGridViewRow, para);
+					StartBatchCollection(dataGridViewRow, para);
 					num++;
 				}
 			}
@@ -531,7 +531,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 指定学号的数据ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void CollectDataByStudentIdMenuItem_Click(object sender, EventArgs e)
 		{
 			FrmStudentIDRange frmStudentIDRange = new FrmStudentIDRange();
 			frmStudentIDRange.StartPosition = FormStartPosition.CenterParent;
@@ -551,7 +551,7 @@ namespace HH.TiYu.UI
 				DataGridViewRow dataGridViewRow = dataGridView2.Rows[i];
 				if (dataGridViewRow.Selected && dataGridViewRow.Tag == null && Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue))
 				{
-					Start集中采集(dataGridViewRow, para);
+					StartBatchCollection(dataGridViewRow, para);
 					num++;
 				}
 			}
@@ -561,7 +561,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 集中采集指定时间段的数据ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void CollectDataByTimeRangeMenuItem_Click(object sender, EventArgs e)
 		{
 			FrmDateRange frmDateRange = new FrmDateRange();
 			frmDateRange.StartPosition = FormStartPosition.CenterParent;
@@ -581,7 +581,7 @@ namespace HH.TiYu.UI
 				DataGridViewRow dataGridViewRow = dataGridView2.Rows[i];
 				if (dataGridViewRow.Selected && dataGridViewRow.Tag == null && Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue))
 				{
-					Start集中采集(dataGridViewRow, para);
+					StartBatchCollection(dataGridViewRow, para);
 					num++;
 				}
 			}
@@ -591,7 +591,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 指定序列号段的数据ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void CollectDataBySerialRangeMenuItem_Click(object sender, EventArgs e)
 		{
 			FrmSerialRange frmSerialRange = new FrmSerialRange();
 			frmSerialRange.StartPosition = FormStartPosition.CenterParent;
@@ -611,7 +611,7 @@ namespace HH.TiYu.UI
 				DataGridViewRow dataGridViewRow = dataGridView2.Rows[i];
 				if (dataGridViewRow.Selected && dataGridViewRow.Tag == null && Convert.ToBoolean(dataGridViewRow.Cells["colCheck"].EditedFormattedValue))
 				{
-					Start集中采集(dataGridViewRow, para);
+					StartBatchCollection(dataGridViewRow, para);
 					num++;
 				}
 			}
@@ -621,7 +621,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void Start集中采集(DataGridViewRow row, HostWifiReaderPara para)
+		private void StartBatchCollection(DataGridViewRow row, HostWifiReaderPara para)
 		{
 			List<PhysicalRecord> records = new List<PhysicalRecord>();
 			WifiHostInfo hi = row.Cells["colSer"].Tag as WifiHostInfo;
@@ -666,7 +666,7 @@ namespace HH.TiYu.UI
 						}
 						if (StudentRawScoresSavingService.Current != null)
 						{
-							StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, 成绩来源.汇海200型主机, reader.HostSN);
+							StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.汇海200型主机, reader.HostSN);
 						}
 						FileLog.Log("原始采集记录", record.ToString());
 					}
@@ -811,7 +811,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 下载学生名单ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void DownloadStudentsMenuItem_Click(object sender, EventArgs e)
 		{
 			bool flag = false;
 			foreach (DataGridViewRow selectedRow in dataGridView2.SelectedRows)
@@ -851,7 +851,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void 清空学生名单ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void ClearStudentsMenuItem_Click(object sender, EventArgs e)
 		{
 			int num = 0;
 			for (int i = 0; i < dataGridView2.Rows.Count; i++)
@@ -995,7 +995,7 @@ namespace HH.TiYu.UI
 		}
 
 
-		private void 同步时间ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void SyncTimeMenuItem_Click(object sender, EventArgs e)
 		{
 			int num = 0;
 			for (int i = 0; i < dataGridView2.Rows.Count; i++)
@@ -1060,7 +1060,7 @@ namespace HH.TiYu.UI
 			frmP.Show();
 		}
 
-		private void 关机ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void ShutdownHostMenuItem_Click(object sender, EventArgs e)
 		{
 			if (MessageBox.Show("是否要进行关机操作？", "询问", MessageBoxButtons.YesNo) != DialogResult.Yes)
 			{
@@ -1129,7 +1129,7 @@ namespace HH.TiYu.UI
 			frmP.Show();
 		}
 
-		private void 通讯质量测试ToolStripMenuItem_Click(object sender, EventArgs e)
+		private void TestCommunicationQualityMenuItem_Click(object sender, EventArgs e)
 		{
 			int num = 0;
 			for (int i = 0; i < dataGridView2.Rows.Count; i++)
@@ -1221,7 +1221,7 @@ namespace HH.TiYu.UI
 			frmP.Show();
 		}
 
-		private void 增加主机USBToolStripMenuItem_Click(object sender, EventArgs e)
+		private void AddUsbHostMenuItem_Click(object sender, EventArgs e)
 		{
 			FrmAddHost_USB frmAddHost_USB = new FrmAddHost_USB();
 			if (frmAddHost_USB.ShowDialog() == DialogResult.OK)
@@ -1365,52 +1365,52 @@ namespace HH.TiYu.UI
 			resources.ApplyResources(this.contextMenuStrip2, "contextMenuStrip2");
 			this.增加主机USBToolStripMenuItem.Name = "增加主机USBToolStripMenuItem";
 			resources.ApplyResources(this.增加主机USBToolStripMenuItem, "增加主机USBToolStripMenuItem");
-			this.增加主机USBToolStripMenuItem.Click += new System.EventHandler(增加主机USBToolStripMenuItem_Click);
+			this.增加主机USBToolStripMenuItem.Click += new System.EventHandler(AddUsbHostMenuItem_Click);
 			this.toolStripSeparator3.Name = "toolStripSeparator3";
 			resources.ApplyResources(this.toolStripSeparator3, "toolStripSeparator3");
 			this.mnu_开始实时采集.Name = "mnu_开始实时采集";
 			resources.ApplyResources(this.mnu_开始实时采集, "mnu_开始实时采集");
-			this.mnu_开始实时采集.Click += new System.EventHandler(mnu_开始实时采集_Click);
+			this.mnu_开始实时采集.Click += new System.EventHandler(StartRealtimeCollectionMenuItem_Click);
 			this.结束实时采集ToolStripMenuItem.Name = "结束实时采集ToolStripMenuItem";
 			resources.ApplyResources(this.结束实时采集ToolStripMenuItem, "结束实时采集ToolStripMenuItem");
-			this.结束实时采集ToolStripMenuItem.Click += new System.EventHandler(结束实时采集ToolStripMenuItem_Click);
+			this.结束实时采集ToolStripMenuItem.Click += new System.EventHandler(StopRealtimeCollectionMenuItem_Click);
 			this.mnu_集中采集所有数据.Name = "mnu_集中采集所有数据";
 			resources.ApplyResources(this.mnu_集中采集所有数据, "mnu_集中采集所有数据");
-			this.mnu_集中采集所有数据.Click += new System.EventHandler(mnu_开始集中采集_Click);
+			this.mnu_集中采集所有数据.Click += new System.EventHandler(CollectAllDataMenuItem_Click);
 			this.高级集中采集ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[4] { this.集中采集剩余数据ToolStripMenuItem, this.指定学号的数据ToolStripMenuItem, this.集中采集指定时间段的数据ToolStripMenuItem, this.指定序列号段的数据ToolStripMenuItem });
 			this.高级集中采集ToolStripMenuItem.Name = "高级集中采集ToolStripMenuItem";
 			resources.ApplyResources(this.高级集中采集ToolStripMenuItem, "高级集中采集ToolStripMenuItem");
 			this.集中采集剩余数据ToolStripMenuItem.Name = "集中采集剩余数据ToolStripMenuItem";
 			resources.ApplyResources(this.集中采集剩余数据ToolStripMenuItem, "集中采集剩余数据ToolStripMenuItem");
-			this.集中采集剩余数据ToolStripMenuItem.Click += new System.EventHandler(集中采集剩余数据ToolStripMenuItem_Click);
+			this.集中采集剩余数据ToolStripMenuItem.Click += new System.EventHandler(CollectRemainingDataMenuItem_Click);
 			this.指定学号的数据ToolStripMenuItem.Name = "指定学号的数据ToolStripMenuItem";
 			resources.ApplyResources(this.指定学号的数据ToolStripMenuItem, "指定学号的数据ToolStripMenuItem");
-			this.指定学号的数据ToolStripMenuItem.Click += new System.EventHandler(指定学号的数据ToolStripMenuItem_Click);
+			this.指定学号的数据ToolStripMenuItem.Click += new System.EventHandler(CollectDataByStudentIdMenuItem_Click);
 			this.集中采集指定时间段的数据ToolStripMenuItem.Name = "集中采集指定时间段的数据ToolStripMenuItem";
 			resources.ApplyResources(this.集中采集指定时间段的数据ToolStripMenuItem, "集中采集指定时间段的数据ToolStripMenuItem");
-			this.集中采集指定时间段的数据ToolStripMenuItem.Click += new System.EventHandler(集中采集指定时间段的数据ToolStripMenuItem_Click);
+			this.集中采集指定时间段的数据ToolStripMenuItem.Click += new System.EventHandler(CollectDataByTimeRangeMenuItem_Click);
 			this.指定序列号段的数据ToolStripMenuItem.Name = "指定序列号段的数据ToolStripMenuItem";
 			resources.ApplyResources(this.指定序列号段的数据ToolStripMenuItem, "指定序列号段的数据ToolStripMenuItem");
-			this.指定序列号段的数据ToolStripMenuItem.Click += new System.EventHandler(指定序列号段的数据ToolStripMenuItem_Click);
+			this.指定序列号段的数据ToolStripMenuItem.Click += new System.EventHandler(CollectDataBySerialRangeMenuItem_Click);
 			this.toolStripSeparator1.Name = "toolStripSeparator1";
 			resources.ApplyResources(this.toolStripSeparator1, "toolStripSeparator1");
 			this.mnu下载学生名单.Name = "mnu下载学生名单";
 			resources.ApplyResources(this.mnu下载学生名单, "mnu下载学生名单");
-			this.mnu下载学生名单.Click += new System.EventHandler(下载学生名单ToolStripMenuItem_Click);
+			this.mnu下载学生名单.Click += new System.EventHandler(DownloadStudentsMenuItem_Click);
 			this.清空学生名单ToolStripMenuItem.Name = "清空学生名单ToolStripMenuItem";
 			resources.ApplyResources(this.清空学生名单ToolStripMenuItem, "清空学生名单ToolStripMenuItem");
-			this.清空学生名单ToolStripMenuItem.Click += new System.EventHandler(清空学生名单ToolStripMenuItem_Click);
+			this.清空学生名单ToolStripMenuItem.Click += new System.EventHandler(ClearStudentsMenuItem_Click);
 			this.toolStripSeparator2.Name = "toolStripSeparator2";
 			resources.ApplyResources(this.toolStripSeparator2, "toolStripSeparator2");
 			this.同步时间ToolStripMenuItem.Name = "同步时间ToolStripMenuItem";
 			resources.ApplyResources(this.同步时间ToolStripMenuItem, "同步时间ToolStripMenuItem");
-			this.同步时间ToolStripMenuItem.Click += new System.EventHandler(同步时间ToolStripMenuItem_Click);
+			this.同步时间ToolStripMenuItem.Click += new System.EventHandler(SyncTimeMenuItem_Click);
 			this.通讯质量检测ToolStripMenuItem.Name = "通讯质量检测ToolStripMenuItem";
 			resources.ApplyResources(this.通讯质量检测ToolStripMenuItem, "通讯质量检测ToolStripMenuItem");
-			this.通讯质量检测ToolStripMenuItem.Click += new System.EventHandler(通讯质量测试ToolStripMenuItem_Click);
+			this.通讯质量检测ToolStripMenuItem.Click += new System.EventHandler(TestCommunicationQualityMenuItem_Click);
 			this.关机ToolStripMenuItem.Name = "关机ToolStripMenuItem";
 			resources.ApplyResources(this.关机ToolStripMenuItem, "关机ToolStripMenuItem");
-			this.关机ToolStripMenuItem.Click += new System.EventHandler(关机ToolStripMenuItem_Click);
+			this.关机ToolStripMenuItem.Click += new System.EventHandler(ShutdownHostMenuItem_Click);
 			this.toolStripSeparator4.Name = "toolStripSeparator4";
 			resources.ApplyResources(this.toolStripSeparator4, "toolStripSeparator4");
 			resources.ApplyResources(this, "$this");

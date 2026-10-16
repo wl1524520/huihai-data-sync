@@ -210,7 +210,7 @@ namespace HH.Zhongkao.Device.Wifi
         }
 
 
-        private StudentDownloadCommand Create下载测试学生Cmd(byte HostID, HostStudent[] students)
+        private StudentDownloadCommand CreateDownloadTestStudentsCmd(byte HostID, HostStudent[] students)
         {
             StudentDownloadCommand studentDownloadCommand = new StudentDownloadCommand();
             studentDownloadCommand.Ser = GetNextSerialNumber();
@@ -401,11 +401,11 @@ namespace HH.Zhongkao.Device.Wifi
         }
 
 
-        public StudentDownloadResult 下载测试学生(HostStudent[] students)
+        public StudentDownloadResult DownloadTestStudents(HostStudent[] students)
         {
             lock (_CommandLocker)
             {
-                StudentDownloadCommand cmd = Create下载测试学生Cmd(HostID, students);
+                StudentDownloadCommand cmd = CreateDownloadTestStudentsCmd(HostID, students);
                 StudentDownloadPacket studentDownloadPacket = SendCommand(HostID, cmd, int.MaxValue, 200);
                 return (StudentDownloadResult)studentDownloadPacket.CommandRet;
             }
