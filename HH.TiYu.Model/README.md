@@ -24,9 +24,9 @@
 
 唯一主动改变的原始模型行为：`AppSettings.StudentRawScoreDB` 返回启动目录下的 `HuihaiTiyu.db`，沿用此前二进制补丁的单库方案。原 DLL 返回 `HHRawScore.db`。源码构建后不再需要 Model 补丁。
 
-保留 `StudentPhoto` 和相关字段以兼容现有 UI/Device 等二进制组件；不新增照片入口。照片数据库功能继续由 DAL 的兼容 Provider 禁用。
+保留 `StudentPhoto` 和相关字段作为原模型兼容表面；采集器 UI/Device 已恢复源码并移除照片入口。照片数据库功能继续由 DAL 的兼容 Provider 禁用。
 
-`Jurassic.dll` 仍承担旧公式 JavaScript 求值；`LJH.GeneralLibrary.dll`、`Newtonsoft.Json.dll` 等仍为外部依赖。还原不等于重新设计：原有异常处理、字典内容、公式和边界行为保留，未修正历史业务规则，也未绕过原有授权校验。
+`Jurassic.dll` 仍承担旧公式 JavaScript 求值，与 `Newtonsoft.Json.dll` 等保持通用第三方依赖；`LJH.GeneralLibrary` 已改为源码项目引用。还原不等于重新设计：原有异常处理、字典内容、公式和边界行为保留，未修正历史业务规则，也未绕过原有授权校验。
 
 ## 还原依据与边界
 

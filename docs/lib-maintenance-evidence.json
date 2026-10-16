@@ -1,0 +1,616 @@
+{
+  "date": "2026-10-16",
+  "scope": "static metadata only; no target execution",
+  "artifacts": [
+    {
+      "file": "HH.TiYu.SQLite.dll",
+      "artifact_evidence": "ev_8e96e04dd5be2da3bccd1de94db056fb357f56542465951a650112f062126392",
+      "sha256": "2cc839098eb91b98ab9b31757ad790b11fbc9bde8aac2e8b8c17999c5dee4bba",
+      "bytes": 19968,
+      "mvid": "4b76cc13-af3b-4715-bba0-59835ab4cab6",
+      "assembly": {
+        "name": "HH.TiYu.SQLite",
+        "version": "1.0.0.0",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 9636
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "anycpu",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 8566
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture anycpu is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_547f22be8b9b3b6607d21b1f5e31dfebda878315a26fb631b3c4b8fda98804a7"
+    },
+    {
+      "file": "Device.dll",
+      "artifact_evidence": "ev_0318cc325f837e3b7db60b03f54b756b84539e3ddf6a8eadcc1d2e87d0a28a75",
+      "sha256": "9b5988557fe66598a9f753a87945edd10237d2d717eda749451b00315217c08c",
+      "bytes": 98304,
+      "mvid": "03bd79b7-3f46-498a-9e6f-3726e646c1f6",
+      "assembly": {
+        "name": "Device",
+        "version": "1.0.0.0",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 77078
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "anycpu",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 70014
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture anycpu is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_8699908a531493bab0d3472e9f5e94974bef35e58b2014622c6c6c7ab44d7312"
+    },
+    {
+      "file": "UI.dll",
+      "artifact_evidence": "ev_10d965304d00a75cbcba1da105500e73aaecd1fb32eea59c0fd59c4a3093b6c9",
+      "sha256": "6f12073d7b8e7d67c4ac9f03bfcbf5115b54098de42e789147a473c86f949d5f",
+      "bytes": 3465216,
+      "mvid": "2d703753-894d-4d34-a7c6-efeac51b237c",
+      "assembly": {
+        "name": "UI",
+        "version": "1.0.0.0",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 3327302
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "anycpu",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 3300514
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture anycpu is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_382f4a3d5eae05831aeeee6013868022fcaee827ecc5e9d027da937f59179c71"
+    },
+    {
+      "file": "LJH.GeneralLibrary.dll",
+      "artifact_evidence": "ev_bf2e38bb10a93f934d7943735f575469b4dc0e05d54d6d647d9e33439bbfaded",
+      "sha256": "a19bf66afefa2c8eb24fb1a7cf2b5ccc13362811dafa08ea1f26d83dcb39c695",
+      "bytes": 2018816,
+      "mvid": "b956a52a-7e58-4ed9-a7a6-7f94fc54cf0c",
+      "assembly": {
+        "name": "LJH.GeneralLibrary",
+        "version": "2.0.2020.1015",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 147202
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 132560
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_56e1d90e46f0566b9532bb970b71d6a38c04d1efb901a75754e7c24ae1a21c80"
+    },
+    {
+      "file": "TSNMachineInterfaceCSharp.dll",
+      "artifact_evidence": "ev_9f7c17ed63abc042ebb5451d55f77ec8432575c12a820214c1c0a4e4cb6e3f41",
+      "sha256": "b45d4b7348f4255bc37ced22e193a002100ee6bc8f8216f0e4881b4263879659",
+      "bytes": 11776,
+      "mvid": "1064f9d9-0e60-4ec7-876f-60c670153bdf",
+      "assembly": {
+        "name": "TSNMachineInterfaceCSharp",
+        "version": "1.0.0.0",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 6614
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 6424
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_7f5c2c0d8388ce88ddb6939e1e5f563444258ed321d176cc10498716cf730626"
+    },
+    {
+      "file": "FJ.CoreWin.dll",
+      "artifact_evidence": "ev_c00258ea77c0630154cf53c3323d17700c8f45e9431cb6af254985e1e2b6a090",
+      "sha256": "1ce229261dafa7df23b1bd21cd46c862ea02f0ca24014e5d2c7672c751bbc427",
+      "bytes": 52736,
+      "mvid": "977a3010-1f99-4e63-a343-4a1e36f9039d",
+      "assembly": {
+        "name": "FJ.CoreWin",
+        "version": "0.8.0.0",
+        "culture": null,
+        "flags": 1,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "public-key",
+          "byte_length": 160,
+          "sha256": "e7b7485e56dc8a81d779a206bb672f59874e52a916f1a3e1cc295fa17a35cbc7",
+          "token": "d79a4df8eb0cd3e3"
+        },
+        "token": "0x20000001",
+        "row_offset": 36064
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "cil",
+        "managed_architecture": "anycpu",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture anycpu is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_1c3aa801c1c47c83382209c45e907236ad631661fac99dc9c3b1a053f472df3c"
+    },
+    {
+      "file": "Barcode._1D.dll",
+      "artifact_evidence": "ev_b97ee05b17e95a8f6c7a0beddc08fa716d4466d24be8dc5b323bec2d41f82644",
+      "sha256": "460fb53abd2c68e4428ad2117df89e1efdf7d3d61105d65779d5f9eeb9ef9112",
+      "bytes": 107520,
+      "mvid": "3e0bfcb3-4da6-4af1-86ec-a7a9ed949ac2",
+      "assembly": {
+        "name": "Barcode._1D",
+        "version": "1.0.0.0",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 65694
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "anycpu",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 62592
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture anycpu is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": "ev_6c0babad37815a678c6da7c210dbddd745d58a5cf4a63cdde4be4878566b1561"
+    },
+    {
+      "file": "dt215.dll",
+      "artifact_evidence": "ev_3dcfa41c8fc67b74c3ce1cdd83367230fc80cbd2feeda74318efc836d5471e03",
+      "sha256": "250b396a45664ce37823a510f6c54415e8d668384376d69170acf7b50df8cf32",
+      "bytes": 73728,
+      "assembly": null,
+      "classification": {
+        "status": "not-managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "not-managed",
+        "managed_architecture": "unknown",
+        "evidence": [
+          {
+            "code": "cli-directory-absent",
+            "detail": "The PE has no CLI data directory; managed metadata and CIL are unavailable.",
+            "file_offset": null
+          }
+        ]
+      },
+      "coverage": {
+        "state": "unavailable",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "dt215L.dll",
+      "artifact_evidence": "ev_a5a7ecb09fc935e7d07fe4b447fea15bbbb0cd68c91b9ab935560ef9a9cd7aec",
+      "sha256": "e5e9996b6a5cdec7a34c7ef578793a4079c0f48082754c34d94ffb619169c4ae",
+      "bytes": 83456,
+      "assembly": null,
+      "classification": {
+        "status": "not-managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "not-managed",
+        "managed_architecture": "unknown",
+        "evidence": [
+          {
+            "code": "cli-directory-absent",
+            "detail": "The PE has no CLI data directory; managed metadata and CIL are unavailable.",
+            "file_offset": null
+          }
+        ]
+      },
+      "coverage": {
+        "state": "unavailable",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "JpgDll.dll",
+      "artifact_evidence": "ev_12ddefb21f114c902e7073783f46fbfa4f89dac54f542123bbddb92f54441005",
+      "sha256": "cbb614dc4f61e14a781ba6b766119e6883962a99ea96981ff68f63282ff62d3b",
+      "bytes": 335360,
+      "assembly": null,
+      "classification": {
+        "status": "not-managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "not-managed",
+        "managed_architecture": "unknown",
+        "evidence": [
+          {
+            "code": "cli-directory-absent",
+            "detail": "The PE has no CLI data directory; managed metadata and CIL are unavailable.",
+            "file_offset": null
+          }
+        ]
+      },
+      "coverage": {
+        "state": "unavailable",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "SavePhoto.dll",
+      "artifact_evidence": "ev_9e26b5412d37883c2afa562a2ee2e3b0700d4a86c1e91ee901a8ef1951f2e8e7",
+      "sha256": "cf6760d8649f4ac86ca6057c6eb7582855bd975e3608ecbaae1d3c8320282b75",
+      "bytes": 3129856,
+      "assembly": null,
+      "classification": {
+        "status": "not-managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "not-managed",
+        "managed_architecture": "unknown",
+        "evidence": [
+          {
+            "code": "cli-directory-absent",
+            "detail": "The PE has no CLI data directory; managed metadata and CIL are unavailable.",
+            "file_offset": null
+          }
+        ]
+      },
+      "coverage": {
+        "state": "unavailable",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "sdtapi.dll",
+      "artifact_evidence": "ev_39b73bddc4a3dd040feec739217bfed5aa04bb2ef077791d2e08b5b23ec37999",
+      "sha256": "2aa9b97a113a7080decf98a2cdece8d0d450332d7f59da35d1d2cb97b691b23e",
+      "bytes": 108032,
+      "assembly": null,
+      "classification": {
+        "status": "not-managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "not-managed",
+        "managed_architecture": "unknown",
+        "evidence": [
+          {
+            "code": "cli-directory-absent",
+            "detail": "The PE has no CLI data directory; managed metadata and CIL are unavailable.",
+            "file_offset": null
+          }
+        ]
+      },
+      "coverage": {
+        "state": "unavailable",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "SLABHIDDevice.dll",
+      "artifact_evidence": "ev_b831c183741a544b8c2ff1c146fe786acc25945df037a980504f9ed9e8478767",
+      "sha256": "31279cf496e5461fab4c53306faba9bcf36ff897835795a76bfc90a50ccf9104",
+      "bytes": 192512,
+      "assembly": null,
+      "classification": {
+        "status": "not-managed",
+        "container": "pe",
+        "runtime_family": "unknown",
+        "implementation": "not-managed",
+        "managed_architecture": "unknown",
+        "evidence": [
+          {
+            "code": "cli-directory-absent",
+            "detail": "The PE has no CLI data directory; managed metadata and CIL are unavailable.",
+            "file_offset": null
+          }
+        ]
+      },
+      "coverage": {
+        "state": "unavailable",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "zTempTestSample_HID.dll",
+      "artifact_evidence": "ev_c46cfd3d996f4b10d0907a8353a7488375ad2980e5e2729f671e9812e54c5dca",
+      "sha256": "e39d935aff158cfeebea554ea51f129602085488ec72d38b7433d87e06e585ff",
+      "bytes": 50688,
+      "mvid": "835757d3-a553-46a9-a995-7631554f8b15",
+      "assembly": {
+        "name": "zTempTestSample_HID",
+        "version": "1.0.4506.20496",
+        "culture": null,
+        "flags": 0,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "none",
+          "byte_length": 0,
+          "sha256": null,
+          "token": null
+        },
+        "token": "0x20000001",
+        "row_offset": 25258
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "mixed-clr-native",
+        "implementation": "cpp-cli-mixed",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 10684
+          },
+          {
+            "code": "cli-il-only-clear",
+            "detail": "COMIMAGE_FLAGS_ILONLY is clear, so managed and native analysis must remain composed.",
+            "file_offset": 10700
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 10700
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": null
+    },
+    {
+      "file": "System.Data.SQLite.dll",
+      "artifact_evidence": "ev_f61a273c2e8e239da3167ad59a88dd15757cbc76c52e3e1da6e8dda8ad11c2ff",
+      "sha256": "316b4732d0b19c8370ef13efcbb8212f1852863d02a1046d867c1b32dd6dc30a",
+      "bytes": 1050624,
+      "mvid": "c47a78c1-b5d0-408f-9e7c-2da8f34ddecf",
+      "assembly": {
+        "name": "System.Data.SQLite",
+        "version": "1.0.94.0",
+        "culture": null,
+        "flags": 1,
+        "hash_algorithm": 32772,
+        "public_key": {
+          "kind": "public-key",
+          "byte_length": 160,
+          "sha256": "64445016c28d62477e22d1a2f4586bc104e8f5fa9cc5cbf903b110433056eb42",
+          "token": "db937bc2d44ff139"
+        },
+        "token": "0x20000001",
+        "row_offset": 931518
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "mixed-clr-native",
+        "implementation": "cpp-cli-mixed",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 835480
+          },
+          {
+            "code": "cli-il-only-clear",
+            "detail": "COMIMAGE_FLAGS_ILONLY is clear, so managed and native analysis must remain composed.",
+            "file_offset": 835496
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 835496
+          }
+        ]
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      },
+      "members": null
+    }
+  ]
+}

@@ -37,7 +37,7 @@
 & C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe HH.TiYu.BLL\HH.TiYu.BLL.csproj /t:Build /p:Configuration=Debug /p:Platform=x86
 ```
 
-项目直接引用 Model、DAL 源码项目；通用 DAL 基类、异常和日志仍依赖原 `lib/LJH.GeneralLibrary.dll`。恢复源码不意味着完整原软件数据库的所有功能都能在采集器八表库中运行。
+项目直接引用 Model、DAL、LJH.GeneralLibrary 源码项目；通用 DAL 基类、异常和日志在基础库源码中维护。恢复源码不意味着完整原软件数据库的所有功能都能在采集器八表库中运行。
 
 在仓库根目录运行 `tools/VerifyBusiness.ps1 -Configuration Debug` 检查公开接口与模型行为，运行 `tools/VerifyDal.ps1 -Configuration Debug` 检查全源码数据库调用链；两者也支持 Release。本次两个配置均通过：BLL 的 21 个公开类型接口与原 DLL 一致；保存服务两个入口 IL 仅含空操作/返回；隔离八表库加载及学生、成绩测试通过。测试不访问生产数据库、设备和云接口。
 

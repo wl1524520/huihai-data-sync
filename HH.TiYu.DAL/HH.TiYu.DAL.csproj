@@ -32,10 +32,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
     <Reference Include="System.Xml" />
-    <Reference Include="LJH.GeneralLibrary">
-      <HintPath>..\lib\LJH.GeneralLibrary.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System.Data.SQLite">
       <HintPath>..\lib\System.Data.SQLite.dll</HintPath>
       <Private>False</Private>
@@ -79,6 +75,9 @@
       <Name>HH.TiYu.Model</Name>
       <Private>True</Private>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

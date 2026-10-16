@@ -21,7 +21,7 @@
 
 注意：采集器新增的同步代码有自己的数据库访问路径。平台学生同步的写入逻辑在 `HH.DataCollection.Wifi/Sync/StudentSync.cs`，原始成绩上传和上传标记在 `Sync/ScoreUpload.cs`，界面列表也有直接 SQL。修改 DAL 不会自动改变这些直接 SQL 的行为。
 
-设备原始成绩仍由外部 `HH.TiYu.SQLite.StudentRawScoresSavingService` 写入 `StudentRawScore`。本项目 `PhysicalScoreProvider` 操作的是原软件正式成绩表 `PhysicalScore`，二者不同。
+设备原始成绩由独立源码项目 `HH.TiYu.SQLite.StudentRawScoresSavingService` 写入 `StudentRawScore`。本项目 `PhysicalScoreProvider` 操作的是原软件正式成绩表 `PhysicalScore`，二者不同。
 
 ## 构建与集成
 
@@ -35,7 +35,7 @@
 
 Model 与 BLL 也已还原为源码；原有单库和停用正式成绩写入的调整直接体现在源码中。`tools/PatchBll.cs` 和对应 EXE 仅作历史对照，不再参与构建。
 
-本项目通过 `ProjectReference` 引用 `HH.TiYu.Model`，仍引用 `lib/LJH.GeneralLibrary.dll`、`lib/System.Data.SQLite.dll`。实体模型可在 Model 项目中维护；公共的 `ProviderBase`、`DataContextFactory` 与工作单元仍来自外部组件。以后如果需要改变其通用持久化机制，需要另外还原对应组件。
+本项目通过 `ProjectReference` 引用 `HH.TiYu.Model` 和 `LJH.GeneralLibrary` 源码；`System.Data.SQLite.dll` 保持通用第三方依赖。公共的 `ProviderBase`、`DataContextFactory` 与工作单元可在 `LJH.GeneralLibrary/Core/DAL/Linq` 中维护。
 
 ## 不支持照片
 

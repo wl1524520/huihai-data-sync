@@ -48,22 +48,6 @@
       <HintPath>$(HuiHaiDir)Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UI">
-      <HintPath>$(HuiHaiDir)UI.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Device">
-      <HintPath>$(HuiHaiDir)Device.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="LJH.GeneralLibrary">
-      <HintPath>$(HuiHaiDir)LJH.GeneralLibrary.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="HH.TiYu.SQLite">
-      <HintPath>$(HuiHaiDir)HH.TiYu.SQLite.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System.Data.SQLite">
       <HintPath>$(HuiHaiDir)System.Data.SQLite.dll</HintPath>
       <Private>False</Private>
@@ -109,12 +93,24 @@
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HH.TiYu.SQLite\HH.TiYu.SQLite.csproj"><Project>{DA46F333-0A97-4B57-83E6-1F4B6EE9B161}</Project><Name>HH.TiYu.SQLite</Name><Private>True</Private></ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HH.TiYu.Device\HH.TiYu.Device.csproj"><Project>{8537D017-64FB-4681-B994-4CA2E4FC245C}</Project><Name>HH.TiYu.Device</Name><Private>True</Private></ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HH.TiYu.UI\HH.TiYu.UI.csproj"><Project>{ACF17DAA-F539-4404-8911-67D2B85FD3B2}</Project><Name>HH.TiYu.UI</Name><Private>True</Private></ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <!-- 从 lib 复制其余运行依赖；Model、DAL、BLL 使用源码项目的构建产物。 -->
+    <!-- 从 lib 复制通用运行依赖；Model、DAL、BLL、SQLite、Device、UI、LJH 使用源码项目的构建产物。 -->
     <!-- 禁止原始 lib 中的业务程序集覆盖项目引用的产物。 -->
     <ItemGroup>
-      <RuntimeLibraries Include="$(HuiHaiDir)*.dll" Exclude="$(HuiHaiDir)DAL.dll;$(HuiHaiDir)Model.dll;$(HuiHaiDir)BLL.dll" />
+      <RuntimeLibraries Include="$(HuiHaiDir)*.dll" Exclude="$(HuiHaiDir)DAL.dll;$(HuiHaiDir)Model.dll;$(HuiHaiDir)BLL.dll;$(HuiHaiDir)HH.TiYu.SQLite.dll;$(HuiHaiDir)Device.dll;$(HuiHaiDir)UI.dll;$(HuiHaiDir)LJH.GeneralLibrary.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(RuntimeLibraries)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)config.xml&quot; &quot;$(TargetDir)&quot; /D /Y /R" />

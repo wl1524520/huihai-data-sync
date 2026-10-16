@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Windows.Forms;
@@ -92,11 +92,11 @@ namespace HH.DataCollection.Wifi
                     WriteLog("WARN", "启动时重建学校绑定失败:" + ex.Message);
                 }
 
-                // 5) 启用原始成绩落盘服务。Model.dll 输出拷贝已被 PatchBll 补丁,
-                //    StudentRawScoreDB 指向主库 HuihaiTiyu.db;此处校验补丁确实生效,防止静默写丢
+                // 5) 启用原始成绩落盘服务。Model 源码中的配置已统一到主库,
+                //    StudentRawScoreDB 指向主库 HuihaiTiyu.db;此处校验部署配置,防止静默写丢
                 if (AppSettings.Current.StudentRawScoreDB.IndexOf(LocalDb.DbFileName, StringComparison.OrdinalIgnoreCase) < 0)
                 {
-                    MessageBox.Show("Model.dll 补丁未生效(原始成绩仍指向 HHRawScore.db)。\r\n请重新编译部署。",
+                    MessageBox.Show("Model 原始成绩数据库配置不正确(原始成绩仍指向 HHRawScore.db)。\r\n请重新编译部署。",
                         "部署错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
@@ -106,14 +106,12 @@ namespace HH.DataCollection.Wifi
                 // 6) 主界面:采集(FrmHosts) + 数据同步
                 Application.Run(new FrmMain());
 
-                // 退出前轮询落盘队列清空(最多 10 秒)再停止服务。
-                // 注意:服务的 Stop() 是 Thread.Abort,积压时立即调用会丢未落盘成绩;
-                // 保存循环每 1 秒批量写一轮,轮询等待能有效排空积压
                 var svc = HH.TiYu.SQLite.StudentRawScoresSavingService.Current;
-                if (svc != null)
+                while (svc != null && !svc.Stop(TimeSpan.FromSeconds(10)))
                 {
-                    WaitUnsavedDrained(svc, TimeSpan.FromSeconds(10));
-                    svc.Stop();
+                    WriteLog("ERROR", "退出时原始成绩未保存完毕，待保存数量：" + svc.PendingCount);
+                    if (MessageBox.Show("仍有 " + svc.PendingCount + " 条成绩未保存到本地库。请检查磁盘和数据库后重试。\r\n取消将退出程序，未保存的成绩将丢失。",
+                        "成绩保存失败", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error) != DialogResult.Retry) break;
                 }
             }
             catch (Exception ex)
@@ -126,35 +124,6 @@ namespace HH.DataCollection.Wifi
                 mutex.ReleaseMutex();
                 mutex.Dispose();
             }
-        }
-
-        /// <summary>
-        /// 等待落盘队列清空(轮询,带超时)。落盘服务未公开队列长度,
-        /// 反射读私有字段 _UnsavedItems 的数量做启发式等待;读不到时退化为固定等待 2 秒。
-        /// </summary>
-        private static void WaitUnsavedDrained(HH.TiYu.SQLite.StudentRawScoresSavingService svc, TimeSpan timeout)
-        {
-            var field = typeof(HH.TiYu.SQLite.StudentRawScoresSavingService)
-                .GetField("_UnsavedItems", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (field == null)
-            {
-                System.Threading.Thread.Sleep(2000); // 拿不到队列时按原固定等待兜底
-                return;
-            }
-            var deadline = DateTime.Now + timeout;
-            while (DateTime.Now < deadline)
-            {
-                int pending;
-                try
-                {
-                    var list = field.GetValue(svc) as System.Collections.IList;
-                    pending = list != null ? list.Count : 0;
-                }
-                catch { break; }
-                if (pending == 0) return;
-                System.Threading.Thread.Sleep(100);
-            }
-            WriteLog("WARN", "退出时落盘队列在 " + timeout.TotalSeconds + " 秒内未清空,可能有成绩未写入本地库");
         }
 
         /// <summary>写一行日志到程序目录 logs\error.log,供现场排障;日志本身失败不再放大。</summary>

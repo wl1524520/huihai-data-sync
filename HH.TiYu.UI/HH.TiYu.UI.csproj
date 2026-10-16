@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{ACF17DAA-F539-4404-8911-67D2B85FD3B2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>HH.TiYu.UI</RootNamespace>
+    <AssemblyName>UI</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>4</LangVersion>
+    <FileAlignment>512</FileAlignment>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="UserControl\ClassNameCombox.cs" />
+    <Compile Include="UserControl\DivisionComboBox.cs" />
+    <Compile Include="DivisionHelper.cs" />
+    <Compile Include="Controls\FacilityComboBox.cs" />
+    <Compile Include="FrmAddHost_USB.cs" />
+    <Compile Include="FrmDateRange.cs" />
+    <Compile Include="FrmHostParameters.cs" />
+    <Compile Include="FrmHosts.cs" />
+    <Compile Include="FrmProcessing.cs" />
+    <Compile Include="FrmScoreCollectStatitics.cs" />
+    <Compile Include="FrmScoreCollect_Wifi.cs" />
+    <Compile Include="FrmSerialRange.cs" />
+    <Compile Include="FrmStudentDownloadPara.cs" />
+    <Compile Include="FrmStudentIDRange.cs" />
+    <Compile Include="Frm学生分组选择.cs" />
+    <Compile Include="Frm组人员实时显示.cs" />
+    <Compile Include="Controls\GradeComboBox.cs" />
+    <Compile Include="UC学生信息.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HH.TiYu.Model\HH.TiYu.Model.csproj"><Project>{6E371ED2-8AB5-4D26-8C53-DC5A635CC801}</Project><Name>HH.TiYu.Model</Name><Private>True</Private></ProjectReference>
+    <ProjectReference Include="..\HH.TiYu.DAL\HH.TiYu.DAL.csproj"><Project>{C4E3D764-8282-4A96-B44E-289346D9EF50}</Project><Name>HH.TiYu.DAL</Name><Private>True</Private></ProjectReference>
+    <ProjectReference Include="..\HH.TiYu.BLL\HH.TiYu.BLL.csproj"><Project>{C6AE204B-4D6A-409A-A684-0E2F79AB7802}</Project><Name>HH.TiYu.BLL</Name><Private>True</Private></ProjectReference>
+    <ProjectReference Include="..\HH.TiYu.Device\HH.TiYu.Device.csproj"><Project>{8537D017-64FB-4681-B994-4CA2E4FC245C}</Project><Name>HH.TiYu.Device</Name><Private>True</Private></ProjectReference>
+    <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
+    <ProjectReference Include="..\HH.TiYu.SQLite\HH.TiYu.SQLite.csproj"><Project>{DA46F333-0A97-4B57-83E6-1F4B6EE9B161}</Project><Name>HH.TiYu.SQLite</Name><Private>True</Private></ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\HH.TiYu.UI.FrmHosts.resx"><LogicalName>HH.TiYu.UI.FrmHosts.resources</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Resources\HH.TiYu.UI.FrmProcessing.resx"><LogicalName>HH.TiYu.UI.FrmProcessing.resources</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Resources\HH.TiYu.UI.FrmScoreCollect_Wifi.resx"><LogicalName>HH.TiYu.UI.FrmScoreCollect_Wifi.resources</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="Resources\HH.TiYu.UI.Frm学生分组选择.resx"><LogicalName>HH.TiYu.UI.Frm学生分组选择.resources</LogicalName></EmbeddedResource>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

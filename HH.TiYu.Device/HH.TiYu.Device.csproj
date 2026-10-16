@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{8537D017-64FB-4681-B994-4CA2E4FC245C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>HH.TiYu.Device</RootNamespace>
+    <AssemblyName>Device</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>4</LangVersion>
+    <FileAlignment>512</FileAlignment>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="HostStudent.cs" />
+    <Compile Include="PhysicalRecordBuffer.cs" />
+    <Compile Include="IDSource.cs" />
+    <Compile Include="PhysicalRecordReceivedArgs.cs" />
+    <Compile Include="PhysicalRecordReceivedHandler.cs" />
+    <Compile Include="PhysicalRecord.cs" />
+    <Compile Include="Wifi\HostWifiReaderPara.cs" />
+    <Compile Include="Wifi\StudentDownloadCommand.cs" />
+    <Compile Include="Wifi\StudentDownloadResult.cs" />
+    <Compile Include="Wifi\StudentDownloadPacket.cs" />
+    <Compile Include="Wifi\CmdResponse.cs" />
+    <Compile Include="Wifi\InitialCrcValue.cs" />
+    <Compile Include="Wifi\Crc16Ccitt.cs" />
+    <Compile Include="Wifi\HeadResponse.cs" />
+    <Compile Include="Wifi\GetParameterResponse.cs" />
+    <Compile Include="Wifi\HostParameters.cs" />
+    <Compile Include="Wifi\HostWifiReader.cs" />
+    <Compile Include="Wifi\DataResponse.cs" />
+    <Compile Include="Wifi\ResponseBase.cs" />
+    <Compile Include="Wifi\WifiHost.cs" />
+    <Compile Include="Wifi\StudentDownloader.cs" />
+    <Compile Include="Wifi\WifiSearcher.cs" />
+    <Compile Include="Wifi\WifiHostInfo.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

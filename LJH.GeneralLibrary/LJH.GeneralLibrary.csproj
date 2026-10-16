@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup><Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration><Platform Condition=" '$(Platform)' == '' ">x86</Platform><ProjectGuid>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</ProjectGuid><OutputType>Library</OutputType><RootNamespace>LJH.GeneralLibrary</RootNamespace><AssemblyName>LJH.GeneralLibrary</AssemblyName><TargetFrameworkVersion>v4.0</TargetFrameworkVersion><PlatformTarget>x86</PlatformTarget><LangVersion>4</LangVersion><FileAlignment>512</FileAlignment></PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' "><OutputPath>bin\Debug\</OutputPath><DebugSymbols>true</DebugSymbols><DebugType>full</DebugType><Optimize>false</Optimize><DefineConstants>DEBUG;TRACE</DefineConstants></PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' "><OutputPath>bin\Release\</OutputPath><DebugType>pdbonly</DebugType><Optimize>true</Optimize><DefineConstants>TRACE</DefineConstants></PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Data.SQLite"><HintPath>..\lib\System.Data.SQLite.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="NPOI"><HintPath>..\lib\NPOI.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="NPOI.OOXML"><HintPath>..\lib\NPOI.OOXML.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="NPOI.OpenXml4Net"><HintPath>..\lib\NPOI.OpenXml4Net.dll</HintPath><Private>False</Private></Reference>
+    <Reference Include="NPOI.OpenXmlFormats"><HintPath>..\lib\NPOI.OpenXmlFormats.dll</HintPath><Private>False</Private></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BCDConverter.cs" />
+    <Compile Include="CommPort.cs" />
+    <Compile Include="Core\DAL\CommandResult.cs" />
+    <Compile Include="Core\DAL\DALConfig.cs" />
+    <Compile Include="Core\DAL\IEntity.cs" />
+    <Compile Include="Core\DAL\ImportOption.cs" />
+    <Compile Include="Core\DAL\IProvider.cs" />
+    <Compile Include="Core\DAL\IUnitWork.cs" />
+    <Compile Include="Core\DAL\Linq\DataContextFactory.cs" />
+    <Compile Include="Core\DAL\Linq\LinqUnitWork.cs" />
+    <Compile Include="Core\DAL\Linq\ProviderBase.cs" />
+    <Compile Include="Core\DAL\QueryResult.cs" />
+    <Compile Include="Core\DAL\QueryResultList.cs" />
+    <Compile Include="Core\DAL\ResultCode.cs" />
+    <Compile Include="Core\DAL\SearchCondition.cs" />
+    <Compile Include="Core\DAL\SortMode.cs" />
+    <Compile Include="Core\DAL\SQLConnectionURI.cs" />
+    <Compile Include="Core\DAL\UpdateItem.cs" />
+    <Compile Include="Core\UI\NPOIExcelHelper.cs" />
+    <Compile Include="DecimalExtention.cs" />
+    <Compile Include="ExceptionHandling\ExceptionPolicy.cs" />
+    <Compile Include="HexStringConverter.cs" />
+    <Compile Include="LOG\FileLog.cs" />
+    <Compile Include="Net\LJHSocket.cs" />
+    <Compile Include="Net\NetTool.cs" />
+    <Compile Include="SEBinaryConverter.cs" />
+    <Compile Include="SoftDog\DSEncrypt.cs" />
+    <Compile Include="SoftDog\DTEncrypt.cs" />
+    <Compile Include="StringHelper.cs" />
+    <Compile Include="TempFolderManager.cs" />
+    <Compile Include="WinformControl\ComPortComboBox.cs" />
+    <Compile Include="WinformControl\DBCTextBox.cs" />
+    <Compile Include="WinformControl\IntergerTextBox.cs" />
+    <Compile Include="WinformControl\PercentageProgressBar.cs" />
+    <Compile Include="DataArrivedDelegate.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

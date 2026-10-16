@@ -1,0 +1,9 @@
+﻿using System.Reflection;
+using System.Runtime.InteropServices;
+[assembly: AssemblyTitle("UI")]
+[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyProduct("UI")]
+[assembly: ComVisible(false)]
+[assembly: Guid("1de03130-63d6-4631-8217-965dbe37e663")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

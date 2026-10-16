@@ -35,10 +35,6 @@
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="LJH.GeneralLibrary">
-      <HintPath>..\lib\LJH.GeneralLibrary.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Jurassic"><HintPath>..\lib\Jurassic.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Newtonsoft.Json"><HintPath>..\lib\Newtonsoft.Json.dll</HintPath><Private>False</Private></Reference>
   </ItemGroup>
@@ -115,6 +111,9 @@
     <Compile Include="SearchCondition\StudentGroupSearchCondition.cs" />
     <Compile Include="SearchCondition\StudentSearchCondition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

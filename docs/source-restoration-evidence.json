@@ -1,0 +1,328 @@
+{
+  "date": "2026-10-16",
+  "scope": "Release managed metadata; no target execution",
+  "artifacts": [
+    {
+      "assembly": "HH.TiYu.SQLite",
+      "evidence": "ev_3c6f79b3b66edee3bd3486a27b885b7b4a029e51c8ea5bda26d98d22100b1ddf",
+      "sha256": "8b3c6fe1ffc7f2a9603d9039189df5cd7e107bc6e54633ab099e1ec82fa1f79e",
+      "bytes": 21504,
+      "module": {
+        "name": "HH.TiYu.SQLite.dll",
+        "generation": 0,
+        "mvid": "6c04ec37-b7dc-4448-85e8-c1861a655456",
+        "enc_id": null,
+        "enc_base_id": null,
+        "token": "0x00000001",
+        "row_offset": 7764
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 10796
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "framework": [
+        ".NETFramework,Version=v4.0"
+      ],
+      "metadata": {
+        "status": "complete",
+        "version": "v4.0.30319",
+        "stream_names": [
+          "#Blob",
+          "#GUID",
+          "#Strings",
+          "#US",
+          "#~"
+        ],
+        "table_row_counts": {
+          "Module": 1,
+          "TypeRef": 84,
+          "TypeDef": 11,
+          "Field": 35,
+          "MethodDef": 70,
+          "Param": 43,
+          "InterfaceImpl": 1,
+          "MemberRef": 151,
+          "Constant": 1,
+          "CustomAttribute": 84,
+          "StandAloneSig": 13,
+          "PropertyMap": 3,
+          "Property": 22,
+          "MethodSemantics": 43,
+          "TypeSpec": 15,
+          "Assembly": 1,
+          "AssemblyRef": 7,
+          "ManifestResource": 1,
+          "NestedClass": 5,
+          "GenericParam": 1,
+          "MethodSpec": 21
+        }
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    },
+    {
+      "assembly": "Device",
+      "evidence": "ev_f821e83373b124fc14aad14d289a6bd02378fdb3d4564ca66d62276e22830dd6",
+      "sha256": "d70ed37ecf10e6d683fe5f89311d3e3dc4fe275d3d9a8ce2f49def9051100c19",
+      "bytes": 47104,
+      "module": {
+        "name": "Device.dll",
+        "generation": 0,
+        "mvid": "68a012e8-474c-41b3-bfc5-10d8aef341b4",
+        "enc_id": null,
+        "enc_base_id": null,
+        "token": "0x00000001",
+        "row_offset": 19372
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 27622
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "framework": [
+        ".NETFramework,Version=v4.0"
+      ],
+      "metadata": {
+        "status": "complete",
+        "version": "v4.0.30319",
+        "stream_names": [
+          "#Blob",
+          "#GUID",
+          "#Strings",
+          "#US",
+          "#~"
+        ],
+        "table_row_counts": {
+          "Module": 1,
+          "TypeRef": 76,
+          "TypeDef": 26,
+          "Field": 160,
+          "MethodDef": 288,
+          "Param": 196,
+          "InterfaceImpl": 1,
+          "MemberRef": 168,
+          "Constant": 40,
+          "CustomAttribute": 259,
+          "StandAloneSig": 51,
+          "EventMap": 1,
+          "Event": 3,
+          "PropertyMap": 15,
+          "Property": 102,
+          "MethodSemantics": 190,
+          "TypeSpec": 13,
+          "FieldRVA": 7,
+          "Assembly": 1,
+          "AssemblyRef": 4,
+          "NestedClass": 1,
+          "MethodSpec": 4
+        }
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    },
+    {
+      "assembly": "UI",
+      "evidence": "ev_7f5d6b5b827340756f62b6e3ddd5582cb08b36ef46f389b116997425121b789c",
+      "sha256": "6823124210a5e65b05daff385ed9a403787fa842d8a0e5feffbaee271347568d",
+      "bytes": 224256,
+      "module": {
+        "name": "UI.dll",
+        "generation": 0,
+        "mvid": "813a0d7b-6907-4c70-9b01-576abebeacbe",
+        "enc_id": null,
+        "enc_base_id": null,
+        "token": "0x00000001",
+        "row_offset": 172584
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 187240
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "framework": [
+        ".NETFramework,Version=v4.0"
+      ],
+      "metadata": {
+        "status": "complete",
+        "version": "v4.0.30319",
+        "stream_names": [
+          "#Blob",
+          "#GUID",
+          "#Strings",
+          "#US",
+          "#~"
+        ],
+        "table_row_counts": {
+          "Module": 1,
+          "TypeRef": 206,
+          "TypeDef": 52,
+          "Field": 402,
+          "MethodDef": 314,
+          "Param": 282,
+          "MemberRef": 692,
+          "Constant": 5,
+          "CustomAttribute": 148,
+          "StandAloneSig": 93,
+          "PropertyMap": 12,
+          "Property": 28,
+          "MethodSemantics": 48,
+          "TypeSpec": 62,
+          "Assembly": 1,
+          "AssemblyRef": 10,
+          "ManifestResource": 4,
+          "NestedClass": 33,
+          "MethodSpec": 29
+        }
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    },
+    {
+      "assembly": "LJH.GeneralLibrary",
+      "evidence": "ev_58395c3391fea5767552d2c63ec43acf5424a1039998983a0789cd149d410302",
+      "sha256": "f14b658551235c63050f289d33e3bf3d6a84e8c95f8e2f5c4497faafea4b2f10",
+      "bytes": 36864,
+      "module": {
+        "name": "LJH.GeneralLibrary.dll",
+        "generation": 0,
+        "mvid": "d716a794-fa9e-44be-bb60-ceab2c04ea92",
+        "enc_id": null,
+        "enc_base_id": null,
+        "token": "0x00000001",
+        "row_offset": 11532
+      },
+      "classification": {
+        "status": "managed",
+        "container": "pe",
+        "runtime_family": "dotnet-framework",
+        "implementation": "cil",
+        "managed_architecture": "x86",
+        "evidence": [
+          {
+            "code": "cli-header-observed",
+            "detail": "A file-backed PE CLI header and metadata root were admitted.",
+            "file_offset": 520
+          },
+          {
+            "code": "target-framework-observed",
+            "detail": "An assembly-level TargetFrameworkAttribute names .NET Framework.",
+            "file_offset": 19718
+          },
+          {
+            "code": "managed-architecture-derived",
+            "detail": "Managed architecture x86 is derived from PE machine and CLI flags.",
+            "file_offset": 536
+          }
+        ]
+      },
+      "framework": [
+        ".NETFramework,Version=v4.0"
+      ],
+      "metadata": {
+        "status": "complete",
+        "version": "v4.0.30319",
+        "stream_names": [
+          "#Blob",
+          "#GUID",
+          "#Strings",
+          "#US",
+          "#~"
+        ],
+        "table_row_counts": {
+          "Module": 1,
+          "TypeRef": 157,
+          "TypeDef": 37,
+          "Field": 73,
+          "MethodDef": 222,
+          "Param": 192,
+          "InterfaceImpl": 2,
+          "MemberRef": 318,
+          "Constant": 17,
+          "CustomAttribute": 106,
+          "StandAloneSig": 51,
+          "EventMap": 2,
+          "Event": 3,
+          "PropertyMap": 16,
+          "Property": 40,
+          "MethodSemantics": 81,
+          "ModuleRef": 1,
+          "TypeSpec": 22,
+          "ImplMap": 2,
+          "Assembly": 1,
+          "AssemblyRef": 12,
+          "GenericParam": 9,
+          "MethodSpec": 11,
+          "GenericParamConstraint": 2
+        }
+      },
+      "coverage": {
+        "state": "complete",
+        "issues": []
+      }
+    }
+  ]
+}
