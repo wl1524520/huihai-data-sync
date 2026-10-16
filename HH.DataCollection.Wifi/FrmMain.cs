@@ -394,7 +394,7 @@ namespace HH.DataCollection.Wifi
                     // (学校 qrcode_field 决定),客户端不区分
                     string sql = "SELECT StudentID AS 标识, Name AS 姓名, " +
                                  "CASE Sex WHEN 1 THEN '男' WHEN 2 THEN '女' ELSE '' END AS 性别, " +
-                                 "ClassName AS 班级 FROM Student WHERE ProjectID = @p";
+                                 "Grade, ClassName AS 班级 FROM Student WHERE ProjectID = @p";
                     if (_cboClass.SelectedIndex > 0)
                     {
                         sql += " AND ClassName = @c";
@@ -414,6 +414,14 @@ namespace HH.DataCollection.Wifi
                         adapter.Fill(table);
                 }
             }
+            table.Columns.Add("年级", typeof(string)).SetOrdinal(3);
+            foreach (DataRow row in table.Rows)
+            {
+                int grade;
+                row["年级"] = int.TryParse(Convert.ToString(row["Grade"]), out grade)
+                    ? GradeHelper.Instance.GetName(grade) ?? string.Empty : string.Empty;
+            }
+            table.Columns.Remove("Grade");
             _gridStudents.DataSource = table;
         }
 
