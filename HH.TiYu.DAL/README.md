@@ -3,6 +3,25 @@
 基于恢复源码维护，目标为 .NET Framework 4.0 / C# 4 / x86，输出 DAL.dll。
 当前代码以采集器功能为准，不再保证原体测软件的全部 API 或完整数据库兼容。
 
+## 目录与维护入口
+
+| 目录 / 文件 | 职责 |
+| --- | --- |
+| `Contracts/IBatchProvider.cs` | 批量新增、删除、修改的数据访问契约 |
+| `Factories/ProviderFactory.cs` | 创建有效 Provider、缓存并加载嵌入式映射 |
+| `LinqProvider/Organizations/` | 区域和学校的查询、删除约束 |
+| `LinqProvider/Students/` | 学生查询、导入、覆盖与批量修改、删除 |
+| `LinqProvider/PhysicalTests/` | 体测项目、科目字典、项目科目关联的读写 |
+| `LinqProvider/Configuration/` | 同步配置的查询和事务保存 |
+| `LinqProvider/DataMapping.xml` | 七表共享的 LINQ to SQL 映射资源 |
+| `Properties/AssemblyInfo.cs` | 程序集元数据 |
+
+Provider 在 `LinqProvider` 下按业务职责分组；组织、学生、体测分组与 BLL 对应。新增 Provider 放入对应业务目录，不预建空目录；跨业务的批量契约放入 `Contracts`，工厂创建与注册入口放入 `Factories`。
+
+目录调整不改变类型命名空间：契约和工厂仍为 `HH.TiYu.DAL`，Provider 仍为 `HH.TiYu.DAL.LinqProvider`；现有公开接口和程序集身份保持不变。新增源码须显式添加到 `HH.TiYu.DAL.csproj` 的 `Compile Include`；新增可用 Provider 还须在工厂中注册并按需维护映射。
+
+共享映射文件保留原路径，嵌入资源逻辑名称固定为 `HH.TiYu.DAL.LinqProvider.DataMapping.xml`，必须与工厂的 `GetManifestResourceStream` 参数一致；物理目录不决定运行时资源名称。数据库建表和独立同步 SQL 的维护边界见下文。
+
 ## 当前数据契约
 
 `LinqProvider/DataMapping.xml` 仅映射七表：
@@ -31,7 +50,7 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 
 - StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；查询条件只保留项目、学校（映射到 FacilityID）与标识集合三项，未映射字段修改明确失败。
 - 删除学生名单不删除已经采集的 StudentRawScore。
-- PhysicalProjectProvider 使用 GUID 生成项目编号，模板仅复制项目科目；项目编号不依赖任何编号表。
+- PhysicalProjectProvider 使用 GUID 生成项目编号；当前已移除模板项目科目复制分支，项目编号不依赖任何编号表。
 - ProjectPhysicalItemProvider 的批量导入按性别与年级替换同组记录，批量删除按主键删除；`BatchPatch` 明确抛出 NotSupportedException，采集器不支持项目科目的批量修改。
 - 显式删除项目时，在一个事务中清理项目、学校、区域、名单、科目关联和原始成绩；工作单元入口没有显式事务时拒绝执行。
 - SyncConfigProvider.SavePairs 使用映射读写，并在单个事务中新增/覆盖传入键，保留其他键，空值转换为空字符串。
@@ -46,7 +65,7 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 
 ## 验证
 
-运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
+在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
 测试在全新隔离目录使用真实 LocalDb 八表结构，覆盖七表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、七个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载23、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
 不再扩展旧业务表，也不再要求映射与原 DLL 逐字相同。
 VerifyBusiness 保留模型算法的原 DLL 对照；VerifyRecoveredApi 验证剩余 API 和所有源码组件间的引用解析。

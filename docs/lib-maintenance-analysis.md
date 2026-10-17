@@ -47,7 +47,7 @@ HH.TiYu.SQLite 是汇海业务库，和通用 System.Data.SQLite 数据库驱动
 - HH.DataCollection.Wifi/Program.cs:103：创建、启动保存服务。
 - HH.DataCollection.Wifi/Program.cs:112：退出排空后停止。
 - HH.DataCollection.Wifi/Program.cs:135：反射队列的 WaitUnsavedDrained。
-- HH.DataCollection.Wifi/FrmMain.cs:213：实例化 FrmHosts。
+- HH.DataCollection.Wifi/Shell/FrmMain.cs:213：实例化 FrmHosts。
 
 ## Device 与 UI 的边界
 

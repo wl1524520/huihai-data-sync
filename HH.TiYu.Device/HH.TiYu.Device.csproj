@@ -31,29 +31,29 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HostStudent.cs" />
-    <Compile Include="PhysicalRecordBuffer.cs" />
-    <Compile Include="IDSource.cs" />
-    <Compile Include="PhysicalRecordReceivedArgs.cs" />
-    <Compile Include="PhysicalRecordReceivedHandler.cs" />
-    <Compile Include="PhysicalRecord.cs" />
-    <Compile Include="Wifi\HostWifiReaderPara.cs" />
-    <Compile Include="Wifi\StudentDownloadCommand.cs" />
-    <Compile Include="Wifi\StudentDownloadResult.cs" />
-    <Compile Include="Wifi\StudentDownloadPacket.cs" />
-    <Compile Include="Wifi\CmdResponse.cs" />
-    <Compile Include="Wifi\InitialCrcValue.cs" />
-    <Compile Include="Wifi\Crc16Ccitt.cs" />
-    <Compile Include="Wifi\HeadResponse.cs" />
-    <Compile Include="Wifi\GetParameterResponse.cs" />
-    <Compile Include="Wifi\HostParameters.cs" />
-    <Compile Include="Wifi\HostWifiReader.cs" />
-    <Compile Include="Wifi\DataResponse.cs" />
-    <Compile Include="Wifi\ResponseBase.cs" />
-    <Compile Include="Wifi\WifiHost.cs" />
-    <Compile Include="Wifi\StudentDownloader.cs" />
-    <Compile Include="Wifi\WifiSearcher.cs" />
-    <Compile Include="Wifi\WifiHostInfo.cs" />
+    <Compile Include="Wifi\StudentDownload\HostStudent.cs" />
+    <Compile Include="Records\PhysicalRecordBuffer.cs" />
+    <Compile Include="Records\IDSource.cs" />
+    <Compile Include="Records\PhysicalRecordReceivedArgs.cs" />
+    <Compile Include="Records\PhysicalRecordReceivedHandler.cs" />
+    <Compile Include="Records\PhysicalRecord.cs" />
+    <Compile Include="Wifi\Collection\HostWifiReaderPara.cs" />
+    <Compile Include="Wifi\StudentDownload\StudentDownloadCommand.cs" />
+    <Compile Include="Wifi\StudentDownload\StudentDownloadResult.cs" />
+    <Compile Include="Wifi\StudentDownload\StudentDownloadPacket.cs" />
+    <Compile Include="Wifi\Control\CmdResponse.cs" />
+    <Compile Include="Wifi\Protocol\InitialCrcValue.cs" />
+    <Compile Include="Wifi\Protocol\Crc16Ccitt.cs" />
+    <Compile Include="Wifi\Collection\HeadResponse.cs" />
+    <Compile Include="Wifi\Control\GetParameterResponse.cs" />
+    <Compile Include="Wifi\Control\HostParameters.cs" />
+    <Compile Include="Wifi\Collection\HostWifiReader.cs" />
+    <Compile Include="Wifi\Collection\DataResponse.cs" />
+    <Compile Include="Wifi\Protocol\ResponseBase.cs" />
+    <Compile Include="Wifi\Control\WifiHost.cs" />
+    <Compile Include="Wifi\StudentDownload\StudentDownloader.cs" />
+    <Compile Include="Wifi\Discovery\WifiSearcher.cs" />
+    <Compile Include="Wifi\Discovery\WifiHostInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

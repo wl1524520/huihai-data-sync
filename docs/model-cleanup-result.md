@@ -111,4 +111,4 @@ Debug 与 Release 两个配置各运行 7 套验证，全部通过（均为隔�
 - 连带清理：`StudentNote`/`ScoreNote` 两个类型删除；`PhysicalScore` 的 Note 扩展位（8 处只写不读、且无处落库的 `SetProperty`）删除；`GradeHelper` 的 101-110 年龄码常量删除（码到名的翻译条目保留，以免旧数据失去显示名）；`StudentSearchCondition` 删除 `CardID`/`Graduation`/`WriteCard`（其中前两项原值一旦设置即抛 `NotSupportedException`）；`PhysicalProject.GetStudentByID` 由三参收窄为单参，卡号/身份证索引字典随之删除（4 个调用点全部用默认值，索引从未被查询）。
 - 平台年级：`StudentSync` 按契约 §3.2 校验 11-44，越界只报告不阻断（新增按无年级落库，更新保留本地原年级）；`FrmHosts` 下发主机时对无年级仍按 `byte 0` 处理（本轮未改，见下条限制）。
 - 验证：`VerifyBusiness`（Model 22 个公开/受保护类型；源码侧 517 项检查与 280 项行为观察、legacy 侧 2 项检查与 280 项观察，快照一致；新增 `ChangedMembers` 登记表与 source 变体专属的负向断言，钉住"故意不存在"的成员）、`VerifyDal`（109 项检查，八表 schema）、`VerifyRecoveredApi`（697 项）、`VerifyUI`（59 项）全部通过；启动冒烟窗口标题为"汇海主机数据采集器"，未产生 `logs/error.log`。
-- 新增限制：`HH.TiYu.UI/FrmHosts.cs` 的 `GetScoreFrom` 在删除其唯一调用点后成为零调用点的私有方法，本轮保留未删；主机端年级仍以 `byte` 下发，无年级显示为 0。
+- 新增限制：`HH.TiYu.UI/Hosts/FrmHosts.cs` 的 `GetScoreFrom` 在删除其唯一调用点后成为零调用点的私有方法，本轮保留未删；主机端年级仍以 `byte` 下发，无年级显示为 0。

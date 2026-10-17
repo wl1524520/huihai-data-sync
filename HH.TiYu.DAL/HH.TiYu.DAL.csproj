@@ -35,15 +35,15 @@
   </ItemGroup>
   <ItemGroup>
     <!-- 采集器仅保留 DataMapping.xml 映射到的七表 Provider；停用的旧 Provider 已随本轮精简删除。 -->
-    <Compile Include="IBatchProvider.cs" />
-    <Compile Include="ProviderFactory.cs" />
-    <Compile Include="LinqProvider\DivisionProvider.cs" />
-    <Compile Include="LinqProvider\FacilityProvider.cs" />
-    <Compile Include="LinqProvider\PhysicalItemProvider.cs" />
-    <Compile Include="LinqProvider\PhysicalProjectProvider.cs" />
-    <Compile Include="LinqProvider\ProjectPhysicalItemProvider.cs" />
-    <Compile Include="LinqProvider\StudentProvider.cs" />
-    <Compile Include="LinqProvider\SyncConfigProvider.cs" />
+    <Compile Include="Contracts\IBatchProvider.cs" />
+    <Compile Include="Factories\ProviderFactory.cs" />
+    <Compile Include="LinqProvider\Organizations\DivisionProvider.cs" />
+    <Compile Include="LinqProvider\Organizations\FacilityProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalTests\PhysicalItemProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalTests\PhysicalProjectProvider.cs" />
+    <Compile Include="LinqProvider\PhysicalTests\ProjectPhysicalItemProvider.cs" />
+    <Compile Include="LinqProvider\Students\StudentProvider.cs" />
+    <Compile Include="LinqProvider\Configuration\SyncConfigProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="LinqProvider\DataMapping.xml">
       <LogicalName>HH.TiYu.DAL.LinqProvider.DataMapping.xml</LogicalName>

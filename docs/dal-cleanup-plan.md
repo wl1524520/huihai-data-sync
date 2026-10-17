@@ -25,11 +25,11 @@ DAL 当前编译 22 个 Provider，工厂仅允许创建其中 7 个；其余 15
 
 实际生产调用包括：
 
-- `HH.DataCollection.Wifi/Program.cs`、`FrmMain.cs`：年度项目查询和创建、项目科目保存、基础数据加载。
-- `HH.DataCollection.Wifi/Sync/FrmSyncTasks.cs`：同步后重新加载学生。
+- `HH.DataCollection.Wifi/Program.cs`、`HH.DataCollection.Wifi/Shell/FrmMain.cs`：年度项目查询和创建、项目科目保存、基础数据加载。
+- `HH.DataCollection.Wifi/Sync/Views/FrmSyncTasks.cs`：同步后重新加载学生。
 - `HH.DataCollection.Wifi/Sync/SyncConfig.cs`：同步配置查询与事务保存。
-- `HH.TiYu.UI/FrmScoreCollect_Wifi.cs`：学校查询与采集。
-- `HH.TiYu.UI/FrmStudentDownloadPara.cs`：普通人员下发的区域、学校筛选。
+- `HH.TiYu.UI/Collection/FrmScoreCollect_Wifi.cs`：学校查询与采集。
+- `HH.TiYu.UI/StudentDownload/FrmStudentDownloadPara.cs`：普通人员下发的区域、学校筛选。
 
 ## 一、DAL 清理
 

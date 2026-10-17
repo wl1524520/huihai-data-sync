@@ -5,7 +5,7 @@
 
 ## 范围
 
-23 个顶层类型：Wifi 目录的 17 个协议/通信类型，加上 HostStudent、IDSource、
+23 个顶层类型：17 个 Wifi 协议/通信类型，加上 HostStudent、IDSource、
 PhysicalRecord、PhysicalRecordBuffer、PhysicalRecordReceivedArgs、PhysicalRecordReceivedHandler。
 保留 Wifi 搜索、参数、成绩报文解析、实时/批量读取、名单下发和必要串口入口。
 保留原始命名空间 HH.Zhongkao.Device，便于其他恢复程序集兼容调用。
@@ -14,14 +14,23 @@ PhysicalRecord、PhysicalRecordBuffer、PhysicalRecordReceivedArgs、PhysicalRec
 StudentDownloader 的 DownloadStudentWithPhoto 及三个照片报文构造方法、照片分包方法均移除；
 UI 已用的普通名单下发继续保留。
 
-## 修改入口
+## 目录与维护入口
 
-- Wifi/DataResponse.cs：成绩、项目代码、性别/卡号来源、特殊成绩和记录时间解析。
-- Wifi/HeadResponse.cs、ResponseBase.cs：记录头、CRC 校验。
-- Wifi/HostWifiReader.cs：接收缓存、读取流程、状态与回调。
-- Wifi/WifiHost.cs、GetParameterResponse.cs、HostParameters.cs：参数及控制命令。
-- Wifi/StudentDownloader.cs：普通名单及测试学生名单序列化和传输。
-- Wifi/WifiSearcher.cs：设备发现响应解析。
+| 目录 | 职责与修改入口 |
+| --- | --- |
+| `Records/` | 成绩记录 `PhysicalRecord`、标识来源 `IDSource`、记录缓存及接收事件参数和委托 |
+| `Wifi/Discovery/` | 设备发现 `WifiSearcher` 与发现结果 `WifiHostInfo` |
+| `Wifi/Collection/` | 成绩读取 `HostWifiReader`、读取条件 `HostWifiReaderPara`、成绩报文 `DataResponse` 和记录头 `HeadResponse` |
+| `Wifi/Control/` | 主机控制 `WifiHost`、参数 `HostParameters`、参数响应 `GetParameterResponse` 和命令响应 `CmdResponse` |
+| `Wifi/StudentDownload/` | 名单数据 `HostStudent`、下发流程 `StudentDownloader`、下发命令、响应报文和结果码 |
+| `Wifi/Protocol/` | 共享报文基类 `ResponseBase`、CRC 算法 `Crc16Ccitt` 和初始值枚举 |
+| `Properties/` | 程序集元数据 |
+
+按设备功能组织代码，参数、报文和结果类型优先与使用它们的流程放在同一目录；跨 Wifi 流程使用的协议基础类型放入 `Wifi/Protocol`。通用成绩记录和接收事件放入 `Records`，不预建空目录，也不单独建立汇集所有枚举或参数的目录。
+
+成绩、项目代码、性别/标识来源、特殊成绩和时间解析位于 `Wifi/Collection/DataResponse.cs`；主机参数编解码位于 `Wifi/Control/GetParameterResponse.cs`；普通名单和测试名单的编码、分包与传输位于 `Wifi/StudentDownload/StudentDownloader.cs`。
+
+物理目录调整不改变命名空间：记录相关类型及 `HostStudent` 仍为 `HH.Zhongkao.Device`，其余现有 Wifi 类型仍为 `HH.Zhongkao.Device.Wifi`；`HostStudent` 随当前使用它的名单下发流程存放。类名、公开接口、枚举数值和程序集身份保持不变。新增源码须显式加入 `HH.TiYu.Device.csproj` 的 `Compile Include`。
 
 ## 兼容性与边界
 
@@ -46,7 +55,7 @@ ev_8699908a531493bab0d3472e9f5e94974bef35e58b2014622c6c6c7ab44d7312
 
 ## 验证
 
-从仓库根目录执行：
+从 `HH.DataCollection.Wifi` 仓库根目录执行：
 powershell -File tools/VerifyDevice.ps1 -Configuration Debug
 powershell -File tools/VerifyDevice.ps1 -Configuration Release
 

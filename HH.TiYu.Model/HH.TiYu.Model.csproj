@@ -37,29 +37,29 @@
     <Reference Include="Newtonsoft.Json"><HintPath>..\lib\Newtonsoft.Json.dll</HintPath><Private>False</Private></Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AppSettings.cs" />
-    <Compile Include="DateTimeRange.cs" />
-    <Compile Include="Division.cs" />
-    <Compile Include="Facility.cs" />
-    <Compile Include="GradeHelper.cs" />
-    <Compile Include="PhysicalItem.cs" />
-    <Compile Include="PhysicalProject.cs" />
-    <Compile Include="PhysicalProjectClass.cs" />
-    <Compile Include="PhysicalProjectHelper.cs" />
-    <Compile Include="PhysicalScore.cs" />
-    <Compile Include="ProjectPhysicalItem.cs" />
-    <Compile Include="Sex.cs" />
-    <Compile Include="SpecialScoreType.cs" />
-    <Compile Include="Student.cs" />
-    <Compile Include="ScoreSource.cs" />
-    <Compile Include="ProjectLoadOptions.cs" />
+    <Compile Include="Configuration\AppSettings.cs" />
+    <Compile Include="Shared\DateTimeRange.cs" />
+    <Compile Include="Organizations\Division.cs" />
+    <Compile Include="Organizations\Facility.cs" />
+    <Compile Include="Students\GradeHelper.cs" />
+    <Compile Include="PhysicalTests\PhysicalItem.cs" />
+    <Compile Include="PhysicalTests\PhysicalProject.cs" />
+    <Compile Include="PhysicalTests\PhysicalProjectClass.cs" />
+    <Compile Include="PhysicalTests\PhysicalProjectHelper.cs" />
+    <Compile Include="Scores\PhysicalScore.cs" />
+    <Compile Include="PhysicalTests\ProjectPhysicalItem.cs" />
+    <Compile Include="Shared\Sex.cs" />
+    <Compile Include="Scores\SpecialScoreType.cs" />
+    <Compile Include="Students\Student.cs" />
+    <Compile Include="Scores\ScoreSource.cs" />
+    <Compile Include="PhysicalTests\ProjectLoadOptions.cs" />
     <Compile Include="Security\Operator.cs" />
-    <Compile Include="SearchCondition\DivisionSearchCondition.cs" />
-    <Compile Include="SearchCondition\FacilitySearchCondition.cs" />
-    <Compile Include="SearchCondition\PhysicalProjectSearchCondition.cs" />
-    <Compile Include="SearchCondition\ProjectPhysicalItemSearchCondition.cs" />
-    <Compile Include="SearchCondition\StudentSearchCondition.cs" />
-    <Compile Include="SyncConfigEntry.cs" />
+    <Compile Include="Organizations\DivisionSearchCondition.cs" />
+    <Compile Include="Organizations\FacilitySearchCondition.cs" />
+    <Compile Include="PhysicalTests\PhysicalProjectSearchCondition.cs" />
+    <Compile Include="PhysicalTests\ProjectPhysicalItemSearchCondition.cs" />
+    <Compile Include="Students\StudentSearchCondition.cs" />
+    <Compile Include="Configuration\SyncConfigEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

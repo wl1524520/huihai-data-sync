@@ -4,15 +4,26 @@
 `LJH.GeneralLibrary, Version=2.0.2020.1015, Culture=neutral, PublicKeyToken=null`。
 项目目标为 .NET Framework 4.0、C# 4、x86。原 DLL 保留作为对照。
 
-## 维护入口
+## 目录与维护入口
 
-- `Core/DAL`：实体/Provider/工作单元接口、操作与查询返回类型、查询条件、连接 URI、更新项目。
-- `Core/DAL/Linq`：SQLite/SQL Server 连接工厂、LINQ Provider 基类、工作单元提交。
-- `CommPort.cs`、`Net/LJHSocket.cs`、`Net/NetTool.cs`：Wifi 设备路径使用的串口、Socket 和本机 IP 工具。
-- `SEBinaryConverter.cs`、`BCDConverter.cs`、`HexStringConverter.cs`：协议字节转换；`DecimalExtention.cs`：模型及成绩窗口使用的 decimal 扩展方法。
-- `LOG/FileLog.cs`、`ExceptionHandling/ExceptionPolicy.cs`：业务异常与设备日志。
-- `WinformControl`：UI 实际使用的串口下拉框、整数/全角输入框及进度条；`StringHelper.cs` 为输入转换依赖（只保留 `ToDBC`）。
-- `Core/UI/NPOIExcelHelper.cs`：成绩采集窗口导出 Excel（只保留 `Export`）。NPOI 保留为通用第三方 DLL，不逆向其实现。
+| 目录 | 职责与修改入口 |
+| --- | --- |
+| `DataAccess/` | 实体、Provider、工作单元契约，操作与查询结果、查询条件、连接 URI、导入选项与更新项 |
+| `DataAccess/Linq/` | SQLite/SQL Server 连接工厂、LINQ Provider 基类、工作单元提交 |
+| `Communication/` | 串口与 Socket 共用的数据接收委托 `DataArrivedDelegate` |
+| `Communication/Serial/` | 串口封装 `CommPort` |
+| `Communication/Network/` | Socket 封装 `LJHSocket` 和本机 IP 工具 `NetTool` |
+| `Conversion/` | BCD、整数与字节、十六进制文本转换，decimal 扩展和全角转半角 |
+| `Diagnostics/` | 文件日志 `FileLog`、异常记录策略 `ExceptionPolicy` |
+| `UI/Controls/` | 串口下拉框、整数/全角输入框、进度条 |
+| `UI/Excel/` | Excel 导出 `NPOIExcelHelper`，只保留 `Export` |
+| `Properties/` | 程序集元数据 |
+
+按基础能力分组，新增源码优先放入对应能力目录，不预建空目录。数据访问契约与结果类型集中在 `DataAccess`，LINQ 实现放在其子目录；串口与网络共用的接收契约放在 `Communication` 入口。协议转换代码放在 `Conversion`，界面控件和导出支持放在 `UI`，业务专用规则应归属业务项目。
+
+目录移动不改变命名空间。原根命名空间类型仍为 `LJH.GeneralLibrary`；数据访问仍为 `LJH.GeneralLibrary.Core.DAL` / `.Linq`；网络仍为 `LJH.GeneralLibrary.Net`；日志、异常处理、控件和 Excel 导出分别保留 `LJH.GeneralLibrary.LOG`、`LJH.GeneralLibrary.ExceptionHandling`、`LJH.GeneralLibrary.WinformControl`、`LJH.GeneralLibrary.Core.UI`。保留原类型名称（包括 `DecimalExtention`、`IntergerTextBox`）、公开接口和程序集身份，避免影响调用方。新增源码须显式加入 `LJH.GeneralLibrary.csproj` 的 `Compile Include`。
+
+`StringHelper` 仅保留 `ToDBC`，供输入控件转换使用。NPOI 保留为通用第三方 DLL，不逆向其实现。源码目录不决定运行时配置、日志或数据库的位置；本次仅整理目录，不改变这些路径和生命周期行为。
 
 不纳入未使用的授权硬件读写、读卡器、打印机、LED、语音、扫描仪/摄像头、报表主窗体、其他控件及 COM 类型。
 项目没有调用这些模块的本机 DLL。LJH 与 UI 中存在同名 FrmProcessing；采集窗口使用 UI 自己的实现，因此没有恢复 LJH 的同名窗体。
@@ -35,7 +46,7 @@ DecimalExtention.Trim 原来依赖当前 CultureInfo，均保持原行为。网�
 
 ## 验证
 
-从仓库目录执行：
+从 `HH.DataCollection.Wifi` 仓库根目录执行：
 
 ```powershell
 & .\tools\VerifyGeneralLibrary.ps1 -Configuration Debug

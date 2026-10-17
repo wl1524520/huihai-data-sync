@@ -38,13 +38,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ProviderFactory.cs" />
-    <Compile Include="StudentRawScore.cs" />
-    <Compile Include="StudentRawScoreProvider.cs" />
-    <Compile Include="StudentRawScoreSearchCondition.cs" />
-    <Compile Include="StudentRawScoresSavingService.cs" />
+    <Compile Include="Factories\ProviderFactory.cs" />
+    <Compile Include="RawScores\StudentRawScore.cs" />
+    <Compile Include="RawScores\StudentRawScoreProvider.cs" />
+    <Compile Include="RawScores\StudentRawScoreSearchCondition.cs" />
+    <Compile Include="RawScores\StudentRawScoresSavingService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="DataMapping.xml"><LogicalName>HH.TiYu.SQLite.DataMapping.xml</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="RawScores\DataMapping.xml"><LogicalName>HH.TiYu.SQLite.DataMapping.xml</LogicalName></EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HH.TiYu.Device\HH.TiYu.Device.csproj">

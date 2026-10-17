@@ -55,15 +55,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
-    <Compile Include="FrmMain.cs" />
-    <Compile Include="FrmSelectProject.cs" />
+    <Compile Include="Shell\FrmMain.cs" />
+    <Compile Include="Shell\FrmSelectProject.cs" />
     <Compile Include="Db\LocalDb.cs" />
     <Compile Include="Sync\SyncConfig.cs" />
     <Compile Include="Sync\SyncApi.cs" />
     <Compile Include="Sync\StudentSync.cs" />
     <Compile Include="Sync\ScoreUpload.cs" />
-    <Compile Include="Sync\FrmSyncSettings.cs" />
-    <Compile Include="Sync\FrmSyncTasks.cs" />
+    <Compile Include="Sync\Views\FrmSyncSettings.cs" />
+    <Compile Include="Sync\Views\FrmSyncTasks.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- 工具栏图标,由 tools\ExtractIcons.ps1 从原软件 GuojiaTiZhi.exe 资源提取 -->

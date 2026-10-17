@@ -17,12 +17,12 @@
 
 | 文件 | 删除成员 | 保留说明 | 行数 |
 | --- | --- | --- | --- |
-| `SEBinaryConverter.cs` | `LongToBytes`、`UintToBytes`、`BytesToShort` | 保留 `IntToBytes`（`PhysicalProject.GetStudentByID`）、`ShortToBytes`/`BytesToLong`/`BytesToInt`（Device Wifi 协议）、`BytesToUint` | 144 → 74 |
-| `HexStringConverter.cs` | `StringToHex`、`HexEquals` | 保留 `HexToString`（Device 协议日志） | 102 → 31 |
-| `StringHelper.cs` | `ToSBC` | 保留 `ToDBC`（`DBCTextBox`、`IntergerTextBox`） | 82 → 27 |
-| `Net/NetTool.cs` | `GetLocalIP`、`GetLocalMAC`、`GetHostName` | 保留 `GetLocalIPS`（`WifiSearcher` 主机发现） | 131 → 34 |
-| `Core/UI/NPOIExcelHelper.cs` | `Import` 及其专用私有方法 `GetValue` | 保留三个 `Export` 重载（`FrmScoreCollect_Wifi` 导出成绩表） | 240 → 129 |
-| `Net/LJHSocket.cs` | `OnClosed` 事件 | 保留 `OnDataArrivedEvent`、`Open`/`SendData`/`Close` | 175 → 137 |
+| `Conversion/SEBinaryConverter.cs` | `LongToBytes`、`UintToBytes`、`BytesToShort` | 保留 `IntToBytes`（`PhysicalProject.GetStudentByID`）、`ShortToBytes`/`BytesToLong`/`BytesToInt`（Device Wifi 协议）、`BytesToUint` | 144 → 74 |
+| `Conversion/HexStringConverter.cs` | `StringToHex`、`HexEquals` | 保留 `HexToString`（Device 协议日志） | 102 → 31 |
+| `Conversion/StringHelper.cs` | `ToSBC` | 保留 `ToDBC`（`DBCTextBox`、`IntergerTextBox`） | 82 → 27 |
+| `Communication/Network/NetTool.cs` | `GetLocalIP`、`GetLocalMAC`、`GetHostName` | 保留 `GetLocalIPS`（`WifiSearcher` 主机发现） | 131 → 34 |
+| `UI/Excel/NPOIExcelHelper.cs` | `Import` 及其专用私有方法 `GetValue` | 保留三个 `Export` 重载（`FrmScoreCollect_Wifi` 导出成绩表） | 240 → 129 |
+| `Communication/Network/LJHSocket.cs` | `OnClosed` 事件 | 保留 `OnDataArrivedEvent`、`Open`/`SendData`/`Close` | 175 → 137 |
 
 - `GetLocalMAC` 是原库中 `System.Management` 的唯一使用者，删除后该引用一并移除。
 - 采集器不上传 Excel（学生名单走同步接口），`Import` 无调用方。

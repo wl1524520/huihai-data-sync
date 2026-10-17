@@ -2,12 +2,23 @@
 
 本项目从随附 `lib/HH.TiYu.SQLite.dll` 恢复，为 .NET Framework 4.0 / C# 4 / x86 项目，程序集名称 `HH.TiYu.SQLite`，版本 `1.0.0.0`，无强名称。原 DLL 留作验证基线；采集器使用项目引用的构建产物。
 
-## 维护入口
+## 目录与维护入口
 
-- `StudentRawScoresSavingService`：设备成绩转实体、去重键生成、后台批量保存与停止。
-- `StudentRawScore` / `DataMapping.xml`：实体和原始 LINQ 映射。映射资源逻辑名称为 `HH.TiYu.SQLite.DataMapping.xml`，字节与原 DLL 完全相同。
-- `StudentRawScoreProvider`：按项目、时间、学号、姓名、科目、主机过滤，排序、分页、批量去重和删除。
-- `ProviderFactory` / `StudentRawScoreSearchCondition`：工厂与查询参数。
+| 目录 / 文件 | 职责 |
+| --- | --- |
+| `Factories/ProviderFactory.cs` | 创建 Provider、加载嵌入式映射 |
+| `RawScores/StudentRawScore.cs` | 原始成绩实体 |
+| `RawScores/StudentRawScoreSearchCondition.cs` | 项目、时间、学号、姓名、科目、主机等查询条件 |
+| `RawScores/StudentRawScoreProvider.cs` | 原始成绩查询、排序分页、批量去重保存和删除 |
+| `RawScores/StudentRawScoresSavingService.cs` | 设备成绩转实体、去重键生成、后台批量保存与生命周期管理 |
+| `RawScores/DataMapping.xml` | 原始成绩 LINQ to SQL 映射 |
+| `Properties/AssemblyInfo.cs` | 程序集元数据 |
+
+原始成绩相关代码按业务集中在 `RawScores`，工厂入口位于 `Factories`；新增原始成绩相关代码优先放入 `RawScores`，不再按实体、查询参数和服务拆成仅含单个文件的目录，也不预建空目录。
+
+目录调整不改变类型命名空间，现有类型仍为 `HH.TiYu.SQLite`，保留类名、公开接口和程序集身份。新增源码须在 `HH.TiYu.SQLite.csproj` 中显式添加 `Compile Include`。
+
+映射文件的物理路径为 `RawScores/DataMapping.xml`，嵌入资源逻辑名称仍为 `HH.TiYu.SQLite.DataMapping.xml`，与工厂加载参数一致；本次移动保持映射字节不变。`DataMapping.xml` 负责实体映射，实际建库位于采集器 `Db/LocalDb.cs`；表字段调整时还需检查采集器同步和上传 SQL。
 
 共恢复五个业务类，保持原命名空间、已有公开签名及可选参数。底层 LINQ provider、日志、异常处理使用 LJH；设备记录类型使用 Device 项目；通用 `System.Data.SQLite.dll` 保留供应商依赖，不逆向。
 
@@ -25,6 +36,6 @@
 
 REA 静态身份：`ev_8e96e04dd5be2da3bccd1de94db056fb357f56542465951a650112f062126392`；成员：`ev_547f22be8b9b3b6607d21b1f5e31dfebda878315a26fb631b3c4b8fda98804a7`，详见 `docs/lib-maintenance-evidence.json`。C# 重建使用本机 ILSpy 9.1.0.7988，并非恢复开发者原始注释或工程。静态证据不代表实际运行；以下独立测试执行的是受控临时数据库流程。
 
-在项目根目录执行 `tools/VerifySQLite.ps1 -Configuration Debug` 或 Release。每次在 `tools/bin/SQLiteVerification/<GUID>` 生成独立进程与数据库，不接触生产库、设备和网络。验证已有公开 API、程序集身份、映射字节、实体转换快照、插入去重、组合筛选、排序分页、删除；并验证超过 500 条的跨项目队列、并发生产者、停止后拒绝新增、数据库故障超时保留队列及修复后重试落盘。
+在 `HH.DataCollection.Wifi` 仓库根目录执行 `tools/VerifySQLite.ps1 -Configuration Debug` 或 Release。每次在 `tools/bin/SQLiteVerification/<GUID>` 生成独立进程与数据库，不接触生产库、设备和网络。验证已有公开 API、程序集身份、映射字节、实体转换快照、插入去重、组合筛选、排序分页、删除；并验证超过 500 条的跨项目队列、并发生产者、停止后拒绝新增、数据库故障超时保留队列及修复后重试落盘。
 
 Debug、Release 均通过：源码 85 项检查、原 DLL 10 项检查，10 条实体转换/落盘快照完全一致。新增空时间行为和显式重启另有断言，不与原 DLL 的缺陷行为作等价要求。

@@ -2,21 +2,26 @@
 
 本项目从 `lib/UI.dll` 恢复采集器实际使用的界面闭包，输出仍为 `UI.dll`，版本 `1.0.0.0`，目标为 .NET Framework 4.0 / C# 4 / x86。原始 DLL 保留作分析基线。它不恢复旧软件的整个 UI 程序集。
 
-## 维护入口
+## 目录与维护入口
 
-| 源码 | 职责 |
+| 目录 | 职责与修改入口 |
 | --- | --- |
-| `FrmHosts.cs` | 主机发现、集中/实时采集、名单下发、时间同步、通信质量检测与关闭主机 |
-| `FrmScoreCollect_Wifi.cs` | 实时成绩展示、原始成绩入队、成绩转换与导出 |
-| `FrmStudentDownloadPara.cs` | 学生筛选、名单下发参数 |
-| `FrmAddHost_USB.cs` | 原 Wifi 协议的串口接入入口，不是 TSN USB 协议 |
-| `FrmDateRange.cs`、`FrmSerialRange.cs`、`FrmStudentIDRange.cs` | 集中采集筛选范围 |
-| `FrmProcessing.cs`、`FrmScoreCollectStatitics.cs` | 操作进度与采集统计 |
-| `Controls/`、`UserControl/`、`DivisionHelper.cs` | 学校、区域、年级、班级选择依赖 |
+| `Hosts/` | 主机发现与管理入口 `FrmHosts`、原 Wifi 协议的串口接入窗口 `FrmAddHost_USB` |
+| `Collection/` | 成绩展示、入队、转换与导出 `FrmScoreCollect_Wifi`，统计窗口及日期、序列号、学号范围对话框 |
+| `StudentDownload/` | 学生筛选和名单下发参数窗口 `FrmStudentDownloadPara` |
+| `Selection/` | 区域、学校、年级、班级选择控件及区域与学校筛选辅助类 `DivisionHelper` |
+| `Shared/` | 多个主机操作流程共用的进度对话框 `FrmProcessing` |
+| `Properties/` | 程序集元数据 |
 
-保留 14 个业务类型：9 个窗口、4 个控件和 1 个辅助类。保留原公开类型命名空间，供采集器继续使用 `new FrmHosts()`。
+保留 14 个业务类型：9 个窗口、4 个控件和 1 个辅助类。按界面功能组织代码，窗体及其资源就近维护；共享选择组件集中在 `Selection`，跨流程的通用对话框放入 `Shared`。新增源码优先归入对应功能目录，不预建空目录，也不再区分内容重叠的 `Controls` 与 `UserControl` 物理目录。
 
-`Resources/` 仅恢复 `FrmHosts`、`FrmProcessing`、`FrmScoreCollect_Wifi` 实际使用的 3 份资源，以可编辑 `.resx` 保存；使用原清单资源名。其他窗口的布局已在 `InitializeComponent` 中直接恢复，不需要嵌入其未被读取的旧资源。没有恢复程序集的全局图片资源、报表资源或旧平台资源。
+`FrmHosts` 仍协调集中/实时采集、名单下发、时间同步、通信检测和主机关闭；目录分组不拆分其业务实现。`FrmAddHost_USB` 是原 Wifi 协议的串口接入入口，不是 TSN USB 协议。
+
+文件移动不改变命名空间：窗体及辅助类仍为 `HH.TiYu.UI`；`ClassNameCombox`、`DivisionComboBox` 仍为 `HH.TiYu.UI.UserControl`；`FacilityComboBox`、`GradeComboBox` 仍为 `HH.TiYu.UI.Controls`。保留现有类名（包括 `FrmScoreCollectStatitics`、`ClassNameCombox`）、公开接口和程序集身份，调用方仍可使用 `new FrmHosts()`。新增源码须显式加入 `HH.TiYu.UI.csproj` 的 `Compile Include`。
+
+三份资源与所属窗体同目录，分别为 `Hosts/FrmHosts.resx`、`Collection/FrmScoreCollect_Wifi.resx`、`Shared/FrmProcessing.resx`，并通过项目中的 `DependentUpon` 关联对应 `.cs`。嵌入资源逻辑名称仍分别为 `HH.TiYu.UI.FrmHosts.resources`、`HH.TiYu.UI.FrmScoreCollect_Wifi.resources`、`HH.TiYu.UI.FrmProcessing.resources`，与现有 `ComponentResourceManager` 的类型保持匹配；资源文件内容不变。
+
+当前窗体的布局和事件关联已在各自 `.cs` 的 `InitializeComponent` 中恢复，没有独立 `.Designer.cs`；本次目录整理不拆分设计器代码。其他窗口不需要嵌入未被读取的旧资源，也未恢复程序集的全局图片、报表或旧平台资源。
 
 ## 旧分组下发工作流已删除
 
@@ -38,14 +43,14 @@
 
 工程直接引用 Model、DAL、BLL、Device、HH.TiYu.SQLite、LJH.GeneralLibrary 的源码项目。NPOI 等通用第三方库通过基础库继续使用，没有恢复第三方源码。
 
-运行：
+在 `HH.DataCollection.Wifi` 仓库根目录运行：
 
 ```powershell
 .\tools\VerifyUI.ps1 -Configuration Debug
 .\tools\VerifyUI.ps1 -Configuration Release
 ```
 
-Debug 和 Release 均通过 61 项检查：在独立目录创建、释放全部 10 个窗口和 4 个控件，按名称清单验证保留类型齐全、旧分组窗体与控件不存在、只保留 3 份嵌入资源、主机窗口中文标题与 MDI 布局、右键菜单条目数、成绩表列，以及照片入口和旧学生测试菜单入口已删除。测试不调用 Show/ShowDialog，不触发 Load 处理程序，不进行设备或网络通信；构造中的历史学校 DAL 查询只能访问测试目录，不使用生产数据。
+Debug 和 Release 均通过 99 项检查：在独立目录创建、释放全部 9 个窗口和 4 个控件，按名称清单验证保留类型齐全、旧分组窗体与控件不存在、只保留 3 份嵌入资源、主机窗口中文标题与 MDI 布局、右键菜单条目数、成绩表列，以及照片入口和旧学生测试菜单入口已删除。测试不调用 Show/ShowDialog，不触发 Load 处理程序，不进行设备或网络通信；构造中的历史学校 DAL 查询只能访问测试目录，不使用生产数据。
 
 这验证了构造、资源加载与依赖兼容；尚未验证实际显示外观、多窗口交互、Wifi/串口通信、参数读写、真实设备成绩及名单下发。
 
