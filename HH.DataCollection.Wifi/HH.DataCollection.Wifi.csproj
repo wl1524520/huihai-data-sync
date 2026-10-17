@@ -107,9 +107,11 @@
     <!-- 从 lib 复制通用运行依赖；Model、DAL、BLL、Device、UI、HH.GeneralLibrary 使用源码项目的构建产物。 -->
     <!-- 禁止原始 lib 中的业务程序集覆盖项目引用的产物。 -->
     <ItemGroup>
-      <RuntimeLibraries Include="$(HuiHaiDir)*.dll" Exclude="$(HuiHaiDir)DAL.dll;$(HuiHaiDir)Model.dll;$(HuiHaiDir)BLL.dll;$(HuiHaiDir)HH.TiYu.SQLite.dll;$(HuiHaiDir)Device.dll;$(HuiHaiDir)UI.dll;$(HuiHaiDir)LJH.GeneralLibrary.dll;$(HuiHaiDir)HH.GeneralLibrary.dll;$(HuiHaiDir)AForge.dll;$(HuiHaiDir)AForge.Controls.dll;$(HuiHaiDir)AForge.Imaging.dll;$(HuiHaiDir)AForge.Math.dll;$(HuiHaiDir)AForge.Video.dll;$(HuiHaiDir)AForge.Video.DirectShow.dll;$(HuiHaiDir)FJ.CoreWin.dll;$(HuiHaiDir)JpgDll.dll;$(HuiHaiDir)SavePhoto.dll" />
+      <!-- 只复制当前运行所需的第三方库；SharpZipLib 是 NPOI 的间接依赖。 -->
+      <RuntimeLibraries Include="$(HuiHaiDir)Newtonsoft.Json.dll;$(HuiHaiDir)System.Data.SQLite.dll;$(HuiHaiDir)NPOI.dll;$(HuiHaiDir)NPOI.OOXML.dll;$(HuiHaiDir)NPOI.OpenXml4Net.dll;$(HuiHaiDir)NPOI.OpenXmlFormats.dll;$(HuiHaiDir)ICSharpCode.SharpZipLib.dll" />
     </ItemGroup>
-    <Delete Files="$(TargetDir)LJH.GeneralLibrary.dll;$(TargetDir)LJH.GeneralLibrary.pdb;$(TargetDir)HH.TiYu.SQLite.dll;$(TargetDir)HH.TiYu.SQLite.pdb;$(TargetDir)AForge.dll;$(TargetDir)AForge.Controls.dll;$(TargetDir)AForge.Imaging.dll;$(TargetDir)AForge.Math.dll;$(TargetDir)AForge.Video.dll;$(TargetDir)AForge.Video.DirectShow.dll;$(TargetDir)FJ.CoreWin.dll;$(TargetDir)JpgDll.dll;$(TargetDir)SavePhoto.dll" />
+    <!-- 清理旧构建留下的已移除组件，兼容直接增量构建。 -->
+    <Delete Files="$(TargetDir)LJH.GeneralLibrary.dll;$(TargetDir)LJH.GeneralLibrary.pdb;$(TargetDir)HH.TiYu.SQLite.dll;$(TargetDir)HH.TiYu.SQLite.pdb;$(TargetDir)AForge.dll;$(TargetDir)AForge.Controls.dll;$(TargetDir)AForge.Imaging.dll;$(TargetDir)AForge.Math.dll;$(TargetDir)AForge.Video.dll;$(TargetDir)AForge.Video.DirectShow.dll;$(TargetDir)FJ.CoreWin.dll;$(TargetDir)JpgDll.dll;$(TargetDir)SavePhoto.dll;$(TargetDir)dt215.dll;$(TargetDir)dt215L.dll;$(TargetDir)Microsoft.ReportViewer.Common.dll;$(TargetDir)Microsoft.ReportViewer.DataVisualization.dll;$(TargetDir)Microsoft.ReportViewer.ProcessingObjectModel.dll;$(TargetDir)Microsoft.ReportViewer.WinForms.dll;$(TargetDir)Jurassic.dll;$(TargetDir)Barcode._1D.dll;$(TargetDir)TSNMachineInterfaceCSharp.dll;$(TargetDir)zTempTestSample_HID.dll;$(TargetDir)SLABHIDDevice.dll;$(TargetDir)sdtapi.dll" />
     <Copy SourceFiles="@(RuntimeLibraries)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)config.xml&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)DbUpdate_SQLITE.sql&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
