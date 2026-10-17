@@ -1,6 +1,6 @@
 ﻿// 从 lib/BLL.dll 还原；维护范围与差异见 README.md。
 using HH.TiYu.DAL;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.BLL
 {

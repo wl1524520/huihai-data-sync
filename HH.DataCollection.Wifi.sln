@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.TiYu.Device", "HH.TiYu.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.TiYu.UI", "HH.TiYu.UI\HH.TiYu.UI.csproj", "{ACF17DAA-F539-4404-8911-67D2B85FD3B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LJH.GeneralLibrary", "LJH.GeneralLibrary\LJH.GeneralLibrary.csproj", "{C70B95A5-1217-4E8A-A409-E997982C6E2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HH.GeneralLibrary", "HH.GeneralLibrary\HH.GeneralLibrary.csproj", "{C70B95A5-1217-4E8A-A409-E997982C6E2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

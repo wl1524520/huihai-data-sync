@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.BLL
 {

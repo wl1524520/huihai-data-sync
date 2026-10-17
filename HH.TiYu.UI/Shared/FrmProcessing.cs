@@ -19,13 +19,13 @@ using HH.TiYu.UI.Controls;
 using HH.TiYu.UI.UserControl;
 using HH.Zhongkao.Device;
 using HH.Zhongkao.Device.Wifi;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.UI;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
-using LJH.GeneralLibrary.WinformControl;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.UI;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Net;
+using HH.GeneralLibrary.WinformControl;
 namespace HH.TiYu.UI
 {
 	public class FrmProcessing : Form
@@ -151,7 +151,7 @@ namespace HH.TiYu.UI
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(HH.TiYu.UI.FrmProcessing));
 			this.btnCancel = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
-			this.progressBar1 = new LJH.GeneralLibrary.WinformControl.PercentageProgressBar(this.components);
+			this.progressBar1 = new HH.GeneralLibrary.WinformControl.PercentageProgressBar(this.components);
 			this.button1 = new System.Windows.Forms.Button();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
 			base.SuspendLayout();

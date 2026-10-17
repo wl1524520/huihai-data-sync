@@ -21,7 +21,7 @@ foreach ($variant in @('source')) {
         Get-ChildItem -LiteralPath $collectorOutput -Filter '*.dll' -File | Copy-Item -Destination $dir -Force
     }
     $references = @('System.dll','System.Core.dll','System.Data.dll','System.Data.Linq.dll','System.Windows.Forms.dll','System.Xml.dll','System.Xml.Linq.dll')
-    $references += @('DAL.dll','BLL.dll','Model.dll','LJH.GeneralLibrary.dll','System.Data.SQLite.dll','Mono.Cecil.dll') | ForEach-Object { Join-Path $dir $_ }
+    $references += @('DAL.dll','BLL.dll','Model.dll','HH.GeneralLibrary.dll','System.Data.SQLite.dll','Mono.Cecil.dll') | ForEach-Object { Join-Path $dir $_ }
     $compilerArgs = @('/nologo', '/target:exe', '/platform:x86', '/langversion:4', '/codepage:65001', "/out:$dir\VerifyDal.exe")
     $compilerArgs += $references | ForEach-Object { '/reference:' + $_ }
     $compilerArgs += @((Join-Path $PSScriptRoot 'VerifyDal.cs'), (Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs'), (Join-Path $repo 'HH.DataCollection.Wifi\Sync\SyncConfig.cs'))

@@ -19,13 +19,13 @@ using HH.TiYu.UI.Controls;
 using HH.TiYu.UI.UserControl;
 using HH.Zhongkao.Device;
 using HH.Zhongkao.Device.Wifi;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.UI;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
-using LJH.GeneralLibrary.WinformControl;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.UI;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Net;
+using HH.GeneralLibrary.WinformControl;
 namespace HH.TiYu.UI
 {
 	public class FrmAddHost_USB : Form
@@ -120,8 +120,8 @@ namespace HH.TiYu.UI
 		{
 			this.components = new System.ComponentModel.Container();
 			this.label1 = new System.Windows.Forms.Label();
-			this.cmbCommport = new LJH.GeneralLibrary.WinformControl.ComPortComboBox(this.components);
-			this.txtHost = new LJH.GeneralLibrary.WinformControl.IntergerTextBox(this.components);
+			this.cmbCommport = new HH.GeneralLibrary.WinformControl.ComPortComboBox(this.components);
+			this.txtHost = new HH.GeneralLibrary.WinformControl.IntergerTextBox(this.components);
 			this.label2 = new System.Windows.Forms.Label();
 			this.btnCancel = new System.Windows.Forms.Button();
 			this.btnOk = new System.Windows.Forms.Button();

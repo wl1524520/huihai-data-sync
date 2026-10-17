@@ -10,7 +10,7 @@
 | `HH.TiYu.BLL` | 组织、学生、体测项目与科目业务入口、设备成绩转换与后台保存，输出 `BLL.dll` |
 | `HH.TiYu.Device` | 实际使用的 Wifi 协议与通信，输出 `Device.dll` |
 | `HH.TiYu.UI` | 采集窗口及必要控件，输出 `UI.dll` |
-| `LJH.GeneralLibrary` | 必要数据库、通信、日志、转换和控件基础，输出同名 DLL |
+| `HH.GeneralLibrary` | 必要数据库、通信、日志、转换和控件基础，输出同名 DLL |
 | `lib` | 通用第三方运行依赖；七个原始业务 DLL 仅作为逆向/验证基准，不部署 |
 | `tools` | API、模型行为及数据库集成验证脚本；旧补丁工具仅留作历史对照 |
 

@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model.Security
 {

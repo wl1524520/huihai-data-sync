@@ -13,10 +13,10 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Net;
 
 
 namespace HH.Zhongkao.Device.Wifi
@@ -31,7 +31,7 @@ namespace HH.Zhongkao.Device.Wifi
 
         private bool _IsWorking = false;
 
-        private LJHSocket _Socket = null;
+        private HHSocket _Socket = null;
 
         private CommPort _Commport = null;
 
@@ -377,14 +377,14 @@ namespace HH.Zhongkao.Device.Wifi
             }
             if (_Socket == null)
             {
-                _Socket = new LJHSocket(IP, Port, ProtocolType.Udp);
+                _Socket = new HHSocket(IP, Port, ProtocolType.Udp);
                 _Socket.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
             }
             if (!_Socket.IsConnected)
             {
                 _Socket.OnDataArrivedEvent -= Commport_OnDataArrivedEvent;
                 _Socket.Close();
-                _Socket = new LJHSocket(IP, Port, ProtocolType.Udp);
+                _Socket = new HHSocket(IP, Port, ProtocolType.Udp);
                 _Socket.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
                 _Socket.Open();
             }

@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.Core.DAL;
 
 internal static class VerifyGeneralLibrary
 {

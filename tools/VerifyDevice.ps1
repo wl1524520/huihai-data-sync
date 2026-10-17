@@ -11,7 +11,7 @@ foreach($variant in @('source','legacy')){
  Get-ChildItem (Join-Path $repo 'lib') -Filter '*.dll' -File | Copy-Item -Destination $dir
  if($variant -eq 'source'){
   Copy-Item (Join-Path $repo "HH.TiYu.Device\bin\$Configuration\Device.dll") $dir -Force
-  $ljh=Join-Path $repo "LJH.GeneralLibrary\bin\$Configuration\LJH.GeneralLibrary.dll"
+  $ljh=Join-Path $repo "HH.GeneralLibrary\bin\$Configuration\HH.GeneralLibrary.dll"
   if(Test-Path $ljh){Copy-Item $ljh $dir -Force}
  }
  if($variant -eq 'legacy'){ & (Join-Path $PSScriptRoot 'PrepareLegacyApi.ps1') -Directory $dir }

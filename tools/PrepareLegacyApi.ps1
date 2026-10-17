@@ -9,6 +9,6 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Mono.Cecil.dll') -Destination $
 $exe = Join-Path $fixture 'LegacyApiNames.exe'
 & (Join-Path $framework 'csc.exe') /nologo /target:exe /main:LegacyApiNames /platform:x86 /langversion:4 /codepage:65001 "/out:$exe" /reference:System.Core.dll "/reference:$fixture\Mono.Cecil.dll" (Join-Path $PSScriptRoot 'LegacyApiNames.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Legacy name migration compile failed' }
-$assemblies = @('Model','BLL','DAL','Device','HH.TiYu.SQLite','UI') | ForEach-Object { Join-Path $fixture ($_ + '.dll') } | Where-Object { Test-Path -LiteralPath $_ }
+$assemblies = @('Model','BLL','DAL','Device','HH.TiYu.SQLite','UI','LJH.GeneralLibrary') | ForEach-Object { Join-Path $fixture ($_ + '.dll') } | Where-Object { Test-Path -LiteralPath $_ }
 & $exe @assemblies
 if ($LASTEXITCODE -ne 0) { throw 'Legacy fixture name migration failed' }

@@ -49,7 +49,7 @@
 & C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe HH.TiYu.BLL\HH.TiYu.BLL.csproj /t:Build /p:Configuration=Debug /p:Platform=x86
 ```
 
-项目直接引用 Model、DAL、Device、LJH.GeneralLibrary 源码项目；Device 引用仅用于设备成绩转换，通信协议和设备发现不归本项目；通用 DAL 基类、异常和日志在基础库源码中维护。
+项目直接引用 Model、DAL、Device、HH.GeneralLibrary 源码项目；Device 引用仅用于设备成绩转换，通信协议和设备发现不归本项目；通用 DAL 基类、异常和日志在基础库源码中维护。
 
 在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyBusiness.ps1 -Configuration Debug` 检查公开接口与模型行为，运行 `tools/VerifyDal.ps1 -Configuration Debug` 检查全源码数据库调用链；两者也支持 Release。`VerifyBusiness` 按清单记录允许删除的 BLL 类型与方法，断言 `PhysicalScoresSavingService` 不存在，其余保留类型的方法形状必须与原始 DLL 一致；模型算法仍与原 DLL 逐项对照，纯行为快照保持一致。测试不访问生产数据库、设备和云接口。
 

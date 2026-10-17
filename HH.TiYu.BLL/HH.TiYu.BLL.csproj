@@ -57,7 +57,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
+    <ProjectReference Include="..\HH.GeneralLibrary\HH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>HH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HH.TiYu.Device\HH.TiYu.Device.csproj">

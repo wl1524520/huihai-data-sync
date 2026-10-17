@@ -6,8 +6,8 @@ using System.Data.Linq.Mapping;
 using System.Linq;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.DAL.Linq;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL.Linq;
 
 namespace HH.TiYu.DAL.LinqProvider
 {

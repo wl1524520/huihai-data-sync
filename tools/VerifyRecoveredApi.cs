@@ -11,8 +11,8 @@ internal static class VerifyRecoveredApi {
     static int Main(string[] args){
       try{
        string original=args[0],output=args[1];
-       foreach(string name in new[]{"Device","UI","LJH.GeneralLibrary"}){
-        using(var before=AssemblyDefinition.ReadAssembly(Path.Combine(original,name+".dll")))
+       foreach(string name in new[]{"Device","UI","HH.GeneralLibrary"}){
+        using(var before=AssemblyDefinition.ReadAssembly(Path.Combine(original,(name == "HH.GeneralLibrary" ? "LJH.GeneralLibrary" : name)+".dll")))
         using(var after=AssemblyDefinition.ReadAssembly(Path.Combine(output,name+".dll"))){
           LegacyApiNames.Normalize(before);
           Require(before.Name.FullName==after.Name.FullName,"Assembly identity: "+name);
@@ -39,12 +39,14 @@ internal static class VerifyRecoveredApi {
           Console.WriteLine(name+": "+newTypes.Count+" retained public types checked");
         }
        }
+       Require(!File.Exists(Path.Combine(output,"LJH.GeneralLibrary.dll")), "Legacy GeneralLibrary DLL deployed");
        var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(output);
-       string[] recovered={"Device","UI","LJH.GeneralLibrary","Model","DAL","BLL"};
+       string[] recovered={"Device","UI","HH.GeneralLibrary","Model","DAL","BLL"};
        Require(!File.Exists(Path.Combine(output,"HH.TiYu.SQLite.dll")), "Retired SQLite DLL deployed");
        foreach(string path in Directory.GetFiles(output,"*.dll").Concat(Directory.GetFiles(output,"HH.DataCollection.Wifi.exe"))){
         if(!recovered.Contains(Path.GetFileNameWithoutExtension(path)) && !path.EndsWith("HH.DataCollection.Wifi.exe"))continue;
         using(var assembly=AssemblyDefinition.ReadAssembly(path,new ReaderParameters{AssemblyResolver=resolver})){
+         Require(!assembly.MainModule.AssemblyReferences.Any(a=>a.Name=="LJH.GeneralLibrary"),"Legacy GeneralLibrary reference: "+path);
          Require(!assembly.MainModule.AssemblyReferences.Any(a=>a.Name=="HH.TiYu.SQLite"),"Retired SQLite reference: "+path);
          foreach(var definition in AllDefinedTypes(assembly.MainModule.Types)){
           Require(!HasChinese(definition.Name),"Chinese type name: "+definition.FullName);

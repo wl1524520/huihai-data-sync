@@ -7,9 +7,9 @@ using HH.TiYu.DAL;
 using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
 using HH.Zhongkao.Device;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
 
 namespace HH.TiYu.BLL
 {

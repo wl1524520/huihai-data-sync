@@ -13,10 +13,10 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Net;
 
 
 namespace HH.Zhongkao.Device

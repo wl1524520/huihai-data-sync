@@ -1,8 +1,8 @@
 ﻿// Recovered from lib/DAL.dll using ILSpy; see README.md for provenance and supported scope.
 using System;
 using System.Collections.Generic;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.DAL.Linq;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL.Linq;
 
 namespace HH.TiYu.DAL
 {

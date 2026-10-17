@@ -1,5 +1,5 @@
 ﻿using System;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
 {

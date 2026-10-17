@@ -8,11 +8,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model.SearchCondition
 {
-    public class PhysicalProjectSearchCondition : LJH.GeneralLibrary.Core.DAL.SearchCondition
+    public class PhysicalProjectSearchCondition : HH.GeneralLibrary.Core.DAL.SearchCondition
     {
         public PhysicalProjectClass? Class { get; set; }
 

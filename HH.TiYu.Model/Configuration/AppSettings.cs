@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Windows.Forms;
 using System.Xml;
-using LJH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.ExceptionHandling;
 
 namespace HH.TiYu.Model
 {

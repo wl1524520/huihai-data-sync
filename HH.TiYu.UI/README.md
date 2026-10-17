@@ -41,7 +41,7 @@
 
 ## 构建与验证
 
-工程直接引用 Model、DAL、BLL、Device、LJH.GeneralLibrary 的源码项目。NPOI 等通用第三方库通过基础库继续使用，没有恢复第三方源码。
+工程直接引用 Model、DAL、BLL、Device、HH.GeneralLibrary 的源码项目。NPOI 等通用第三方库通过基础库继续使用，没有恢复第三方源码。
 
 在 `HH.DataCollection.Wifi` 仓库根目录运行：
 

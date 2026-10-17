@@ -1,6 +1,6 @@
 # 采集器主程序维护
 
-本项目是 .NET Framework 4.0 / x86 Windows Forms 应用，输出 `HH.DataCollection.Wifi.exe`，引用 Model、DAL、BLL、SQLite、Device、UI 和 LJH.GeneralLibrary 源码项目。
+本项目是 .NET Framework 4.0 / x86 Windows Forms 应用，输出 `HH.DataCollection.Wifi.exe`，引用 Model、DAL、BLL、SQLite、Device、UI 和 HH.GeneralLibrary 源码项目。
 
 ## 目录与修改入口
 
@@ -34,7 +34,7 @@
 
 三个图标保留在 `Resources`，运行时嵌入资源名称为 `HH.DataCollection.Wifi.Resources.wireless.png`、`HH.DataCollection.Wifi.Resources.upload.png`、`HH.DataCollection.Wifi.Resources.network.png`，供 `FrmMain` 按名称加载。不要仅移动资源而遗漏嵌入名称与调用方的对应关系。
 
-`Program.cs` 和 `app.config` 保留项目根目录。构建后从 `lib` 复制通用运行依赖及 `config.xml`、`DbUpdate_SQLITE.sql`；Model、DAL、BLL、SQLite、Device、UI、LJH 均使用源码构建产物。发布使用 `bin/Release` 完整文件集，不用原始 `lib` 业务 DLL 覆盖输出。
+`Program.cs` 和 `app.config` 保留项目根目录。构建后从 `lib` 复制通用运行依赖及 `config.xml`、`DbUpdate_SQLITE.sql`；Model、DAL、BLL、SQLite、Device、UI、HH.GeneralLibrary 均使用源码构建产物。发布使用 `bin/Release` 完整文件集，不用原始 `lib` 业务 DLL 覆盖输出。
 
 ## 构建与验证
 

@@ -20,7 +20,7 @@ foreach($variant in @('source','legacy')){
     if($variant -eq 'legacy'){Copy-Item (Join-Path $repo 'lib\HH.TiYu.SQLite.dll') $dir -Force}
     if($variant -eq 'legacy'){ & (Join-Path $PSScriptRoot 'PrepareLegacyApi.ps1') -Directory $dir }
     $refs=@('System.dll','System.Core.dll','System.Data.dll','System.Data.Linq.dll','System.Xml.Linq.dll','System.Windows.Forms.dll')
-    $businessRefs=@('Model.dll','Device.dll','LJH.GeneralLibrary.dll','System.Data.SQLite.dll','Mono.Cecil.dll')
+    $businessRefs=@('Model.dll','Device.dll','HH.GeneralLibrary.dll','System.Data.SQLite.dll','Mono.Cecil.dll')
     if($variant -eq 'source'){$businessRefs+=@('DAL.dll','BLL.dll')}else{$businessRefs+='HH.TiYu.SQLite.dll'}
     $refs+=$businessRefs | ForEach-Object{Join-Path $dir $_}
     $compilerArgs=@('/main:VerifySQLite','/nologo','/target:exe','/platform:x86','/langversion:4','/codepage:65001',"/out:$dir\VerifySQLite.exe")

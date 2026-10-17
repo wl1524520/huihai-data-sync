@@ -19,13 +19,13 @@ using HH.TiYu.UI.Controls;
 using HH.TiYu.UI.UserControl;
 using HH.Zhongkao.Device;
 using HH.Zhongkao.Device.Wifi;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.UI;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
-using LJH.GeneralLibrary.WinformControl;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.UI;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Net;
+using HH.GeneralLibrary.WinformControl;
 namespace HH.TiYu.UI
 {
 	public class FrmStudentDownloadPara : Form
@@ -313,7 +313,7 @@ namespace HH.TiYu.UI
 			this.colMemo = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.gpStudent = new System.Windows.Forms.GroupBox();
 			this.button2 = new System.Windows.Forms.Button();
-			this.txtMaxPertime = new LJH.GeneralLibrary.WinformControl.IntergerTextBox(this.components);
+			this.txtMaxPertime = new HH.GeneralLibrary.WinformControl.IntergerTextBox(this.components);
 			this.label9 = new System.Windows.Forms.Label();
 			this.chkClearFirst = new System.Windows.Forms.CheckBox();
 			this.gpStep1 = new System.Windows.Forms.GroupBox();
@@ -329,14 +329,14 @@ namespace HH.TiYu.UI
 			this.txtGrade = new HH.TiYu.UI.Controls.GradeComboBox(this.components);
 			this.label6 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
-			this.txtStudentID1 = new LJH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
+			this.txtStudentID1 = new HH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
 			this.panel2 = new System.Windows.Forms.Panel();
 			this.rdSexAll = new System.Windows.Forms.RadioButton();
 			this.rdFemale = new System.Windows.Forms.RadioButton();
 			this.rdMale = new System.Windows.Forms.RadioButton();
 			this.label7 = new System.Windows.Forms.Label();
-			this.txtStudentID2 = new LJH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
-			this.txtName = new LJH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
+			this.txtStudentID2 = new HH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
+			this.txtName = new HH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
 			this.btnAll = new System.Windows.Forms.Button();
 			this.btnNone = new System.Windows.Forms.Button();
 			this.btnRevert = new System.Windows.Forms.Button();

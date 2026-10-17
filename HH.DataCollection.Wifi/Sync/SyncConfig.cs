@@ -5,7 +5,7 @@ using HH.DataCollection.Wifi.Db;
 using HH.TiYu.DAL;
 using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.DataCollection.Wifi.Sync
 {

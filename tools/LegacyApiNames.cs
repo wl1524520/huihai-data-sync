@@ -156,6 +156,13 @@ internal static class LegacyApiNames
             }
             RenameType(type);
         }
+        foreach (var reference in module.AssemblyReferences)
+            if (reference.Name == "LJH.GeneralLibrary") reference.Name = "HH.GeneralLibrary";
+        if (assembly.Name.Name == "LJH.GeneralLibrary")
+        {
+            assembly.Name.Name = "HH.GeneralLibrary";
+            module.Name = "HH.GeneralLibrary.dll";
+        }
     }
     private static IEnumerable<TypeDefinition> AllTypes(IEnumerable<TypeDefinition> types)
     {
@@ -174,6 +181,12 @@ internal static class LegacyApiNames
     }
     private static void RenameType(TypeReference type)
     {
+        if (AssemblyName(type) == "LJH.GeneralLibrary" || AssemblyName(type) == "HH.GeneralLibrary")
+        {
+            if (type.Namespace == "LJH.GeneralLibrary" || type.Namespace.StartsWith("LJH.GeneralLibrary."))
+                type.Namespace = "HH.GeneralLibrary" + type.Namespace.Substring("LJH.GeneralLibrary".Length);
+            if (type.Name == "LJHSocket") type.Name = "HHSocket";
+        }
         string name;
         if (AssemblyName(type) == "Model" && Types.TryGetValue(type.FullName, out name)) type.Name = name;
     }
@@ -216,7 +229,7 @@ internal static class LegacyApiNames
                     using (var assembly = AssemblyDefinition.ReadAssembly(stream, new ReaderParameters { AssemblyResolver = resolver }))
                     {
                         Normalize(assembly);
-                        assembly.Write(path);
+                        assembly.Write(Path.Combine(Path.GetDirectoryName(path), assembly.Name.Name + ".dll"));
                     }
                 }
             }

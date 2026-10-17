@@ -12,7 +12,7 @@ using HH.TiYu.DAL;
 using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.DataCollection.Wifi
 {
@@ -66,7 +66,7 @@ internal static class VerifyDal
             Check(typeof(Student).GetProperty("HasPhoto") == null, "Photo flag remains");
             Check(!typeof(StudentBLL).GetMethods().Any(m => m.Name.Contains("Photo")), "Photo BLL remains");
             Check(typeof(ProviderFactory).Assembly.GetType("HH.TiYu.DAL.LinqProvider.StudentPhotoProvider") == null, "Photo provider remains");
-            Check(typeof(LJH.GeneralLibrary.Core.DAL.Linq.ProviderBase<,>).Assembly.GetType("LJH.GeneralLibrary.TempFolderManager") == null, "Photo temp helper remains");
+            Check(typeof(HH.GeneralLibrary.Core.DAL.Linq.ProviderBase<,>).Assembly.GetType("HH.GeneralLibrary.TempFolderManager") == null, "Photo temp helper remains");
             Console.WriteLine("PASS current collector DAL: " + checks + " checks; exact eight-table production schema");
             return 0;
         }

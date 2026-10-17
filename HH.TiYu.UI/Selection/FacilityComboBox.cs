@@ -19,13 +19,13 @@ using HH.TiYu.UI.Controls;
 using HH.TiYu.UI.UserControl;
 using HH.Zhongkao.Device;
 using HH.Zhongkao.Device.Wifi;
-using LJH.GeneralLibrary;
-using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.UI;
-using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
-using LJH.GeneralLibrary.Net;
-using LJH.GeneralLibrary.WinformControl;
+using HH.GeneralLibrary;
+using HH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.UI;
+using HH.GeneralLibrary.ExceptionHandling;
+using HH.GeneralLibrary.LOG;
+using HH.GeneralLibrary.Net;
+using HH.GeneralLibrary.WinformControl;
 namespace HH.TiYu.UI.Controls
 {
 	public class FacilityComboBox : ComboBox

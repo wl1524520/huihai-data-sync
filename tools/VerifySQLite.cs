@@ -19,7 +19,7 @@ using StudentRawScoresSavingService = HH.TiYu.SQLite.StudentRawScoresSavingServi
 #endif
 using HH.TiYu.Model;
 using HH.Zhongkao.Device;
-using LJH.GeneralLibrary.Core.DAL;
+using HH.GeneralLibrary.Core.DAL;
 using Mono.Cecil;
 
 namespace HH.DataCollection.Wifi { internal static class Program { internal static void WriteLog(string level, string text) { Console.WriteLine(level + ": " + text); } } }
