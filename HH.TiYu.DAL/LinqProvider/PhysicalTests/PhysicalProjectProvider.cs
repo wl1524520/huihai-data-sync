@@ -82,7 +82,7 @@ namespace HH.TiYu.DAL.LinqProvider
             if (dc.Transaction == null)
                 throw new NotSupportedException("项目删除需要显式事务，请调用项目 Provider 的 Delete 方法");
             // Explicit project deletion removes its raw scores in the same transaction.
-            foreach (var table in new[] { "StudentRawScore", "Student", "ProjectPhysicalItems", "Facility", "Division" })
+            foreach (var table in new[] { "StudentRawScore", "Student", "ProjectPhysicalItems", "Facility" })
                 dc.ExecuteCommand("DELETE FROM [" + table + "] WHERE ProjectID = {0}", info.ID);
             base.DeletingItem(info, dc);
         }

@@ -8,8 +8,8 @@ namespace HH.DataCollection.Wifi.Db
 {
     /// <summary>
     /// 本地精简库的自建与初始化。
-    /// 库文件为程序目录下的 HuihaiTiyu.db,首次启动时创建,只含采集+同步必需的 8 张表:
-    /// PhysicalProject / Facility / Division / PhysicalItem / ProjectPhysicalItems /
+    /// 库文件为程序目录下的 HuihaiTiyu.db,首次启动时创建,只含采集+同步必需的 7 张表:
+    /// PhysicalProject / Facility / PhysicalItem / ProjectPhysicalItems /
     /// Student / StudentRawScore(唯一成绩表,带 Uploaded 上传标记) / SyncConfig。
     /// 表结构仅包含当前采集与同步字段；DAL 映射源码位于 HH.TiYu.DAL/LinqProvider/DataMapping.xml。
     /// 修改列名/类型时须同步考虑实体模型与映射；当前版本仅维护当前开发结构。
@@ -138,17 +138,9 @@ namespace HH.DataCollection.Wifi.Db
   [ID] NVARCHAR(50) NOT NULL,
   [Name] NVARCHAR(50) NOT NULL,
   [ProjectID] nvarchar(50) NOT NULL,
-  [DivisionID] NVARCHAR(50),
   [Memo] nvarchar(50),
   CONSTRAINT [sqlite_autoindex_Facility_1] PRIMARY KEY ([ID]))",
             // 区域(启动加载需要,保持空表)
-            @"CREATE TABLE IF NOT EXISTS [Division] (
-  [ID] NVARCHAR(50) NOT NULL,
-  [Name] NVARCHAR(50) NOT NULL,
-  [ProjectID] nvarchar(50) NOT NULL,
-  [Parent] NVARCHAR(50),
-  [Memo] nvarchar(50),
-  CONSTRAINT [sqlite_autoindex_Division_1] PRIMARY KEY ([ID]))",
             // 科目字典
             @"CREATE TABLE IF NOT EXISTS [PhysicalItem] (
   [ID] INT NOT NULL,

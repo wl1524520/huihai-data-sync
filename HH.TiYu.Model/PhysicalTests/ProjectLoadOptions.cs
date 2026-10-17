@@ -15,14 +15,10 @@ namespace HH.TiYu.Model
     [Flags]
     public enum ProjectLoadOptions
     {
-        /// <summary>加载区域信息。</summary>
-        Regions = 1,
         /// <summary>加载学校信息。</summary>
         Facilities = 2,
         /// <summary>加载学生信息。</summary>
         Students = 4,
-        /// <summary>区域、学校和学生信息的组合加载项。</summary>
-        RegionsFacilitiesAndStudents = 7,
         /// <summary>加载学生成绩（采集器已移除此功能，传入时会明确报不支持）。</summary>
         StudentScores = 8,
         /// <summary>加载测试科目。</summary>

@@ -1,21 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<!-- Collector contract. LocalDb creates the schema; raw scores use HH.TiYu.SQLite. -->
+<!-- Collector contract. LocalDb creates the schema, including raw scores. -->
 <Database Name="HuihaiTiyu" xmlns="http://schemas.microsoft.com/linqtosql/mapping/2007">
-  <Table Name="Division" Member="HH.TiYu.Model.Division">
-    <Type Name="HH.TiYu.Model.Division">
-      <Column Name="ID" Member="ID"  DbType="nvarchar(50) not null" IsPrimaryKey="true" />
-      <Column Name="Name" Member="Name" DbType="nvarchar(50) not null" UpdateCheck="Never"/>
-      <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
-      <Column Name="Parent" Member="Parent" DbType="nvarchar(50)" UpdateCheck="Never"/>
-      <Column Name="Memo" Member="Memo" DbType="nvarchar(50)" UpdateCheck="Never"/>
-    </Type>
-  </Table>
   <Table Name="Facility" Member="HH.TiYu.Model.Facility">
     <Type Name="HH.TiYu.Model.Facility">
       <Column Name="ID" Member="ID"  DbType="nvarchar(50) not null" IsPrimaryKey="true" />
       <Column Name="Name" Member="Name" DbType="nvarchar(50) not null" UpdateCheck="Never"/>
       <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
-      <Column Name="DivisionID" Member="DivisionID" DbType="nvarchar(50)" UpdateCheck="Never"/>
       <Column Name="Memo" Member="Memo" DbType="nvarchar(50)" UpdateCheck="Never"/>
     </Type>
   </Table>

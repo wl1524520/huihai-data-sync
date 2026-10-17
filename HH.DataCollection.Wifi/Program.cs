@@ -14,7 +14,7 @@ namespace HH.DataCollection.Wifi
     /// <summary>
     /// 汇海体测软件"成绩采集_Wifi"功能的独立薄壳入口。
     /// 跳过原软件的登录/加密狗启动链,直接填充前置状态后进入主界面(采集 + 数据同步)。
-    /// 本地库为程序目录下自建的精简 HuihaiTiyu.db(8 张表),不再从主系统拷贝。
+    /// 本地库为程序目录下自建的精简 HuihaiTiyu.db(7 张表),不再从主系统拷贝。
     /// </summary>
     static class Program
     {
@@ -73,7 +73,7 @@ namespace HH.DataCollection.Wifi
                 {
                     // 只加载 区域|学校|学生|科目(1+2+4+16=23),不含成绩(8)/评分标准(32)/综合评价(64)/
                     // 运动建议(128)/分组(256):本软件不评分,PhysicalScore 与分组表均不存在
-                    projectBLL.GetFullInfo(PhysicalProject.Current, (ProjectLoadOptions)23);
+                    projectBLL.GetFullInfo(PhysicalProject.Current, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
                 }
                 finally
                 {

@@ -9,7 +9,7 @@
 | `Program.cs` | 单实例、异常日志、本地库初始化、当前学年项目加载、原始成绩保存服务启停和主界面启动 |
 | `Shell/FrmMain.cs` | 主界面、学生与原始成绩列表、采集入口、同步入口和项目切换协调 |
 | `Shell/FrmSelectProject.cs` | 历史项目选择对话框 |
-| `Db/LocalDb.cs` | 八表数据库创建与测试科目字典初始化 |
+| `Db/LocalDb.cs` | 七表数据库创建与测试科目字典初始化 |
 | `Sync/SyncConfig.cs` | 同步配置读写、校验、当前项目的学校绑定 |
 | `Sync/SyncApi.cs` | HTTP 接口、响应与错误类型、重试和服务端错误处理 |
 | `Sync/StudentSync.cs` | 学生名单下发解析、校验与本地数据库更新 |
@@ -26,7 +26,7 @@
 
 同步接口以工作区的[汇海同步接口文档](../../unite-tizhi-docs/docs/汇海同步接口文档.md)为准。目录整理不修改请求、响应、认证、重试或上传行为；修改这些行为时应先核对接口文档。
 
-`StudentSync` 和 `ScoreUpload` 存在直接 SQL 路径，不会自动经过 BLL/DAL。调整学生或成绩字段时，应同时检查 `Db/LocalDb.cs`、Model 实体、DAL 映射及同步 SQL。当前库为八表，由 DAL 统一映射；原始成绩实体在 Model，设备转换与后台保存服务在 BLL，Program 负责服务启停。
+`StudentSync` 和 `ScoreUpload` 存在直接 SQL 路径，不会自动经过 BLL/DAL。调整学生或成绩字段时，应同时检查 `Db/LocalDb.cs`、Model 实体、DAL 映射及同步 SQL。当前库为七表，由 DAL 统一映射；原始成绩实体在 Model，设备转换与后台保存服务在 BLL，Program 负责服务启停。
 
 启动使用应用目录下的 `HuihaiTiyu.db`，错误日志位于 `logs/error.log`；源码目录不决定运行时文件位置。单实例、保存队列与退出排空流程由 `Program` 协调，目录调整保持现有行为。
 
@@ -49,3 +49,5 @@
 上述构建和验证也支持 Release。接口验证会构建完整解决方案，核对七个源码程序集的部署产物及程序集间引用；DAL 验证使用隔离数据库检查当前表结构、读写与同步配置。恢复的采集窗体另由 `tools/VerifyUI.ps1` 验证。
 
 这些检查不启动 `Program.Main`，不覆盖主程序四个窗体的实际显示、项目切换交互、设备通信或真实云平台同步；现场流程仍需相应验收。
+
+2026-10-17：完整移除 Division 表、Facility.DivisionID、区域实体/查询/BLL/DAL 和名单下发区域筛选。学校、年级、班级筛选保留。首次启动创建七表新库，不提供旧库迁移。

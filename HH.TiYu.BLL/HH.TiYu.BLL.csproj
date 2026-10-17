@@ -37,7 +37,6 @@
     <Compile Include="Infrastructure\BLLBase.cs" />
     <Compile Include="Scores\StudentRawScoreConverter.cs" />
     <Compile Include="Scores\StudentRawScoresSavingService.cs" />
-    <Compile Include="Organizations\DivisionBLL.cs" />
     <Compile Include="Organizations\FacilityBLL.cs" />
     <Compile Include="PhysicalTests\PhysicalItemBLL.cs" />
     <Compile Include="PhysicalTests\PhysicalProjectBLL.cs" />

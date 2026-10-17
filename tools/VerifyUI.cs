@@ -30,7 +30,7 @@ internal static class VerifyUI
             {
                 "FrmAddHost_USB", "FrmDateRange", "FrmHosts", "FrmProcessing",
                 "FrmScoreCollectStatitics", "FrmScoreCollect_Wifi", "FrmSerialRange", "FrmStudentDownloadPara", "FrmStudentIDRange",
-                "ClassNameCombox", "DivisionComboBox", "FacilityComboBox", "GradeComboBox", "DivisionHelper"
+                "ClassNameCombox", "FacilityComboBox", "GradeComboBox"
             };
             foreach (string name in retained)
                 Check(types.Any(t => t.Name == name), "Retained UI type missing: " + name);
@@ -78,11 +78,27 @@ internal static class VerifyUI
                     }
                 }
             }
-            Check(forms == 9 && controls == 4, "Window/control closure changed");
+            Check(forms == 9 && controls == 3, "Window/control closure changed");
+            var schools = new List<Facility> {
+                new Facility { ID = "F2", Name = "B school" },
+                new Facility { ID = "F1", Name = "A school" }
+            };
+            PhysicalProject.Current.AllFacilities = schools;
+            using (var selector = new HH.TiYu.UI.Controls.FacilityComboBox())
+            {
+                selector.BindingContext = new BindingContext();
+                selector.Init();
+                Check(selector.Items.Count == 3 && ((Facility)selector.Items[0]).ID == null, "School selector needs an unfiltered option");
+                Check(((Facility)selector.Items[1]).ID == "F1" && ((Facility)selector.Items[2]).ID == "F2", "School selector must list all schools in name order");
+                Check(schools.Count == 2 && schools[0].ID == "F2", "School selector changed project schools");
+                selector.SelectedFacilityID = "F2";
+                Check(selector.SelectedFacilityID == "F2", "School selection failed without regions");
+            }
             Check(typeof(FrmStudentDownloadPara).GetField("DownloadPhoto") == null, "Photo download option retained");
             Check(typeof(FrmStudentDownloadPara).GetField("cardID4StudentID") == null, "Card identity replacement option retained");
             using (var form = new FrmStudentDownloadPara())
             {
+                Check(!Walk(form).Any(c => c.Name == "cmbDivision"), "Region selector retained");
                 var grid = (DataGridView)form.Controls.Find("dataGridView1", true).Single();
                 Check(grid.Columns.Count == 7 && !grid.Columns.Contains("colCardID"), "Student list retained card column");
                 Check(!Walk(form).Any(c => c.Name == "chkCardIDForStudentID"), "Card identity checkbox retained");

@@ -39,7 +39,6 @@
   <ItemGroup>
     <Compile Include="Configuration\AppSettings.cs" />
     <Compile Include="Shared\DateTimeRange.cs" />
-    <Compile Include="Organizations\Division.cs" />
     <Compile Include="Organizations\Facility.cs" />
     <Compile Include="Students\GradeHelper.cs" />
     <Compile Include="PhysicalTests\PhysicalItem.cs" />
@@ -56,7 +55,6 @@
     <Compile Include="Scores\ScoreSource.cs" />
     <Compile Include="PhysicalTests\ProjectLoadOptions.cs" />
     <Compile Include="Security\Operator.cs" />
-    <Compile Include="Organizations\DivisionSearchCondition.cs" />
     <Compile Include="Organizations\FacilitySearchCondition.cs" />
     <Compile Include="PhysicalTests\PhysicalProjectSearchCondition.cs" />
     <Compile Include="PhysicalTests\ProjectPhysicalItemSearchCondition.cs" />

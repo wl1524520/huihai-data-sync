@@ -37,7 +37,6 @@ namespace HH.TiYu.Model
 
         public string Memo { get; set; }
 
-        public List<Division> AllDivisions { get; set; }
 
         public List<Facility> AllFacilities { get; set; }
 

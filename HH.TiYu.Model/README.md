@@ -8,7 +8,7 @@
 
 | 目录 | 内容与修改入口 |
 | --- | --- |
-| `Organizations/` | 区域、学校实体及对应查询条件 |
+| `Organizations/` | 学校实体及对应查询条件 |
 | `Students/` | 学生九列字段、年级规则 `GradeHelper` 和学生查询条件 |
 | `PhysicalTests/` | 体测项目、测试科目、项目科目关联、项目分类与加载选项、默认科目生成和查询条件 |
 | `Scores/` | 原始成绩实体 `StudentRawScore` 与查询条件、内存成绩视图 `PhysicalScore`、成绩来源与特殊成绩类型枚举 |
@@ -53,3 +53,5 @@ Student 只持久化当前九个字段，类本身也只保留这九个属性，
 REA 静态分析未执行目标程序集；行为回归是另行运行的隔离测试。在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyBusiness.ps1` 检查 API 与模型行为，`tools/VerifyDal.ps1` 检查数据库读写集成。二者均支持 `-Configuration Debug` / `Release`，使用新建测试目录，不读取生产数据库。
 
 最近一次 Debug/Release 验证均通过：Model 的 22 个与 BLL 的 6 个公开/受保护类型，其签名、flags、枚举常量、参数默认值及业务特性与原始 DLL 的差异不超过登记清单；源码侧 517 项检查与 280 项行为观察、legacy 侧 2 项检查与 280 项观察，快照完全一致。这是选定用例的回归证据，不代表全部业务输入已验证。
+
+2026-10-17：完整移除 Division 表、Facility.DivisionID、区域实体/查询/BLL/DAL 和名单下发区域筛选。学校、年级、班级筛选保留。首次启动创建七表新库，不提供旧库迁移。

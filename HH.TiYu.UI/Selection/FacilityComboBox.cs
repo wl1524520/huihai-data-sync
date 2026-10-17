@@ -30,8 +30,6 @@ namespace HH.TiYu.UI.Controls
 {
 	public class FacilityComboBox : ComboBox
 	{
-		private DivisionHelper _DivisionHelper = new DivisionHelper();
-
 		private IContainer components = null;
 
 		[Browsable(false)]
@@ -100,15 +98,11 @@ namespace HH.TiYu.UI.Controls
 			InitializeComponent();
 		}
 
-		public void Init(Division d = null)
+		public void Init()
 		{
-			_DivisionHelper.Init();
-			List<Facility> list = _DivisionHelper.GetFacilitysOf((d != null && !string.IsNullOrEmpty(d.ID)) ? d : null);
-			if (list != null)
-			{
-				list = list.OrderBy((Facility s) => s.Name).ToList();
-				list.Insert(0, new Facility());
-			}
+			List<Facility> list = (PhysicalProject.Current.AllFacilities ?? new List<Facility>())
+				.OrderBy((Facility s) => s.Name).ToList();
+			list.Insert(0, new Facility());
 			base.DataSource = list;
 			base.DisplayMember = "Name";
 			base.DropDownStyle = ComboBoxStyle.DropDownList;

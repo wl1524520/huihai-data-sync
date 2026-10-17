@@ -20,8 +20,6 @@ namespace HH.TiYu.Model
 
         public string ProjectID { get; set; }
 
-        public string DivisionID { get; set; }
-
         public string Memo { get; set; }
 
         public Facility Clone()

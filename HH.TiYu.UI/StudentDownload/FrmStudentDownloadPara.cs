@@ -30,8 +30,6 @@ namespace HH.TiYu.UI
 {
 	public class FrmStudentDownloadPara : Form
 	{
-		private List<Division> _Divisions = null;
-
 		private List<Facility> _Facilitys = null;
 
 		public List<Student> students = null;
@@ -114,10 +112,6 @@ namespace HH.TiYu.UI
 
 		private ClassNameCombox txtClassName;
 
-		private Label label4;
-
-		private DivisionComboBox cmbDivision;
-
 		private FacilityComboBox cmbFacility;
 
 
@@ -161,10 +155,9 @@ namespace HH.TiYu.UI
 
 		private void FrmStudentUpload_Load(object sender, EventArgs e)
 		{
-			_Divisions = new DivisionBLL(AppSettings.Current.ConnStr).GetItems(null).QueryObjects;
 			_Facilitys = new FacilityBLL(AppSettings.Current.ConnStr).GetItems(null).QueryObjects;
 			txtGrade.Init();
-			cmbDivision.Init();
+			cmbFacility.Init();
 			txtClassName.Init();
 			bool result = false;
 			string configContent = AppSettings.Current.GetConfigContent(string.Format("{0}_{1}", base.Name, chkClearFirst.Name));
@@ -210,14 +203,6 @@ namespace HH.TiYu.UI
 					if (f != null)
 					{
 						list = list.Where((Student it) => it.FacilityID == f.ID).ToList();
-					}
-				}
-				else if (!string.IsNullOrEmpty(cmbDivision.Text))
-				{
-					List<Facility> fs = cmbFacility.DataSource as List<Facility>;
-					if (fs != null)
-					{
-						list = list.Where((Student it) => fs.Exists((Facility facility) => facility.ID == it.FacilityID)).ToList();
 					}
 				}
 				if (list != null && list.Count > 0)
@@ -284,11 +269,6 @@ namespace HH.TiYu.UI
 			txtClassName.Init((cmbFacility.SelectedItem == null) ? null : (cmbFacility.SelectedItem as Facility).ID);
 		}
 
-		private void cmbDivision_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			cmbFacility.Init(cmbDivision.SelectedDivision);
-		}
-
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && components != null)
@@ -317,9 +297,7 @@ namespace HH.TiYu.UI
 			this.label9 = new System.Windows.Forms.Label();
 			this.chkClearFirst = new System.Windows.Forms.CheckBox();
 			this.gpStep1 = new System.Windows.Forms.GroupBox();
-			this.cmbDivision = new HH.TiYu.UI.UserControl.DivisionComboBox(this.components);
 			this.cmbFacility = new HH.TiYu.UI.Controls.FacilityComboBox(this.components);
-			this.label4 = new System.Windows.Forms.Label();
 			this.txtClassName = new HH.TiYu.UI.UserControl.ClassNameCombox(this.components);
 			this.label8 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
@@ -448,9 +426,7 @@ namespace HH.TiYu.UI
 			this.chkClearFirst.Visible = false;
 			this.chkClearFirst.CheckedChanged += new System.EventHandler(chkClearFirst_CheckedChanged);
 			this.gpStep1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			this.gpStep1.Controls.Add(this.cmbDivision);
 			this.gpStep1.Controls.Add(this.cmbFacility);
-			this.gpStep1.Controls.Add(this.label4);
 			this.gpStep1.Controls.Add(this.txtClassName);
 			this.gpStep1.Controls.Add(this.label8);
 			this.gpStep1.Controls.Add(this.label1);
@@ -471,35 +447,20 @@ namespace HH.TiYu.UI
 			this.gpStep1.TabIndex = 140;
 			this.gpStep1.TabStop = false;
 			this.gpStep1.Text = "第一步  查询";
-			this.cmbDivision.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cmbDivision.FormattingEnabled = true;
-			this.cmbDivision.Location = new System.Drawing.Point(69, 186);
-			this.cmbDivision.Name = "cmbDivision";
-			this.cmbDivision.Size = new System.Drawing.Size(159, 20);
-			this.cmbDivision.TabIndex = 206;
-			this.cmbDivision.SelectedIndexChanged += new System.EventHandler(cmbDivision_SelectedIndexChanged);
 			this.cmbFacility.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.cmbFacility.FormattingEnabled = true;
-			this.cmbFacility.Location = new System.Drawing.Point(69, 217);
+			this.cmbFacility.Location = new System.Drawing.Point(69, 186);
 			this.cmbFacility.Name = "cmbFacility";
 			this.cmbFacility.Size = new System.Drawing.Size(159, 20);
 			this.cmbFacility.TabIndex = 205;
 			this.cmbFacility.SelectedIndexChanged += new System.EventHandler(cmbFacility_SelectedIndexChanged);
-			this.label4.AutoSize = true;
-			this.label4.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-			this.label4.Location = new System.Drawing.Point(31, 189);
-			this.label4.Name = "label4";
-			this.label4.Size = new System.Drawing.Size(29, 12);
-			this.label4.TabIndex = 173;
-			this.label4.Text = "地区";
-			this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 			this.txtClassName.FormattingEnabled = true;
-			this.txtClassName.Location = new System.Drawing.Point(69, 249);
+			this.txtClassName.Location = new System.Drawing.Point(69, 218);
 			this.txtClassName.Name = "txtClassName";
 			this.txtClassName.Size = new System.Drawing.Size(159, 20);
 			this.txtClassName.TabIndex = 172;
 			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(34, 220);
+			this.label8.Location = new System.Drawing.Point(34, 189);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(29, 12);
 			this.label8.TabIndex = 134;
@@ -512,7 +473,7 @@ namespace HH.TiYu.UI
 			this.label1.TabIndex = 120;
 			this.label1.Text = "学号";
 			this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.btnQuery.Location = new System.Drawing.Point(69, 303);
+			this.btnQuery.Location = new System.Drawing.Point(69, 272);
 			this.btnQuery.Name = "btnQuery";
 			this.btnQuery.Size = new System.Drawing.Size(181, 28);
 			this.btnQuery.TabIndex = 133;
@@ -527,7 +488,7 @@ namespace HH.TiYu.UI
 			this.label2.Text = "姓名";
 			this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(31, 252);
+			this.label5.Location = new System.Drawing.Point(31, 221);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(29, 12);
 			this.label5.TabIndex = 122;

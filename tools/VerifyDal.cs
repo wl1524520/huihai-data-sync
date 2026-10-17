@@ -62,20 +62,21 @@ internal static class VerifyDal
             CheckConfig();
             CheckProjectPhysicalItems();
             CheckStudentsAndProjects();
+            CheckStudentSync();
             Check(typeof(Student).Assembly.GetType("HH.TiYu.Model.StudentPhoto") == null, "Photo model remains");
             Check(typeof(Student).GetProperty("HasPhoto") == null, "Photo flag remains");
             Check(!typeof(StudentBLL).GetMethods().Any(m => m.Name.Contains("Photo")), "Photo BLL remains");
             Check(typeof(ProviderFactory).Assembly.GetType("HH.TiYu.DAL.LinqProvider.StudentPhotoProvider") == null, "Photo provider remains");
             Check(typeof(HH.GeneralLibrary.Core.DAL.Linq.ProviderBase<,>).Assembly.GetType("HH.GeneralLibrary.TempFolderManager") == null, "Photo temp helper remains");
-            Console.WriteLine("PASS current collector DAL: " + checks + " checks; exact eight-table production schema");
+            Console.WriteLine("PASS current collector DAL: " + checks + " checks; exact seven-table production schema");
             return 0;
         }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void CheckSchema()
     {
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE type='table'")) == 8, "Expected eight production tables");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name IN ('StudentPhoto','PhysicalScore','sync_config')")) == 0, "Legacy table remains");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE type='table'")) == 7, "Expected seven production tables");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name IN ('Division','StudentPhoto','PhysicalScore','sync_config')")) == 0, "Legacy table remains");
         using (var connection = new SQLiteConnection(LocalDb.ConnStr))
         {
             connection.Open();
@@ -84,7 +85,7 @@ internal static class VerifyDal
                 var doc = XDocument.Load(stream); XNamespace ns = doc.Root.Name.Namespace;
                 var tables = doc.Root.Elements(ns + "Table").ToList();
                 Check((string)doc.Root.Attribute("Name") == "HuihaiTiyu", "Database contract name");
-                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Division", "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentRawScore" }.OrderBy(n => n)), "Eight-table DAL contract");
+                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentRawScore" }.OrderBy(n => n)), "Seven-table DAL contract");
                 foreach (var table in tables)
                 {
                     string name = (string)table.Attribute("Name"); var columns = new HashSet<string>();
@@ -97,6 +98,7 @@ internal static class VerifyDal
                     Check(mapped.Count == mapped.Distinct().Count(), "Duplicate mapping: " + name);
                     if (name == "StudentRawScore") { Check(columns.Remove("Uploaded"), "Raw score upload flag exists outside mapping"); Check(!mapped.Contains("Uploaded"), "Upload flag must not be overwritten by raw score mapping"); }
                     Check(columns.SetEquals(mapped), "Mapping does not match actual table: " + name);
+                    if (name == "Facility") Check(!columns.Contains("DivisionID"), "Retired region link remains");
                     if (name == "Student") Check(columns.Count == 9, "Student must have only nine persisted fields");
                 }
             }
@@ -104,8 +106,8 @@ internal static class VerifyDal
     }
     private static void CheckFactories()
     {
-        string[] supported = { "DivisionProvider", "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentRawScoreProvider" };
-        string[] removed = { "AlarmProvider", "AppraiseTemplateProvider", "DiscussionProvider", "OperatorProvider", "PhysicalProjectStateProvider", "PhysicalScoreProvider", "RoleProvider", "SportsProvider", "SportsStudentPairProvider", "SportSuggestionProvider", "StandardProvider", "StudentCheckRecordProvider", "StudentGroupPairProvider", "StudentGroupProvider", "SysparameterProvider" };
+        string[] supported = { "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentRawScoreProvider" };
+        string[] removed = { "DivisionProvider", "AlarmProvider", "AppraiseTemplateProvider", "DiscussionProvider", "OperatorProvider", "PhysicalProjectStateProvider", "PhysicalScoreProvider", "RoleProvider", "SportsProvider", "SportsStudentPairProvider", "SportSuggestionProvider", "StandardProvider", "StudentCheckRecordProvider", "StudentGroupPairProvider", "StudentGroupProvider", "SysparameterProvider" };
         var assembly = typeof(ProviderFactory).Assembly;
         foreach (var name in removed)
             Check(assembly.GetType("HH.TiYu.DAL.LinqProvider." + name) == null, "Removed provider still present: " + name);
@@ -188,6 +190,27 @@ internal static class VerifyDal
         Check(count() == 0, "Subject batch delete persisted");
         Check(projects.Delete(project).Result == ResultCode.Successful, "Subject project cleanup");
     }
+    private static void CheckStudentSync()
+    {
+        var project = new PhysicalProject { ID = "SYNC", Name = "同步项目", CreateDate = DateTime.Now };
+        Check(ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri).Insert(project).Result == ResultCode.Successful, "Sync project creation");
+        Check(ProviderFactory.Create<IProvider<Facility, string>>(Uri).Insert(new Facility { ID = "SYNC-F", ProjectID = project.ID, Name = "同步学校" }).Result == ResultCode.Successful, "School creation without region link");
+        var sync = new StudentSync(null, new HH.DataCollection.Wifi.Sync.SyncConfig { SourceFacilityId = "SYNC-F" });
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var target = typeof(StudentSync).GetMethod("GetFacility", flags).Invoke(sync, null);
+        var upsert = typeof(StudentSync).GetMethod("UpsertPage", flags);
+        var page = Newtonsoft.Json.Linq.JArray.Parse("[{test_no:'0001',name:'学生',gender:1,grade:21,class_name:'一班'}]");
+        var issues = new List<string>();
+        var result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { page, target, issues });
+        Check(result.Item1 == 1 && result.Item2 == 0, "Student sync insert on fresh seven-table schema");
+        page[0]["name"] = "更新姓名";
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { page, target, issues });
+        Check(result.Item1 == 0 && result.Item2 == 1, "Student sync updates existing roster");
+        PhysicalProject.Current = project;
+        new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students);
+        Check(project.AllFacilities.Count == 1 && project.AllStudents["0001"].Name == "更新姓名" && project.AllStudents["0001"].ClassName == "一班", "Synced school and roster load without region table");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name='Division'")) == 0, "Sync recreated retired region table");
+    }
     private static void CheckStudentsAndProjects()
     {
         var projects = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri);
@@ -195,16 +218,14 @@ internal static class VerifyDal
         Check(projects.Insert(project).Result == ResultCode.Successful, "Project insert");
         var facilities = ProviderFactory.Create<IProvider<Facility, string>>(Uri);
         Check(facilities.Insert(new Facility { ID = "F1", Name = "学校", ProjectID = project.ID }).Result == ResultCode.Successful, "Facility insert");
-        var divisions = ProviderFactory.Create<IProvider<Division, string>>(Uri);
-        Check(divisions.Insert(new Division { ID = "D1", Name = "区域", ProjectID = project.ID }).Result == ResultCode.Successful, "Division insert");
         var students = ProviderFactory.Create<IProvider<Student, Guid>>(Uri);
         var batch = ProviderFactory.Create<IBatchProvider<Student, Guid>>(Uri);
         string testNo = new string('A', 58) + "'中";
         var student = new Student { ID = Guid.NewGuid(), StudentID = testNo, ProjectID = project.ID, FacilityID = "F1", Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Append).Result == ResultCode.Successful, "Student batch insert");
         PhysicalProject.Current = project;
-        new PhysicalProjectBLL(Uri).GetFullInfo(project, (ProjectLoadOptions)23);
-        Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllFacilities.Count == 1 && project.AllDivisions.Count == 1 && project.AllPhysicalItems.Count > 0, "Production startup load flags 23");
+        new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
+        Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllFacilities.Count == 1 && project.AllPhysicalItems.Count > 0, "Production startup loads schools, students and subjects");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, StudentIDs = new List<string> { testNo } }).QueryObjects.Count == 1, "test_no filter");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, School = "absent" }).QueryObjects.Count == 0, "School filter");
         student.Name = "更新"; student.ClassName = "二班"; student.Grade = null;
@@ -215,14 +236,14 @@ internal static class VerifyDal
         Check(students.GetByID(student.ID).QueryObject.ClassName == "三班", "Student patch persisted");
         Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "Note", Value = "unsupported" } }).Result == ResultCode.Fail, "Unmapped patch falsely succeeded");
         Execute("INSERT INTO StudentRawScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Uploaded) VALUES('11111111-2222-3333-4444-555555555555','P''1','raw','student',1,0,'2026-10-16',1)");
-        Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on eight-table schema");
+        Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on seven-table schema");
         Check(students.GetByID(student.ID).Result == ResultCode.Fail && Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore WHERE Uploaded=1")) == 1, "Roster deletion lost collected scores");
         Execute("CREATE TRIGGER fail_project BEFORE DELETE ON PhysicalProject BEGIN SELECT RAISE(ABORT,'forced deletion failure'); END");
         Check(projects.Delete(project).Result == ResultCode.Fail, "Project deletion failure must propagate");
         Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 1 && facilities.GetItems(null).QueryObjects.Count == 1, "Project deletion partially committed");
         Execute("DROP TRIGGER fail_project");
-        Check(projects.Delete(project).Result == ResultCode.Successful, "Project deletion on eight-table schema");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0 && facilities.GetItems(null).QueryObjects.Count == 0 && divisions.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
+        Check(projects.Delete(project).Result == ResultCode.Successful, "Project deletion on seven-table schema");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0 && facilities.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
         var generated = new PhysicalProject { Name = "新项目", CreateDate = DateTime.Now };
         Check(projects.Insert(generated).Result == ResultCode.Successful && !string.IsNullOrEmpty(generated.ID), "Project ID must not require legacy numbering table");
         PhysicalProject.Current = generated;

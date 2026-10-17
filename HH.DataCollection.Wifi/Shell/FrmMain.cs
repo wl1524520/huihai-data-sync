@@ -285,7 +285,7 @@ namespace HH.DataCollection.Wifi
             try
             {
                 // 重载内存名单与科目,供采集下发主机使用(与启动时同一加载项组合)
-                projectBLL.GetFullInfo(PhysicalProject.Current, (ProjectLoadOptions)23);
+                projectBLL.GetFullInfo(PhysicalProject.Current, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
             }
             finally
             {

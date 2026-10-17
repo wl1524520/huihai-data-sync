@@ -127,7 +127,7 @@ namespace HH.DataCollection.Wifi.Sync
             var sync = new StudentSync(CreateApi(), SyncConfig.Load());
             sync.Run(report, stop);
             // 名单有更新,刷新内存中的项目学生,FrmHosts 下发名单才能用上新名单
-            new PhysicalProjectBLL(AppSettings.Current.ConnStr).GetFullInfo(PhysicalProject.Current, (ProjectLoadOptions)4);
+            new PhysicalProjectBLL(AppSettings.Current.ConnStr).GetFullInfo(PhysicalProject.Current, ProjectLoadOptions.Students);
             report("内存中的学生名单已刷新");
         }
 

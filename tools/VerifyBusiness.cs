@@ -17,6 +17,7 @@ internal static class VerifyBusiness
     // Model 本轮精简明确允许删除的类型：采集器运行时不可达（无 DAL 映射、无建表、无引用）。
     private static readonly string[] RemovedModelTypes =
     {
+        "HH.TiYu.Model.Division", "HH.TiYu.Model.SearchCondition.DivisionSearchCondition",
         "HH.TiYu.Model.Alarm", "HH.TiYu.Model.AlarmType", "HH.TiYu.Model.AppraiseTemplate",
         "HH.TiYu.Model.TotalRank", "HH.TiYu.Model.Discussion", "HH.TiYu.Model.ResolveType",
         "HH.TiYu.Model.NationHelper", "HH.TiYu.Model.PhysicalProjectState", "HH.TiYu.Model.SpecialScoreSetting",
@@ -41,6 +42,7 @@ internal static class VerifyBusiness
     };
     private static readonly string[] RemovedTypes =
     {
+        "HH.TiYu.BLL.DivisionBLL",
         "HH.TiYu.BLL.AlarmInfoBLL", "HH.TiYu.BLL.AppraiseTemplateBLL", "HH.TiYu.BLL.DiscussionBLL", "HH.TiYu.BLL.OperatorBLL",
         "HH.TiYu.BLL.PhysicalScoreBLL", "HH.TiYu.BLL.RoleBLL", "HH.TiYu.BLL.SportsBLL", "HH.TiYu.BLL.SportsStudentPairBLL",
         "HH.TiYu.BLL.SportSuggestionBLL", "HH.TiYu.BLL.StandardBLL", "HH.TiYu.BLL.StudentCheckRecordBLL", "HH.TiYu.BLL.StudentGroupBLL",
@@ -48,6 +50,10 @@ internal static class VerifyBusiness
     };
     private static readonly string[] RemovedMembers =
     {
+        "HH.TiYu.Model.Facility:get_DivisionID", "HH.TiYu.Model.Facility:set_DivisionID", "HH.TiYu.Model.Facility:DivisionID",
+        "HH.TiYu.Model.PhysicalProject:get_AllDivisions", "HH.TiYu.Model.PhysicalProject:set_AllDivisions", "HH.TiYu.Model.PhysicalProject:AllDivisions",
+        "HH.TiYu.Model.ProjectLoadOptions:Regions", "HH.TiYu.Model.ProjectLoadOptions:RegionsFacilitiesAndStudents",
+        "HH.TiYu.BLL.FacilityBLL:Import",
         "HH.TiYu.BLL.StudentBLL:更新考试科目", "HH.TiYu.BLL.StudentBLL:Upgrade", "HH.TiYu.BLL.StudentBLL:Absent",
         "HH.TiYu.BLL.StudentBLL:UndoAbsent", "HH.TiYu.BLL.StudentBLL:UpdateUploadToCloudDate", "HH.TiYu.BLL.StudentBLL:ClearUploadToCloudDate",
         "HH.TiYu.BLL.StudentBLL:设置学生特殊情况",
@@ -288,6 +294,8 @@ internal static class VerifyBusiness
     /// </summary>
     private static void CheckDeliberateRemovals()
     {
+        Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.Division") == null, "Division model must remain removed");
+        Require(typeof(Facility).GetProperty("DivisionID") == null && typeof(PhysicalProject).GetProperty("AllDivisions") == null, "Region links must remain removed");
         Require(string.Join(",", typeof(Student).GetProperties().Select(p => p.Name)
                 .OrderBy(n => n, StringComparer.Ordinal).ToArray())
             == "ClassName,FacilityID,Grade,ID,Name,ProjectID,Sex,StudentID,UpdateDate",
