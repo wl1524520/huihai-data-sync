@@ -1,6 +1,6 @@
 # BLL 业务源码
 
-本项目从原始 `lib/BLL.dll` 还原，按业务类型拆成源码文件；本轮精简后只保留采集器实际使用的业务类。目标为 .NET Framework 4.0、C# 4、x86，输出程序集仍为 `BLL, Version=1.0.0.0`，保留原命名空间、保留类型的成员和泛型约束。
+本项目从原始 `lib/BLL.dll` 还原，并接收原 SQLite 项目的成绩转换与后台保存服务，按业务类型拆成源码文件；本轮精简后只保留采集器实际使用的业务类。目标为 .NET Framework 4.0、C# 4、x86，输出程序集仍为 `BLL, Version=1.0.0.0`，保留原命名空间、保留类型的成员和泛型约束。
 
 ## 目录与维护入口
 
@@ -12,6 +12,8 @@
 | `Students/StudentBLL.cs` | 学生业务入口，当前仅继承通用查询、增删改 |
 | `PhysicalTests/PhysicalProjectBLL.cs` | 加载项目的区域、学校、学生及测试科目，保存项目科目，查询年度学生体测项目，保护系统项目不被删除 |
 | `PhysicalTests/PhysicalItemBLL.cs` | 测试科目字典维护与中考科目排序 |
+| `Scores/StudentRawScoreConverter.cs` | 将设备记录转换为 Model 原始成绩，统一维护 Key、时间及特殊成绩码 |
+| `Scores/StudentRawScoresSavingService.cs` | 后台队列、按项目分批提交、失败重试与退出排空 |
 | `Properties/AssemblyInfo.cs` | 程序集元数据 |
 
 目录按业务职责组织，保持一层；新增代码优先放入对应业务目录，不预建空目录。区域与学校属于组织管理，体测项目与测试科目属于体测业务。只有确实跨业务复用的基础机制才放入 `Infrastructure`，不将业务规则归入该目录。
@@ -34,8 +36,8 @@
 ## 已有采集器适配
 
 - `StudentBLL` 当前未提供批量名单删除或内存展示清理入口；继承的 `Delete` 通过 DAL 删除学生记录。
-- 原始设备成绩由外部 `HH.TiYu.SQLite.StudentRawScoresSavingService` 写入 `StudentRawScore`，与本项目无关。
-- 项目加载学生不再附加 Graduation 筛选；DAL 仅启用采集器七表访问。
+- 原始成绩由本项目 `StudentRawScoresSavingService` 调用 DAL 写入，设备转换集中在内部 `StudentRawScoreConverter`，UI 仅调用保存入口；Program 负责服务启停。保存服务保留 `AddScore`、`Current`、`Start`、`Flush`、`Stop` 和 `PendingCount` 的使用方式。
+- 项目加载学生不再附加 Graduation 筛选；DAL 统一提供采集器八表访问。
 
 除上述删除与裁剪以外，业务实现按原 DLL 还原；未顺便修复原有空值假设、`PhysicalProject.Current` 全局状态依赖、异常处理和事务边界。反编译得到的局部变量名不是原作者命名。
 
@@ -47,7 +49,7 @@
 & C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe HH.TiYu.BLL\HH.TiYu.BLL.csproj /t:Build /p:Configuration=Debug /p:Platform=x86
 ```
 
-项目直接引用 Model、DAL、LJH.GeneralLibrary 源码项目；通用 DAL 基类、异常和日志在基础库源码中维护。
+项目直接引用 Model、DAL、Device、LJH.GeneralLibrary 源码项目；Device 引用仅用于设备成绩转换，通信协议和设备发现不归本项目；通用 DAL 基类、异常和日志在基础库源码中维护。
 
 在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyBusiness.ps1 -Configuration Debug` 检查公开接口与模型行为，运行 `tools/VerifyDal.ps1 -Configuration Debug` 检查全源码数据库调用链；两者也支持 Release。`VerifyBusiness` 按清单记录允许删除的 BLL 类型与方法，断言 `PhysicalScoresSavingService` 不存在，其余保留类型的方法形状必须与原始 DLL 一致；模型算法仍与原 DLL 逐项对照，纯行为快照保持一致。测试不访问生产数据库、设备和云接口。
 

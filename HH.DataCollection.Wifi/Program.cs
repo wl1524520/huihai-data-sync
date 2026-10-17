@@ -100,13 +100,13 @@ namespace HH.DataCollection.Wifi
                         "部署错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-                HH.TiYu.SQLite.StudentRawScoresSavingService.Current = new HH.TiYu.SQLite.StudentRawScoresSavingService();
-                HH.TiYu.SQLite.StudentRawScoresSavingService.Current.Start();
+                HH.TiYu.BLL.StudentRawScoresSavingService.Current = new HH.TiYu.BLL.StudentRawScoresSavingService();
+                HH.TiYu.BLL.StudentRawScoresSavingService.Current.Start();
 
                 // 6) 主界面:采集(FrmHosts) + 数据同步
                 Application.Run(new FrmMain());
 
-                var svc = HH.TiYu.SQLite.StudentRawScoresSavingService.Current;
+                var svc = HH.TiYu.BLL.StudentRawScoresSavingService.Current;
                 while (svc != null && !svc.Stop(TimeSpan.FromSeconds(10)))
                 {
                     WriteLog("ERROR", "退出时原始成绩未保存完毕，待保存数量：" + svc.PendingCount);

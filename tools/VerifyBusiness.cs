@@ -227,6 +227,8 @@ internal static class VerifyBusiness
             var newTypes = Types(after.MainModule.Types).ToDictionary(t => t.FullName);
             oldTypes.Remove("HH.TiYu.Model.StudentPhoto");
             newTypes.Remove("HH.TiYu.Model.SyncConfigEntry");
+            // Raw score contracts moved from the retired SQLite assembly; VerifySQLite checks their retained signatures.
+            foreach (string moved in new[] { "HH.TiYu.Model.StudentRawScore", "HH.TiYu.Model.SearchCondition.StudentRawScoreSearchCondition", "HH.TiYu.BLL.StudentRawScoresSavingService" }) newTypes.Remove(moved);
             var removedTypes = new HashSet<string>(RemovedTypes.Concat(RemovedModelTypes), StringComparer.Ordinal);
             var missingTypes = oldTypes.Keys.Except(newTypes.Keys).ToList();
             Require(missingTypes.All(removedTypes.Contains), "Unexpected removed type: " + string.Join(",", missingTypes));

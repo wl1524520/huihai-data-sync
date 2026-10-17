@@ -34,9 +34,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <!-- 采集器仅保留 DataMapping.xml 映射到的七表 Provider；停用的旧 Provider 已随本轮精简删除。 -->
+    <!-- 采集器仅保留 DataMapping.xml 映射到的八表 Provider；停用的旧 Provider 已随本轮精简删除。 -->
     <Compile Include="Contracts\IBatchProvider.cs" />
     <Compile Include="Factories\ProviderFactory.cs" />
+    <Compile Include="LinqProvider\Scores\StudentRawScoreProvider.cs" />
     <Compile Include="LinqProvider\Organizations\DivisionProvider.cs" />
     <Compile Include="LinqProvider\Organizations\FacilityProvider.cs" />
     <Compile Include="LinqProvider\PhysicalTests\PhysicalItemProvider.cs" />

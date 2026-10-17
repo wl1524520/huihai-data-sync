@@ -7,9 +7,9 @@ $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
 if ($LASTEXITCODE -ne 0) { throw 'UI build failed' }
 $run = Join-Path $PSScriptRoot ('bin\UIVerification\' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $run | Out-Null
-$sourceAssemblies = @('Model','DAL','BLL','Device','HH.TiYu.SQLite','UI','LJH.GeneralLibrary')
-Get-ChildItem -LiteralPath (Join-Path $repo 'lib') -Filter '*.dll' | Where-Object { $sourceAssemblies -notcontains $_.BaseName -and $_.Name -notmatch '^(AForge(\.|$)|FJ\.CoreWin\.dll$|JpgDll\.dll$|SavePhoto\.dll$)' } | Copy-Item -Destination $run
-$projects = @{Model='HH.TiYu.Model'; DAL='HH.TiYu.DAL'; BLL='HH.TiYu.BLL'; Device='HH.TiYu.Device'; 'HH.TiYu.SQLite'='HH.TiYu.SQLite'; UI='HH.TiYu.UI'; 'LJH.GeneralLibrary'='LJH.GeneralLibrary'}
+$sourceAssemblies = @('Model','DAL','BLL','Device','UI','LJH.GeneralLibrary')
+Get-ChildItem -LiteralPath (Join-Path $repo 'lib') -Filter '*.dll' | Where-Object { $sourceAssemblies -notcontains $_.BaseName -and $_.BaseName -ne 'HH.TiYu.SQLite' -and $_.Name -notmatch '^(AForge(\.|$)|FJ\.CoreWin\.dll$|JpgDll\.dll$|SavePhoto\.dll$)' } | Copy-Item -Destination $run
+$projects = @{Model='HH.TiYu.Model'; DAL='HH.TiYu.DAL'; BLL='HH.TiYu.BLL'; Device='HH.TiYu.Device'; UI='HH.TiYu.UI'; 'LJH.GeneralLibrary'='LJH.GeneralLibrary'}
 foreach ($name in $sourceAssemblies) {
   Copy-Item -LiteralPath (Join-Path $repo ($projects[$name] + '\bin\' + $Configuration + '\' + $name + '.dll')) -Destination $run
 }

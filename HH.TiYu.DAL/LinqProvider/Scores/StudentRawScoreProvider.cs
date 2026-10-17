@@ -2,22 +2,14 @@
 using System.Collections.Generic;
 using System.Data.Linq;
 using System.Data.Linq.Mapping;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Threading;
 using HH.TiYu.Model;
-using HH.Zhongkao.Device;
+using HH.TiYu.Model.SearchCondition;
 using LJH.GeneralLibrary.Core.DAL;
 using LJH.GeneralLibrary.Core.DAL.Linq;
 using LJH.GeneralLibrary.ExceptionHandling;
-using LJH.GeneralLibrary.LOG;
 
-namespace HH.TiYu.SQLite
+namespace HH.TiYu.DAL.LinqProvider
 {
 	public class StudentRawScoreProvider : ProviderBase<StudentRawScore, Guid>
 	{
@@ -62,7 +54,6 @@ namespace HH.TiYu.SQLite
 					source = source.Where((StudentRawScore it) => it.ProjectID == con.ProjectID);
 				}
 			}
-			List<StudentRawScore> list = null;
 			if (search.SortMode == SortMode.Asc)
 			{
 				return (from sc in source

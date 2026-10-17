@@ -12,7 +12,7 @@ namespace HH.TiYu.DAL
         private static readonly Type[] Providers = {
             typeof(DivisionProvider), typeof(FacilityProvider), typeof(StudentProvider),
             typeof(PhysicalItemProvider), typeof(PhysicalProjectProvider),
-            typeof(ProjectPhysicalItemProvider), typeof(SyncConfigProvider)
+            typeof(ProjectPhysicalItemProvider), typeof(SyncConfigProvider), typeof(StudentRawScoreProvider)
         };
         private static MappingSource LoadMapping()
         {

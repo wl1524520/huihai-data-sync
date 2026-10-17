@@ -5,7 +5,18 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using HH.TiYu.SQLite;
+#if SOURCE
+using HH.TiYu.BLL;
+using HH.TiYu.DAL;
+using HH.TiYu.DAL.LinqProvider;
+using HH.TiYu.Model.SearchCondition;
+#else
+using ProviderFactory = HH.TiYu.SQLite.ProviderFactory;
+using StudentRawScore = HH.TiYu.SQLite.StudentRawScore;
+using StudentRawScoreProvider = HH.TiYu.SQLite.StudentRawScoreProvider;
+using StudentRawScoreSearchCondition = HH.TiYu.SQLite.StudentRawScoreSearchCondition;
+using StudentRawScoresSavingService = HH.TiYu.SQLite.StudentRawScoresSavingService;
+#endif
 using HH.TiYu.Model;
 using HH.Zhongkao.Device;
 using LJH.GeneralLibrary.Core.DAL;
@@ -19,25 +30,48 @@ internal static class VerifySQLite
     static void Check(bool ok, string text) { if (!ok) throw new Exception(text); checks++; }
     static PhysicalRecord Record(int n) { return new PhysicalRecord { SN=n, StudentNumber="S"+n, Name="测试学生", Sex="男", PhysicalItem=1, Result=12.3456m, RecordDate=new DateTime(2026,10,16,12,34,56), HostID=3 }; }
     static void Execute(string sql) { using(var c=new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr)) { c.Open(); using(var cmd=c.CreateCommand()) { cmd.CommandText=sql; cmd.ExecuteNonQuery(); } } }
+    static object Scalar(string sql) { using(var c=new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr)) { c.Open(); using(var cmd=c.CreateCommand()) { cmd.CommandText=sql; return cmd.ExecuteScalar(); } } }
     static StudentRawScoreProvider Provider() { return ProviderFactory.Create<StudentRawScoreProvider>(AppSettings.Current.StudentRawScoreDB); }
     static List<StudentRawScore> All() { return Provider().GetItems(new StudentRawScoreSearchCondition()).QueryObjects; }
     static void Observe(IEnumerable<StudentRawScore> rows) { foreach(var r in rows.OrderBy(x=>x.Key)) observations.Add(string.Join("|", new object[]{r.Key,r.ProjectID,r.StudentID,r.StudentName,r.Sex,r.TestID,r.Score,r.SpecialType,r.CreateTime.ToString("O"),r.ScoreFrom,r.HostSn,r.HostID,r.ScoreSer})); }
     static string Shape(MethodDefinition m) { return m.Name+"("+string.Join(",",m.Parameters.Select(p=>p.ParameterType.FullName+":"+p.Attributes+":"+p.Name+":"+p.Constant))+ "):"+m.ReturnType.FullName+":"+m.Attributes; }
+#if SOURCE
+    static string MovedName(string name)
+    {
+        return name.Replace("HH.TiYu.SQLite.StudentRawScoreSearchCondition", "HH.TiYu.Model.SearchCondition.StudentRawScoreSearchCondition")
+            .Replace("HH.TiYu.SQLite.StudentRawScoresSavingService", "HH.TiYu.BLL.StudentRawScoresSavingService")
+            .Replace("HH.TiYu.SQLite.StudentRawScoreProvider", "HH.TiYu.DAL.LinqProvider.StudentRawScoreProvider")
+            .Replace("HH.TiYu.SQLite.StudentRawScore", "HH.TiYu.Model.StudentRawScore");
+    }
     static void Api(string original)
     {
-        using(var old=AssemblyDefinition.ReadAssembly(original)) using(var now=AssemblyDefinition.ReadAssembly(typeof(StudentRawScore).Assembly.Location))
+        var targets = new[] { typeof(StudentRawScore), typeof(StudentRawScoreSearchCondition), typeof(StudentRawScoreProvider), typeof(StudentRawScoresSavingService) };
+        using(var old = AssemblyDefinition.ReadAssembly(original))
         {
             LegacyApiNames.Normalize(old);
-            Check(old.Name.FullName==now.Name.FullName,"identity");
-            foreach(var t in old.MainModule.Types.Where(t=>t.IsPublic))
+            foreach(var t in old.MainModule.Types.Where(t => t.IsPublic && t.Name != "ProviderFactory"))
             {
-                var n=now.MainModule.Types.Single(x=>x.FullName==t.FullName);
-                Check(t.Attributes==n.Attributes && t.BaseType.FullName==n.BaseType.FullName,"type "+t.FullName);
-                foreach(var m in t.Methods.Where(m=>m.IsPublic||m.IsFamily||m.IsFamilyOrAssembly)) Check(n.Methods.Any(x=>Shape(x)==Shape(m)),"method "+m.FullName);
+                var target = targets.Single(x => x.FullName == MovedName(t.FullName));
+                using(var assembly = AssemblyDefinition.ReadAssembly(target.Assembly.Location))
+                {
+                    var n = assembly.MainModule.Types.Single(x => x.FullName == target.FullName);
+                    Check(t.Attributes == n.Attributes && MovedName(t.BaseType.FullName) == n.BaseType.FullName, "moved type " + t.FullName);
+                    foreach(var m in t.Methods.Where(m => m.IsPublic || m.IsFamily || m.IsFamilyOrAssembly))
+                        Check(n.Methods.Any(x => Shape(x) == MovedName(Shape(m))), "moved method " + m.FullName);
+                }
             }
-            Check(((EmbeddedResource)old.MainModule.Resources.Single()).GetResourceData().SequenceEqual(((EmbeddedResource)now.MainModule.Resources.Single()).GetResourceData()),"mapping bytes");
         }
+        Check(typeof(StudentRawScore).Assembly.GetName().Name == "Model", "raw score belongs to Model");
+        Check(typeof(StudentRawScoreSearchCondition).Assembly == typeof(StudentRawScore).Assembly, "condition belongs to Model");
+        Check(typeof(StudentRawScoreProvider).Assembly.GetName().Name == "DAL", "provider belongs to DAL");
+        Check(typeof(StudentRawScoresSavingService).Assembly.GetName().Name == "BLL", "queue belongs to BLL");
+        Check(!File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "HH.TiYu.SQLite.dll")), "retired assembly absent");
+        foreach(var assembly in targets.Select(t => t.Assembly).Distinct())
+            Check(!assembly.GetReferencedAssemblies().Any(a => a.Name == "HH.TiYu.SQLite"), "retired dependency: " + assembly.FullName);
+        foreach(var assembly in new[] { typeof(StudentRawScore).Assembly, typeof(StudentRawScoreProvider).Assembly })
+            Check(!assembly.GetReferencedAssemblies().Any(a => a.Name == "Device"), "device dependency in Model/DAL");
     }
+#endif
     static int Main(string[] args)
     {
         try
@@ -60,6 +94,17 @@ internal static class VerifySQLite
             var page=Provider().GetItems(new StudentRawScoreSearchCondition{PageIndex=2,PageSize=2,SortMode=SortMode.Asc});
             Check(page.TotalCount==5 && page.QueryObjects.Count==2 && page.QueryObjects[0].ScoreSer==2,"paging ascending");
             Check(Provider().GetItems(new StudentRawScoreSearchCondition{SortMode=SortMode.Desc}).QueryObjects[0].ScoreSer==4,"descending");
+#if SOURCE
+            Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore WHERE Uploaded=0")) == 5, "new records default to unuploaded");
+            Execute("UPDATE StudentRawScore SET Uploaded=1");
+            list[0].Score = 999m;
+            Check(Provider().BatchAdd(list,"P1").Result == ResultCode.Successful, "duplicate uploaded batch");
+            Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore WHERE Uploaded=1")) == 5, "duplicate preserves upload flags");
+            Check(All().All(x => x.Score == 12.3456m), "duplicate does not overwrite original scores");
+            var otherProject = new StudentRawScore { ID=Guid.NewGuid(), ProjectID="P2", Key=list[0].Key, StudentID="S0", TestID=1, CreateTime=new DateTime(2026,10,16), ScoreFrom=(ScoreSource)0 };
+            Check(Provider().BatchAdd(new List<StudentRawScore>{otherProject},"P2").Result == ResultCode.Successful && All().Count == 6, "same key in another project is independent");
+            Check(Provider().BatchDelete(new List<StudentRawScore>{otherProject},"P2").Result == ResultCode.Successful, "delete independent project row");
+#endif
             Check(Provider().BatchDelete(All(),"P1").Result==ResultCode.Successful && All().Count==0,"delete");
 #if SOURCE
             Api(args[0]);

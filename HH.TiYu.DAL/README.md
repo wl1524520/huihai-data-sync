@@ -12,8 +12,9 @@
 | `LinqProvider/Organizations/` | 区域和学校的查询、删除约束 |
 | `LinqProvider/Students/` | 学生查询、导入、覆盖与批量修改、删除 |
 | `LinqProvider/PhysicalTests/` | 体测项目、科目字典、项目科目关联的读写 |
+| `LinqProvider/Scores/` | 原始成绩查询、排序分页、按项目与 Key 去重写入和删除 |
 | `LinqProvider/Configuration/` | 同步配置的查询和事务保存 |
-| `LinqProvider/DataMapping.xml` | 七表共享的 LINQ to SQL 映射资源 |
+| `LinqProvider/DataMapping.xml` | 八表共享的 LINQ to SQL 映射资源 |
 | `Properties/AssemblyInfo.cs` | 程序集元数据 |
 
 Provider 在 `LinqProvider` 下按业务职责分组；组织、学生、体测分组与 BLL 对应。新增 Provider 放入对应业务目录，不预建空目录；跨业务的批量契约放入 `Contracts`，工厂创建与注册入口放入 `Factories`。
@@ -24,7 +25,7 @@ Provider 在 `LinqProvider` 下按业务职责分组；组织、学生、体测�
 
 ## 当前数据契约
 
-`LinqProvider/DataMapping.xml` 仅映射七表：
+`LinqProvider/DataMapping.xml` 仅映射八表：
 
 | 表 | 实体/用途 |
 | --- | --- |
@@ -35,19 +36,21 @@ Provider 在 `LinqProvider` 下按业务职责分组；组织、学生、体测�
 | ProjectPhysicalItems | 项目科目关联 |
 | Student | 学生名单 |
 | SyncConfig | 同步配置，ID 为配置键、Value 为配置值 |
+| StudentRawScore | 原始成绩；实体位于 Model，保存调度位于 BLL |
 
 Student 仅映射 ID、StudentID、ProjectID、Name、Sex、FacilityID、Grade、ClassName、UpdateDate，九列与实体同名属性一一对应。
 StudentID 保存平台 test_no，映射容量为 64，平台约束最多 60 字符。名单下发不再用卡号替换标识。
 已修复重复 FacilityID、ID 重复 NOT NULL、科目 Min/Max 可空性和 Memo 长度声明。
 
-实际建库仍由采集器 `Db/LocalDb.cs` 负责，共八表。StudentRawScore 独立映射位于 HH.TiYu.SQLite；Uploaded 标记由上传模块维护。
+实际建库仍由采集器 `Db/LocalDb.cs` 负责，共八表。StudentRawScore 已并入本项目映射；Uploaded 不映射到成绩实体，由建表默认值 0 初始化并由上传模块维护，避免成绩写入覆盖已上传状态。
 当前开发版本不提供旧库迁移。XML 不负责建表；字段调整需同步修改 LocalDb 和同步 SQL。
 
 ## Provider 与读写范围
 
-ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余契约一律抛出 NotSupportedException。
+ProviderFactory 缓存映射，只允许创建上述八表的 Provider；其余契约一律抛出 NotSupportedException。
 工厂不再吞掉映射异常，也不存在可实例化的停用 Provider：本轮精简已删除 15 个停用 Provider 源码（Alarm、AppraiseTemplate、Discussion、Operator、PhysicalProjectState、PhysicalScore、Role、Sports、SportsStudentPair、SportSuggestion、Standard、StudentCheckRecord、StudentGroup、StudentGroupPair、Sysparameter）以及 `AutoNumberCreater`、`AutoCreateNumber` 两个编号类型，并移除了 DAL 项目对 `System.Data.SQLite` 的显式引用（保留的 Provider 只用 LINQ 映射，无 SQLite 类型使用）。旧实现仍可从原始 `lib/DAL.dll` 基线重新反编译恢复。
 
+- StudentRawScoreProvider 按项目与 Key 去重，已有行不覆盖；数据库结构与原始成绩字段保持不变。
 - StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；查询条件只保留项目、学校（映射到 FacilityID）与标识集合三项，未映射字段修改明确失败。
 - 删除学生名单不删除已经采集的 StudentRawScore。
 - PhysicalProjectProvider 使用 GUID 生成项目编号；当前已移除模板项目科目复制分支，项目编号不依赖任何编号表。
@@ -66,7 +69,7 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 ## 验证
 
 在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
-测试在全新隔离目录使用真实 LocalDb 八表结构，覆盖七表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、七个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载23、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
+测试在全新隔离目录使用真实 LocalDb 八表结构，覆盖八表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、八个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载23、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
 不再扩展旧业务表，也不再要求映射与原 DLL 逐字相同。
 VerifyBusiness 保留模型算法的原 DLL 对照；VerifyRecoveredApi 验证剩余 API 和所有源码组件间的引用解析。
 未连接真实设备或云平台。

@@ -94,9 +94,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\HH.TiYu.SQLite\HH.TiYu.SQLite.csproj"><Project>{DA46F333-0A97-4B57-83E6-1F4B6EE9B161}</Project><Name>HH.TiYu.SQLite</Name><Private>True</Private></ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\HH.TiYu.Device\HH.TiYu.Device.csproj"><Project>{8537D017-64FB-4681-B994-4CA2E4FC245C}</Project><Name>HH.TiYu.Device</Name><Private>True</Private></ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -107,12 +104,12 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <!-- 从 lib 复制通用运行依赖；Model、DAL、BLL、SQLite、Device、UI、LJH 使用源码项目的构建产物。 -->
+    <!-- 从 lib 复制通用运行依赖；Model、DAL、BLL、Device、UI、LJH 使用源码项目的构建产物。 -->
     <!-- 禁止原始 lib 中的业务程序集覆盖项目引用的产物。 -->
     <ItemGroup>
       <RuntimeLibraries Include="$(HuiHaiDir)*.dll" Exclude="$(HuiHaiDir)DAL.dll;$(HuiHaiDir)Model.dll;$(HuiHaiDir)BLL.dll;$(HuiHaiDir)HH.TiYu.SQLite.dll;$(HuiHaiDir)Device.dll;$(HuiHaiDir)UI.dll;$(HuiHaiDir)LJH.GeneralLibrary.dll;$(HuiHaiDir)AForge.dll;$(HuiHaiDir)AForge.Controls.dll;$(HuiHaiDir)AForge.Imaging.dll;$(HuiHaiDir)AForge.Math.dll;$(HuiHaiDir)AForge.Video.dll;$(HuiHaiDir)AForge.Video.DirectShow.dll;$(HuiHaiDir)FJ.CoreWin.dll;$(HuiHaiDir)JpgDll.dll;$(HuiHaiDir)SavePhoto.dll" />
     </ItemGroup>
-    <Delete Files="$(TargetDir)AForge.dll;$(TargetDir)AForge.Controls.dll;$(TargetDir)AForge.Imaging.dll;$(TargetDir)AForge.Math.dll;$(TargetDir)AForge.Video.dll;$(TargetDir)AForge.Video.DirectShow.dll;$(TargetDir)FJ.CoreWin.dll;$(TargetDir)JpgDll.dll;$(TargetDir)SavePhoto.dll" />
+    <Delete Files="$(TargetDir)HH.TiYu.SQLite.dll;$(TargetDir)HH.TiYu.SQLite.pdb;$(TargetDir)AForge.dll;$(TargetDir)AForge.Controls.dll;$(TargetDir)AForge.Imaging.dll;$(TargetDir)AForge.Math.dll;$(TargetDir)AForge.Video.dll;$(TargetDir)AForge.Video.DirectShow.dll;$(TargetDir)FJ.CoreWin.dll;$(TargetDir)JpgDll.dll;$(TargetDir)SavePhoto.dll" />
     <Copy SourceFiles="@(RuntimeLibraries)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)config.xml&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)DbUpdate_SQLITE.sql&quot; &quot;$(TargetDir)&quot; /D /Y /R" />

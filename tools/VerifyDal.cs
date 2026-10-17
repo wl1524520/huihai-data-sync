@@ -84,7 +84,7 @@ internal static class VerifyDal
                 var doc = XDocument.Load(stream); XNamespace ns = doc.Root.Name.Namespace;
                 var tables = doc.Root.Elements(ns + "Table").ToList();
                 Check((string)doc.Root.Attribute("Name") == "HuihaiTiyu", "Database contract name");
-                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Division", "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig" }.OrderBy(n => n)), "Seven-table DAL contract");
+                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Division", "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentRawScore" }.OrderBy(n => n)), "Eight-table DAL contract");
                 foreach (var table in tables)
                 {
                     string name = (string)table.Attribute("Name"); var columns = new HashSet<string>();
@@ -95,6 +95,7 @@ internal static class VerifyDal
                     }
                     var mapped = table.Element(ns + "Type").Elements(ns + "Column").Select(c => (string)c.Attribute("Name")).ToList();
                     Check(mapped.Count == mapped.Distinct().Count(), "Duplicate mapping: " + name);
+                    if (name == "StudentRawScore") { Check(columns.Remove("Uploaded"), "Raw score upload flag exists outside mapping"); Check(!mapped.Contains("Uploaded"), "Upload flag must not be overwritten by raw score mapping"); }
                     Check(columns.SetEquals(mapped), "Mapping does not match actual table: " + name);
                     if (name == "Student") Check(columns.Count == 9, "Student must have only nine persisted fields");
                 }
@@ -103,7 +104,7 @@ internal static class VerifyDal
     }
     private static void CheckFactories()
     {
-        string[] supported = { "DivisionProvider", "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider" };
+        string[] supported = { "DivisionProvider", "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentRawScoreProvider" };
         string[] removed = { "AlarmProvider", "AppraiseTemplateProvider", "DiscussionProvider", "OperatorProvider", "PhysicalProjectStateProvider", "PhysicalScoreProvider", "RoleProvider", "SportsProvider", "SportsStudentPairProvider", "SportSuggestionProvider", "StandardProvider", "StudentCheckRecordProvider", "StudentGroupPairProvider", "StudentGroupProvider", "SysparameterProvider" };
         var assembly = typeof(ProviderFactory).Assembly;
         foreach (var name in removed)

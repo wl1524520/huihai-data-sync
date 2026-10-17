@@ -1,23 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Linq;
-using System.Data.Linq.Mapping;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
 using System.Threading;
+using HH.TiYu.DAL;
+using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
 using HH.Zhongkao.Device;
 using LJH.GeneralLibrary.Core.DAL;
-using LJH.GeneralLibrary.Core.DAL.Linq;
 using LJH.GeneralLibrary.ExceptionHandling;
 using LJH.GeneralLibrary.LOG;
 
-namespace HH.TiYu.SQLite
+namespace HH.TiYu.BLL
 {
 	public class StudentRawScoresSavingService
 	{
@@ -140,42 +134,7 @@ namespace HH.TiYu.SQLite
 			lock (_UnsavedRecordsLocker)
 			{
                 if (_stopping) throw new InvalidOperationException("保存服务正在停止，不能再添加成绩。");
-				DateTime recordTime = record.RecordDate ?? DateTime.Now;
-				StudentRawScore studentRawScore = new StudentRawScore();
-				studentRawScore.ID = Guid.NewGuid();
-				studentRawScore.ProjectID = projectID;
-				studentRawScore.Key = string.Format("{0}_{1}_{2}_{3}_{4}_{5}_{6}", projectID, hostSN, record.SN, record.StudentNumber, record.PhysicalItem, record.Result, recordTime.ToString("yyyyMMddHHmmss"));
-				studentRawScore.StudentID = record.StudentNumber;
-				studentRawScore.StudentName = record.Name;
-				studentRawScore.Sex = record.Sex;
-				studentRawScore.TestID = record.PhysicalItem;
-				studentRawScore.Score = record.Result;
-				studentRawScore.CreateTime = recordTime;
-				studentRawScore.HostSn = hostSN;
-				studentRawScore.HostID = record.HostID;
-				studentRawScore.ScoreSer = record.SN;
-				studentRawScore.ScoreFrom = scoreFrom;
-				StudentRawScore studentRawScore2 = studentRawScore;
-				if (record.SpecialResult.HasValue)
-				{
-					if (record.SpecialResult == 160)
-					{
-						studentRawScore2.SpecialType = SpecialScoreType.Foul;
-					}
-					else if (record.SpecialResult == 161)
-					{
-						studentRawScore2.SpecialType = SpecialScoreType.Abandoned;
-					}
-					else if (record.SpecialResult == 162)
-					{
-						studentRawScore2.SpecialType = SpecialScoreType.Incomplete;
-					}
-					else
-					{
-						studentRawScore2.SpecialType = SpecialScoreType.Foul;
-					}
-				}
-				_UnsavedItems.Add(studentRawScore2);
+				_UnsavedItems.Add(StudentRawScoreConverter.Convert(projectID, record, scoreFrom, hostSN));
                 _wake.Set();
 			}
 		}

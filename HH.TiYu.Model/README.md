@@ -2,7 +2,7 @@
 
 从 `lib/Model.dll` 还原的模型层，集成在 `HH.DataCollection.Wifi.sln`。
 目标为 .NET Framework 4.0 / C# 4 / x86，程序集身份保留为 `Model, Version=1.0.0.0`，未签名。
-当前保留 22 个公开/受保护类型；命名空间、公共接口、枚举数值和序列化声明与原 DLL 一致，本轮精简允许删除的成员在 `tools/VerifyBusiness.cs` 的 `RemovedModelTypes` / `RemovedMembers` 中逐条登记，`ChangedMembers` 登记允许收窄签名的成员。
+当前共有 25 个公开/受保护类型（含 SyncConfigEntry 和从原 SQLite 项目迁入的两种成绩契约）；其余保留类型的命名空间、公共接口、枚举数值和序列化声明与原 DLL 一致，本轮精简允许删除的成员在 `tools/VerifyBusiness.cs` 的 `RemovedModelTypes` / `RemovedMembers` 中逐条登记，`ChangedMembers` 登记允许收窄签名的成员。
 
 ## 目录与维护入口
 
@@ -11,7 +11,7 @@
 | `Organizations/` | 区域、学校实体及对应查询条件 |
 | `Students/` | 学生九列字段、年级规则 `GradeHelper` 和学生查询条件 |
 | `PhysicalTests/` | 体测项目、测试科目、项目科目关联、项目分类与加载选项、默认科目生成和查询条件 |
-| `Scores/` | 内存成绩视图 `PhysicalScore`、成绩来源与特殊成绩类型枚举 |
+| `Scores/` | 原始成绩实体 `StudentRawScore` 与查询条件、内存成绩视图 `PhysicalScore`、成绩来源与特殊成绩类型枚举 |
 | `Configuration/` | 应用配置 `AppSettings`、同步配置实体 `SyncConfigEntry` |
 | `Security/` | 当前操作员身份 `Operator`，不提供旧权限系统 |
 | `Shared/` | 跨业务使用的性别枚举 `Sex`、时间范围 `DateTimeRange` |
@@ -19,7 +19,7 @@
 
 目录按业务职责组织，查询条件、枚举和辅助类随对应业务存放，保持一层，不预建空目录。只有跨业务使用的基础类型放入 `Shared`，业务规则仍归属对应业务目录；实体与查询条件放在一起便于同步维护。
 
-科目编号、成绩舍入、单位转换和文本解析在 `PhysicalTests/PhysicalItem.cs`；项目内学生与学校索引在 `PhysicalTests/PhysicalProject.cs`；默认科目生成在 `PhysicalTests/PhysicalProjectHelper.cs`。`Scores/PhysicalScore.cs` 是内存视图，原始成绩实体与持久化服务位于 `../HH.TiYu.SQLite/RawScores/`，本项目不新增正式成绩表或评分链。
+科目编号、成绩舍入、单位转换和文本解析在 `PhysicalTests/PhysicalItem.cs`；项目内学生与学校索引在 `PhysicalTests/PhysicalProject.cs`；默认科目生成在 `PhysicalTests/PhysicalProjectHelper.cs`。`Scores/PhysicalScore.cs` 是内存视图，原始成绩实体与查询条件位于本项目 `Scores/`，持久化位于 DAL，设备转换与后台保存位于 BLL，本项目不新增正式成绩表或评分链。
 
 文件移动不改变命名空间：查询条件仍为 `HH.TiYu.Model.SearchCondition`，操作员仍为 `HH.TiYu.Model.Security`，其余现有类型仍为 `HH.TiYu.Model`。公开接口、枚举数值、程序集身份以及序列化声明保持不变；不按物理目录重命名现有类型。新增源码须显式加入 `HH.TiYu.Model.csproj` 的 `Compile Include`。
 

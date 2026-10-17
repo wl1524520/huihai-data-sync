@@ -58,7 +58,6 @@
     <ProjectReference Include="..\HH.TiYu.BLL\HH.TiYu.BLL.csproj"><Project>{C6AE204B-4D6A-409A-A684-0E2F79AB7802}</Project><Name>HH.TiYu.BLL</Name><Private>True</Private></ProjectReference>
     <ProjectReference Include="..\HH.TiYu.Device\HH.TiYu.Device.csproj"><Project>{8537D017-64FB-4681-B994-4CA2E4FC245C}</Project><Name>HH.TiYu.Device</Name><Private>True</Private></ProjectReference>
     <ProjectReference Include="..\LJH.GeneralLibrary\LJH.GeneralLibrary.csproj"><Project>{C70B95A5-1217-4E8A-A409-E997982C6E2D}</Project><Name>LJH.GeneralLibrary</Name><Private>True</Private></ProjectReference>
-    <ProjectReference Include="..\HH.TiYu.SQLite\HH.TiYu.SQLite.csproj"><Project>{DA46F333-0A97-4B57-83E6-1F4B6EE9B161}</Project><Name>HH.TiYu.SQLite</Name><Private>True</Private></ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Hosts\FrmHosts.resx"><DependentUpon>FrmHosts.cs</DependentUpon><LogicalName>HH.TiYu.UI.FrmHosts.resources</LogicalName></EmbeddedResource>

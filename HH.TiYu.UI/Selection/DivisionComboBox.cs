@@ -15,7 +15,6 @@ using HH.TiYu.BLL;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
 using HH.TiYu.Model.Security;
-using HH.TiYu.SQLite;
 using HH.TiYu.UI.Controls;
 using HH.TiYu.UI.UserControl;
 using HH.Zhongkao.Device;

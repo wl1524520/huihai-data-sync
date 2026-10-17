@@ -11,7 +11,7 @@ internal static class VerifyRecoveredApi {
     static int Main(string[] args){
       try{
        string original=args[0],output=args[1];
-       foreach(string name in new[]{"HH.TiYu.SQLite","Device","UI","LJH.GeneralLibrary"}){
+       foreach(string name in new[]{"Device","UI","LJH.GeneralLibrary"}){
         using(var before=AssemblyDefinition.ReadAssembly(Path.Combine(original,name+".dll")))
         using(var after=AssemblyDefinition.ReadAssembly(Path.Combine(output,name+".dll"))){
           LegacyApiNames.Normalize(before);
@@ -23,13 +23,6 @@ internal static class VerifyRecoveredApi {
             Require(oldTypes.ContainsKey(type.FullName),"Unexpected public type: "+type.FullName);
             var oldContract=Contract(oldTypes[type.FullName]);
             var newContract=Contract(type);
-            // Explicitly added lifecycle API for the recovered queue.
-            if(type.FullName=="HH.TiYu.SQLite.StudentRawScoresSavingService"){
-              newContract=newContract.Where(s=>!s.StartsWith("PROPERTY:PendingCount:") && !s.StartsWith("PROPERTY:IsRunning:") &&
-                !s.StartsWith("METHOD:get_PendingCount") && !s.StartsWith("METHOD:get_IsRunning") &&
-                !s.StartsWith("METHOD:Flush") && !(s.StartsWith("METHOD:Stop")&&s.Contains("timeout:")) &&
-                !s.StartsWith("METHOD:Dispose") && !s.StartsWith("INTERFACE:System.IDisposable")).ToList();
-            }
             // Explicit override adds the transaction missing from the legacy base Delete.
             if (type.FullName == "HH.TiYu.DAL.LinqProvider.PhysicalProjectProvider")
                 newContract = newContract.Where(c => !c.StartsWith("METHOD:Delete`")).ToList();
@@ -47,10 +40,12 @@ internal static class VerifyRecoveredApi {
         }
        }
        var resolver=new DefaultAssemblyResolver();resolver.AddSearchDirectory(output);
-       string[] recovered={"HH.TiYu.SQLite","Device","UI","LJH.GeneralLibrary","Model","DAL","BLL"};
+       string[] recovered={"Device","UI","LJH.GeneralLibrary","Model","DAL","BLL"};
+       Require(!File.Exists(Path.Combine(output,"HH.TiYu.SQLite.dll")), "Retired SQLite DLL deployed");
        foreach(string path in Directory.GetFiles(output,"*.dll").Concat(Directory.GetFiles(output,"HH.DataCollection.Wifi.exe"))){
         if(!recovered.Contains(Path.GetFileNameWithoutExtension(path)) && !path.EndsWith("HH.DataCollection.Wifi.exe"))continue;
         using(var assembly=AssemblyDefinition.ReadAssembly(path,new ReaderParameters{AssemblyResolver=resolver})){
+         Require(!assembly.MainModule.AssemblyReferences.Any(a=>a.Name=="HH.TiYu.SQLite"),"Retired SQLite reference: "+path);
          foreach(var definition in AllDefinedTypes(assembly.MainModule.Types)){
           Require(!HasChinese(definition.Name),"Chinese type name: "+definition.FullName);
           foreach(var method in definition.Methods){
