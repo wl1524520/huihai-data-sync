@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -71,9 +71,9 @@ namespace HH.TiYu.UI
 
 		private ToolStripMenuItem mnu_Clear;
 
-		private ToolStripMenuItem 保存所有记录ToolStripMenuItem;
+		private ToolStripMenuItem saveAllRecordsMenuItem;
 
-		private ToolStripMenuItem 查看统计信息ToolStripMenuItem;
+		private ToolStripMenuItem viewStatisticsMenuItem;
 
 		private StatusStrip statusStrip1;
 
@@ -93,6 +93,23 @@ namespace HH.TiYu.UI
 				Reader.PhysicalRecordReceived -= Reader_PhysicalRecordReceived;
 				Reader.PhysicalRecordReceived += Reader_PhysicalRecordReceived;
 				_Reader.Open();
+			}
+		}
+
+		// Display text is independent of enum member names used by code.
+		private static string GetSpecialScoreText(SpecialScoreType type)
+		{
+			switch (type)
+			{
+				case SpecialScoreType.Absent: return "缺考";
+				case SpecialScoreType.Exempt: return "免考";
+				case SpecialScoreType.InjuryOrIllness: return "伤病";
+				case SpecialScoreType.Foul: return "犯规";
+				case SpecialScoreType.Abandoned: return "放弃";
+				case SpecialScoreType.Incomplete: return "未完成";
+				case SpecialScoreType.Deferred: return "缓考";
+				case SpecialScoreType.Invalidated: return "作废";
+				default: return type.ToString();
 			}
 		}
 
@@ -123,7 +140,7 @@ namespace HH.TiYu.UI
 							}
 							if (StudentRawScoresSavingService.Current != null)
 							{
-								StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.汇海200型主机, _Reader.HostSN);
+								StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, _Reader.HostSN);
 							}
 						}
 						FileLog.Log("原始采集记录", record.ToString());
@@ -171,19 +188,19 @@ namespace HH.TiYu.UI
 						{
 							if (item.SpecialResult == 160)
 							{
-								physicalScore.SpecialType = SpecialScoreType.犯规;
+								physicalScore.SpecialType = SpecialScoreType.Foul;
 							}
 							else if (item.SpecialResult == 161)
 							{
-								physicalScore.SpecialType = SpecialScoreType.放弃;
+								physicalScore.SpecialType = SpecialScoreType.Abandoned;
 							}
 							else if (item.SpecialResult == 162)
 							{
-								physicalScore.SpecialType = SpecialScoreType.未完成;
+								physicalScore.SpecialType = SpecialScoreType.Incomplete;
 							}
 							else
 							{
-								physicalScore.SpecialType = SpecialScoreType.犯规;
+								physicalScore.SpecialType = SpecialScoreType.Foul;
 							}
 						}
 					}
@@ -245,7 +262,7 @@ namespace HH.TiYu.UI
 				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == PhysicalItem.ConvertPhysicalItem(s, score.PhysicalItem));
 				dataGridView1.Rows[0].Cells["colPhysicalItem"].Value = string.Format("{0}", physicalItem.Name);
 				dataGridView1.Rows[0].Cells["colUnit"].Value = physicalItem.Unit;
-				dataGridView1.Rows[0].Cells["colScore"].Value = ((!score.SpecialType.HasValue) ? physicalItem.ConvertToStr(score.Score) : score.SpecialType.ToString());
+				dataGridView1.Rows[0].Cells["colScore"].Value = ((!score.SpecialType.HasValue) ? physicalItem.ConvertToStr(score.Score) : GetSpecialScoreText(score.SpecialType.Value));
 				dataGridView1.Rows[0].Cells["colRecordDate"].Value = (score.UpdateDate.HasValue ? score.UpdateDate.Value.ToString("yyyy-MM-dd HH:mm") : string.Empty);
 				if (s != null)
 				{
@@ -288,7 +305,7 @@ namespace HH.TiYu.UI
 					string empty = string.Empty;
 					if (record.SpecialResult.HasValue)
 					{
-						empty = ((record.SpecialResult == 160) ? SpecialScoreType.犯规.ToString() : ((record.SpecialResult == 161) ? SpecialScoreType.放弃.ToString() : ((record.SpecialResult != 162) ? SpecialScoreType.犯规.ToString() : SpecialScoreType.未完成.ToString())));
+						empty = GetSpecialScoreText((record.SpecialResult == 160) ? SpecialScoreType.Foul : ((record.SpecialResult == 161) ? SpecialScoreType.Abandoned : ((record.SpecialResult != 162) ? SpecialScoreType.Foul : SpecialScoreType.Incomplete)));
 						dataGridView1.Rows[0].Cells["colScore"].Value = empty;
 					}
 					else
@@ -490,8 +507,8 @@ namespace HH.TiYu.UI
 			this.colFacility = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.mnu_Clear = new System.Windows.Forms.ToolStripMenuItem();
-			this.保存所有记录ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.查看统计信息ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.saveAllRecordsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.viewStatisticsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.lblCount = new System.Windows.Forms.ToolStripStatusLabel();
 			this.timer1 = new System.Windows.Forms.Timer(this.components);
@@ -542,18 +559,18 @@ namespace HH.TiYu.UI
 			resources.ApplyResources(this.colFacility, "colFacility");
 			this.colFacility.Name = "colFacility";
 			this.colFacility.ReadOnly = true;
-			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[3] { this.mnu_Clear, this.保存所有记录ToolStripMenuItem, this.查看统计信息ToolStripMenuItem });
+			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[3] { this.mnu_Clear, this.saveAllRecordsMenuItem, this.viewStatisticsMenuItem });
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
 			resources.ApplyResources(this.contextMenuStrip1, "contextMenuStrip1");
 			this.mnu_Clear.Name = "mnu_Clear";
 			resources.ApplyResources(this.mnu_Clear, "mnu_Clear");
 			this.mnu_Clear.Click += new System.EventHandler(mnu_Clear_Click);
-			this.保存所有记录ToolStripMenuItem.Name = "保存所有记录ToolStripMenuItem";
-			resources.ApplyResources(this.保存所有记录ToolStripMenuItem, "保存所有记录ToolStripMenuItem");
-			this.保存所有记录ToolStripMenuItem.Click += new System.EventHandler(btnExport_Click);
-			this.查看统计信息ToolStripMenuItem.Name = "查看统计信息ToolStripMenuItem";
-			resources.ApplyResources(this.查看统计信息ToolStripMenuItem, "查看统计信息ToolStripMenuItem");
-			this.查看统计信息ToolStripMenuItem.Click += new System.EventHandler(ViewStatisticsMenuItem_Click);
+			this.saveAllRecordsMenuItem.Name = "saveAllRecordsMenuItem";
+			resources.ApplyResources(this.saveAllRecordsMenuItem, "saveAllRecordsMenuItem");
+			this.saveAllRecordsMenuItem.Click += new System.EventHandler(btnExport_Click);
+			this.viewStatisticsMenuItem.Name = "viewStatisticsMenuItem";
+			resources.ApplyResources(this.viewStatisticsMenuItem, "viewStatisticsMenuItem");
+			this.viewStatisticsMenuItem.Click += new System.EventHandler(ViewStatisticsMenuItem_Click);
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[1] { this.lblCount });
 			resources.ApplyResources(this.statusStrip1, "statusStrip1");
 			this.statusStrip1.Name = "statusStrip1";

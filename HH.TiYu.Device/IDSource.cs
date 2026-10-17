@@ -23,12 +23,19 @@ namespace HH.Zhongkao.Device
 {
     public enum IDSource
     {
-        未知 = 0,
-        按键输入 = 64,
-        IC卡物理卡号 = 80,
-        IC卡学号 = 96,
-        扫描枪读出 = 128,
-        身份证读出 = 144,
-        主机已存贮信息中读出 = 10
+        /// <summary>未知。</summary>
+        Unknown = 0,
+        /// <summary>按键输入。</summary>
+        KeypadInput = 64,
+        /// <summary>IC 卡的物理卡号。</summary>
+        IcCardPhysicalNumber = 80,
+        /// <summary>从 IC 卡读取的学号。</summary>
+        IcCardStudentId = 96,
+        /// <summary>扫描枪读出。</summary>
+        BarcodeScanner = 128,
+        /// <summary>身份证读出。</summary>
+        IdentityCardReader = 144,
+        /// <summary>从主机已存储的信息中读出。</summary>
+        HostStoredData = 10
     }
 }

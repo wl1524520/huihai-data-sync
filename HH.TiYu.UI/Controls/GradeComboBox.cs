@@ -73,7 +73,7 @@ namespace HH.TiYu.UI.Controls
 		{
 			base.Items.Clear();
 			base.Items.Add(string.Empty);
-			for (int i = 0; i <= GradeHelper.大四; i++)
+			for (int i = 0; i <= GradeHelper.UniversityYear4; i++)
 			{
 				if ((!AppSettings.Current.MinGrade.HasValue || !(i < AppSettings.Current.MinGrade)) && (!AppSettings.Current.MaxGrade.HasValue || !(i > AppSettings.Current.MaxGrade)))
 				{

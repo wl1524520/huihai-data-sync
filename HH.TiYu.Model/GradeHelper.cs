@@ -13,37 +13,53 @@ namespace HH.TiYu.Model
     {
         private static GradeHelper _Instance;
 
-        public static readonly int 一年级 = 11;
+        /// <summary>小学一年级编码。</summary>
+        public static readonly int PrimaryGrade1 = 11;
 
-        public static readonly int 二年级 = 12;
+        /// <summary>小学二年级编码。</summary>
+        public static readonly int PrimaryGrade2 = 12;
 
-        public static readonly int 三年级 = 13;
+        /// <summary>小学三年级编码。</summary>
+        public static readonly int PrimaryGrade3 = 13;
 
-        public static readonly int 四年级 = 14;
+        /// <summary>小学四年级编码。</summary>
+        public static readonly int PrimaryGrade4 = 14;
 
-        public static readonly int 五年级 = 15;
+        /// <summary>小学五年级编码。</summary>
+        public static readonly int PrimaryGrade5 = 15;
 
-        public static readonly int 六年级 = 16;
+        /// <summary>小学六年级编码。</summary>
+        public static readonly int PrimaryGrade6 = 16;
 
-        public static readonly int 初一 = 21;
+        /// <summary>初一（初中一年级）编码。</summary>
+        public static readonly int JuniorHighGrade1 = 21;
 
-        public static readonly int 初二 = 22;
+        /// <summary>初二（初中二年级）编码。</summary>
+        public static readonly int JuniorHighGrade2 = 22;
 
-        public static readonly int 初三 = 23;
+        /// <summary>初三（初中三年级）编码。</summary>
+        public static readonly int JuniorHighGrade3 = 23;
 
-        public static readonly int 高一 = 31;
+        /// <summary>高一（高中一年级）编码。</summary>
+        public static readonly int SeniorHighGrade1 = 31;
 
-        public static readonly int 高二 = 32;
+        /// <summary>高二（高中二年级）编码。</summary>
+        public static readonly int SeniorHighGrade2 = 32;
 
-        public static readonly int 高三 = 33;
+        /// <summary>高三（高中三年级）编码。</summary>
+        public static readonly int SeniorHighGrade3 = 33;
 
-        public static readonly int 大一 = 41;
+        /// <summary>大一（大学一年级）编码。</summary>
+        public static readonly int UniversityYear1 = 41;
 
-        public static readonly int 大二 = 42;
+        /// <summary>大二（大学二年级）编码。</summary>
+        public static readonly int UniversityYear2 = 42;
 
-        public static readonly int 大三 = 43;
+        /// <summary>大三（大学三年级）编码。</summary>
+        public static readonly int UniversityYear3 = 43;
 
-        public static readonly int 大四 = 44;
+        /// <summary>大四（大学四年级）编码。</summary>
+        public static readonly int UniversityYear4 = 44;
 
         private Dictionary<int, string> _Grades = null;
 

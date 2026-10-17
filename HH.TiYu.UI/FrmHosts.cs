@@ -55,31 +55,31 @@ namespace HH.TiYu.UI
 
 		private ContextMenuStrip contextMenuStrip2;
 
-		private ToolStripMenuItem mnu_集中采集所有数据;
+		private ToolStripMenuItem collectAllDataMenuItem;
 
-		private ToolStripMenuItem mnu_开始实时采集;
+		private ToolStripMenuItem startRealtimeCollectionMenuItem;
 
 		private ToolStripSeparator toolStripSeparator1;
 
-		private ToolStripMenuItem mnu下载学生名单;
+		private ToolStripMenuItem downloadStudentsMenuItem;
 
-		private ToolStripMenuItem 清空学生名单ToolStripMenuItem;
+		private ToolStripMenuItem clearStudentsMenuItem;
 
 		private ToolStripSeparator toolStripSeparator2;
 
-		private ToolStripMenuItem 同步时间ToolStripMenuItem;
+		private ToolStripMenuItem syncTimeMenuItem;
 
-		private ToolStripMenuItem 关机ToolStripMenuItem;
+		private ToolStripMenuItem shutdownHostMenuItem;
 
-		private ToolStripMenuItem 高级集中采集ToolStripMenuItem;
+		private ToolStripMenuItem advancedBatchCollectionMenuItem;
 
-		private ToolStripMenuItem 指定学号的数据ToolStripMenuItem;
+		private ToolStripMenuItem collectDataByStudentIdMenuItem;
 
-		private ToolStripMenuItem 集中采集指定时间段的数据ToolStripMenuItem;
+		private ToolStripMenuItem collectDataByTimeRangeMenuItem;
 
-		private ToolStripMenuItem 集中采集剩余数据ToolStripMenuItem;
+		private ToolStripMenuItem collectRemainingDataMenuItem;
 
-		private ToolStripMenuItem 指定序列号段的数据ToolStripMenuItem;
+		private ToolStripMenuItem collectDataBySerialRangeMenuItem;
 
 		private Button btnRevert;
 
@@ -91,13 +91,13 @@ namespace HH.TiYu.UI
 
 		private ToolStripSeparator toolStripSeparator3;
 
-		private ToolStripMenuItem 通讯质量检测ToolStripMenuItem;
+		private ToolStripMenuItem testCommunicationQualityMenuItem;
 
 		private ToolStripSeparator toolStripSeparator4;
 
-		private ToolStripMenuItem 增加主机USBToolStripMenuItem;
+		private ToolStripMenuItem addUsbHostMenuItem;
 
-		private ToolStripMenuItem 结束实时采集ToolStripMenuItem;
+		private ToolStripMenuItem stopRealtimeCollectionMenuItem;
 
 		private DataGridViewTextBoxColumn colIP;
 
@@ -666,7 +666,7 @@ namespace HH.TiYu.UI
 						}
 						if (StudentRawScoresSavingService.Current != null)
 						{
-							StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.汇海200型主机, reader.HostSN);
+							StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, reader.HostSN);
 						}
 						FileLog.Log("原始采集记录", record.ToString());
 					}
@@ -736,19 +736,19 @@ namespace HH.TiYu.UI
 						{
 							if (item.SpecialResult == 160)
 							{
-								physicalScore.SpecialType = SpecialScoreType.犯规;
+								physicalScore.SpecialType = SpecialScoreType.Foul;
 							}
 							else if (item.SpecialResult == 161)
 							{
-								physicalScore.SpecialType = SpecialScoreType.放弃;
+								physicalScore.SpecialType = SpecialScoreType.Abandoned;
 							}
 							else if (item.SpecialResult == 162)
 							{
-								physicalScore.SpecialType = SpecialScoreType.未完成;
+								physicalScore.SpecialType = SpecialScoreType.Incomplete;
 							}
 							else
 							{
-								physicalScore.SpecialType = SpecialScoreType.犯规;
+								physicalScore.SpecialType = SpecialScoreType.Foul;
 							}
 						}
 					}
@@ -909,7 +909,7 @@ namespace HH.TiYu.UI
 							StudentDownloadResult studentDownloadResult = sd.DownloadStudents(list.ToArray());
 							list.Clear();
 							frmP.ShowProgress(string.Format("主机 {0} 已经下载 {1} 人，总共 {2}", hi.HostID, num, students.Count), (decimal)num / (decimal)students.Count);
-							if (studentDownloadResult == StudentDownloadResult.存储器已满)
+							if (studentDownloadResult == StudentDownloadResult.StorageFull)
 							{
 								frmP.ShowProgress(string.Format("主机 {0} 存储器已满", hi.HostID), 0.9m, Color.Red);
 								return;
@@ -1263,23 +1263,23 @@ namespace HH.TiYu.UI
 			this.colCheck = new System.Windows.Forms.DataGridViewCheckBoxColumn();
 			this.colOperation = new System.Windows.Forms.DataGridViewLinkColumn();
 			this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
-			this.增加主机USBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.addUsbHostMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-			this.mnu_开始实时采集 = new System.Windows.Forms.ToolStripMenuItem();
-			this.结束实时采集ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.mnu_集中采集所有数据 = new System.Windows.Forms.ToolStripMenuItem();
-			this.高级集中采集ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.集中采集剩余数据ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.指定学号的数据ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.集中采集指定时间段的数据ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.指定序列号段的数据ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.startRealtimeCollectionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.stopRealtimeCollectionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.collectAllDataMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.advancedBatchCollectionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.collectRemainingDataMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.collectDataByStudentIdMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.collectDataByTimeRangeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.collectDataBySerialRangeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-			this.mnu下载学生名单 = new System.Windows.Forms.ToolStripMenuItem();
-			this.清空学生名单ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.downloadStudentsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.clearStudentsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-			this.同步时间ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.通讯质量检测ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.关机ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.syncTimeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.testCommunicationQualityMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.shutdownHostMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
 			this.panel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)this.dataGridView2).BeginInit();
@@ -1358,59 +1358,59 @@ namespace HH.TiYu.UI
 			this.colOperation.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
 			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[14]
 			{
-				this.增加主机USBToolStripMenuItem, this.toolStripSeparator3, this.mnu_开始实时采集, this.结束实时采集ToolStripMenuItem, this.mnu_集中采集所有数据, this.高级集中采集ToolStripMenuItem, this.toolStripSeparator1, this.mnu下载学生名单, this.清空学生名单ToolStripMenuItem,
-				this.toolStripSeparator2, this.同步时间ToolStripMenuItem, this.通讯质量检测ToolStripMenuItem, this.关机ToolStripMenuItem, this.toolStripSeparator4
+				this.addUsbHostMenuItem, this.toolStripSeparator3, this.startRealtimeCollectionMenuItem, this.stopRealtimeCollectionMenuItem, this.collectAllDataMenuItem, this.advancedBatchCollectionMenuItem, this.toolStripSeparator1, this.downloadStudentsMenuItem, this.clearStudentsMenuItem,
+				this.toolStripSeparator2, this.syncTimeMenuItem, this.testCommunicationQualityMenuItem, this.shutdownHostMenuItem, this.toolStripSeparator4
 			});
 			this.contextMenuStrip2.Name = "contextMenuStrip1";
 			resources.ApplyResources(this.contextMenuStrip2, "contextMenuStrip2");
-			this.增加主机USBToolStripMenuItem.Name = "增加主机USBToolStripMenuItem";
-			resources.ApplyResources(this.增加主机USBToolStripMenuItem, "增加主机USBToolStripMenuItem");
-			this.增加主机USBToolStripMenuItem.Click += new System.EventHandler(AddUsbHostMenuItem_Click);
+			this.addUsbHostMenuItem.Name = "addUsbHostMenuItem";
+			resources.ApplyResources(this.addUsbHostMenuItem, "addUsbHostMenuItem");
+			this.addUsbHostMenuItem.Click += new System.EventHandler(AddUsbHostMenuItem_Click);
 			this.toolStripSeparator3.Name = "toolStripSeparator3";
 			resources.ApplyResources(this.toolStripSeparator3, "toolStripSeparator3");
-			this.mnu_开始实时采集.Name = "mnu_开始实时采集";
-			resources.ApplyResources(this.mnu_开始实时采集, "mnu_开始实时采集");
-			this.mnu_开始实时采集.Click += new System.EventHandler(StartRealtimeCollectionMenuItem_Click);
-			this.结束实时采集ToolStripMenuItem.Name = "结束实时采集ToolStripMenuItem";
-			resources.ApplyResources(this.结束实时采集ToolStripMenuItem, "结束实时采集ToolStripMenuItem");
-			this.结束实时采集ToolStripMenuItem.Click += new System.EventHandler(StopRealtimeCollectionMenuItem_Click);
-			this.mnu_集中采集所有数据.Name = "mnu_集中采集所有数据";
-			resources.ApplyResources(this.mnu_集中采集所有数据, "mnu_集中采集所有数据");
-			this.mnu_集中采集所有数据.Click += new System.EventHandler(CollectAllDataMenuItem_Click);
-			this.高级集中采集ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[4] { this.集中采集剩余数据ToolStripMenuItem, this.指定学号的数据ToolStripMenuItem, this.集中采集指定时间段的数据ToolStripMenuItem, this.指定序列号段的数据ToolStripMenuItem });
-			this.高级集中采集ToolStripMenuItem.Name = "高级集中采集ToolStripMenuItem";
-			resources.ApplyResources(this.高级集中采集ToolStripMenuItem, "高级集中采集ToolStripMenuItem");
-			this.集中采集剩余数据ToolStripMenuItem.Name = "集中采集剩余数据ToolStripMenuItem";
-			resources.ApplyResources(this.集中采集剩余数据ToolStripMenuItem, "集中采集剩余数据ToolStripMenuItem");
-			this.集中采集剩余数据ToolStripMenuItem.Click += new System.EventHandler(CollectRemainingDataMenuItem_Click);
-			this.指定学号的数据ToolStripMenuItem.Name = "指定学号的数据ToolStripMenuItem";
-			resources.ApplyResources(this.指定学号的数据ToolStripMenuItem, "指定学号的数据ToolStripMenuItem");
-			this.指定学号的数据ToolStripMenuItem.Click += new System.EventHandler(CollectDataByStudentIdMenuItem_Click);
-			this.集中采集指定时间段的数据ToolStripMenuItem.Name = "集中采集指定时间段的数据ToolStripMenuItem";
-			resources.ApplyResources(this.集中采集指定时间段的数据ToolStripMenuItem, "集中采集指定时间段的数据ToolStripMenuItem");
-			this.集中采集指定时间段的数据ToolStripMenuItem.Click += new System.EventHandler(CollectDataByTimeRangeMenuItem_Click);
-			this.指定序列号段的数据ToolStripMenuItem.Name = "指定序列号段的数据ToolStripMenuItem";
-			resources.ApplyResources(this.指定序列号段的数据ToolStripMenuItem, "指定序列号段的数据ToolStripMenuItem");
-			this.指定序列号段的数据ToolStripMenuItem.Click += new System.EventHandler(CollectDataBySerialRangeMenuItem_Click);
+			this.startRealtimeCollectionMenuItem.Name = "startRealtimeCollectionMenuItem";
+			resources.ApplyResources(this.startRealtimeCollectionMenuItem, "startRealtimeCollectionMenuItem");
+			this.startRealtimeCollectionMenuItem.Click += new System.EventHandler(StartRealtimeCollectionMenuItem_Click);
+			this.stopRealtimeCollectionMenuItem.Name = "stopRealtimeCollectionMenuItem";
+			resources.ApplyResources(this.stopRealtimeCollectionMenuItem, "stopRealtimeCollectionMenuItem");
+			this.stopRealtimeCollectionMenuItem.Click += new System.EventHandler(StopRealtimeCollectionMenuItem_Click);
+			this.collectAllDataMenuItem.Name = "collectAllDataMenuItem";
+			resources.ApplyResources(this.collectAllDataMenuItem, "collectAllDataMenuItem");
+			this.collectAllDataMenuItem.Click += new System.EventHandler(CollectAllDataMenuItem_Click);
+			this.advancedBatchCollectionMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[4] { this.collectRemainingDataMenuItem, this.collectDataByStudentIdMenuItem, this.collectDataByTimeRangeMenuItem, this.collectDataBySerialRangeMenuItem });
+			this.advancedBatchCollectionMenuItem.Name = "advancedBatchCollectionMenuItem";
+			resources.ApplyResources(this.advancedBatchCollectionMenuItem, "advancedBatchCollectionMenuItem");
+			this.collectRemainingDataMenuItem.Name = "collectRemainingDataMenuItem";
+			resources.ApplyResources(this.collectRemainingDataMenuItem, "collectRemainingDataMenuItem");
+			this.collectRemainingDataMenuItem.Click += new System.EventHandler(CollectRemainingDataMenuItem_Click);
+			this.collectDataByStudentIdMenuItem.Name = "collectDataByStudentIdMenuItem";
+			resources.ApplyResources(this.collectDataByStudentIdMenuItem, "collectDataByStudentIdMenuItem");
+			this.collectDataByStudentIdMenuItem.Click += new System.EventHandler(CollectDataByStudentIdMenuItem_Click);
+			this.collectDataByTimeRangeMenuItem.Name = "collectDataByTimeRangeMenuItem";
+			resources.ApplyResources(this.collectDataByTimeRangeMenuItem, "collectDataByTimeRangeMenuItem");
+			this.collectDataByTimeRangeMenuItem.Click += new System.EventHandler(CollectDataByTimeRangeMenuItem_Click);
+			this.collectDataBySerialRangeMenuItem.Name = "collectDataBySerialRangeMenuItem";
+			resources.ApplyResources(this.collectDataBySerialRangeMenuItem, "collectDataBySerialRangeMenuItem");
+			this.collectDataBySerialRangeMenuItem.Click += new System.EventHandler(CollectDataBySerialRangeMenuItem_Click);
 			this.toolStripSeparator1.Name = "toolStripSeparator1";
 			resources.ApplyResources(this.toolStripSeparator1, "toolStripSeparator1");
-			this.mnu下载学生名单.Name = "mnu下载学生名单";
-			resources.ApplyResources(this.mnu下载学生名单, "mnu下载学生名单");
-			this.mnu下载学生名单.Click += new System.EventHandler(DownloadStudentsMenuItem_Click);
-			this.清空学生名单ToolStripMenuItem.Name = "清空学生名单ToolStripMenuItem";
-			resources.ApplyResources(this.清空学生名单ToolStripMenuItem, "清空学生名单ToolStripMenuItem");
-			this.清空学生名单ToolStripMenuItem.Click += new System.EventHandler(ClearStudentsMenuItem_Click);
+			this.downloadStudentsMenuItem.Name = "downloadStudentsMenuItem";
+			resources.ApplyResources(this.downloadStudentsMenuItem, "downloadStudentsMenuItem");
+			this.downloadStudentsMenuItem.Click += new System.EventHandler(DownloadStudentsMenuItem_Click);
+			this.clearStudentsMenuItem.Name = "clearStudentsMenuItem";
+			resources.ApplyResources(this.clearStudentsMenuItem, "clearStudentsMenuItem");
+			this.clearStudentsMenuItem.Click += new System.EventHandler(ClearStudentsMenuItem_Click);
 			this.toolStripSeparator2.Name = "toolStripSeparator2";
 			resources.ApplyResources(this.toolStripSeparator2, "toolStripSeparator2");
-			this.同步时间ToolStripMenuItem.Name = "同步时间ToolStripMenuItem";
-			resources.ApplyResources(this.同步时间ToolStripMenuItem, "同步时间ToolStripMenuItem");
-			this.同步时间ToolStripMenuItem.Click += new System.EventHandler(SyncTimeMenuItem_Click);
-			this.通讯质量检测ToolStripMenuItem.Name = "通讯质量检测ToolStripMenuItem";
-			resources.ApplyResources(this.通讯质量检测ToolStripMenuItem, "通讯质量检测ToolStripMenuItem");
-			this.通讯质量检测ToolStripMenuItem.Click += new System.EventHandler(TestCommunicationQualityMenuItem_Click);
-			this.关机ToolStripMenuItem.Name = "关机ToolStripMenuItem";
-			resources.ApplyResources(this.关机ToolStripMenuItem, "关机ToolStripMenuItem");
-			this.关机ToolStripMenuItem.Click += new System.EventHandler(ShutdownHostMenuItem_Click);
+			this.syncTimeMenuItem.Name = "syncTimeMenuItem";
+			resources.ApplyResources(this.syncTimeMenuItem, "syncTimeMenuItem");
+			this.syncTimeMenuItem.Click += new System.EventHandler(SyncTimeMenuItem_Click);
+			this.testCommunicationQualityMenuItem.Name = "testCommunicationQualityMenuItem";
+			resources.ApplyResources(this.testCommunicationQualityMenuItem, "testCommunicationQualityMenuItem");
+			this.testCommunicationQualityMenuItem.Click += new System.EventHandler(TestCommunicationQualityMenuItem_Click);
+			this.shutdownHostMenuItem.Name = "shutdownHostMenuItem";
+			resources.ApplyResources(this.shutdownHostMenuItem, "shutdownHostMenuItem");
+			this.shutdownHostMenuItem.Click += new System.EventHandler(ShutdownHostMenuItem_Click);
 			this.toolStripSeparator4.Name = "toolStripSeparator4";
 			resources.ApplyResources(this.toolStripSeparator4, "toolStripSeparator4");
 			resources.ApplyResources(this, "$this");

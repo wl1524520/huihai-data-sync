@@ -15,16 +15,27 @@ namespace HH.TiYu.Model
     [Flags]
     public enum ProjectLoadOptions
     {
-        区域信息 = 1,
-        学校信息 = 2,
-        学生信息 = 4,
-        区域学校学生信息 = 7,
-        学生成绩 = 8,
-        测试科目 = 0x10,
-        评分标准 = 0x20,
-        综合评价 = 0x40,
-        运动建议 = 0x80,
-        学生分组 = 0x100,
-        运动会分组 = 0x200
+        /// <summary>加载区域信息。</summary>
+        Regions = 1,
+        /// <summary>加载学校信息。</summary>
+        Facilities = 2,
+        /// <summary>加载学生信息。</summary>
+        Students = 4,
+        /// <summary>区域、学校和学生信息的组合加载项。</summary>
+        RegionsFacilitiesAndStudents = 7,
+        /// <summary>加载学生成绩（采集器已移除此功能，传入时会明确报不支持）。</summary>
+        StudentScores = 8,
+        /// <summary>加载测试科目。</summary>
+        PhysicalItems = 0x10,
+        /// <summary>加载评分标准（采集器已移除此功能，传入时会明确报不支持）。</summary>
+        ScoringStandards = 0x20,
+        /// <summary>加载综合评价（采集器已移除此功能，传入时会明确报不支持）。</summary>
+        OverallEvaluations = 0x40,
+        /// <summary>加载运动建议（采集器已移除此功能，传入时会明确报不支持）。</summary>
+        ExerciseSuggestions = 0x80,
+        /// <summary>加载学生分组（采集器已移除此功能，传入时会明确报不支持）。</summary>
+        StudentGroups = 0x100,
+        /// <summary>加载运动会分组（采集器已移除此功能，传入时会明确报不支持）。</summary>
+        SportsMeetGroups = 0x200
     }
 }

@@ -23,12 +23,19 @@ namespace HH.Zhongkao.Device.Wifi
 {
     public enum StudentDownloadResult
     {
-        接收成功 = 0,
-        接收失败 = 17,
-        存储成功 = 34,
-        存储失败 = 51,
-        存储器已满 = 68,
-        清除成功 = 85,
-        清除失败 = 102
+        /// <summary>接收成功。</summary>
+        ReceiveSucceeded = 0,
+        /// <summary>接收失败。</summary>
+        ReceiveFailed = 17,
+        /// <summary>存储成功。</summary>
+        StorageSucceeded = 34,
+        /// <summary>存储失败。</summary>
+        StorageFailed = 51,
+        /// <summary>存储器已满。</summary>
+        StorageFull = 68,
+        /// <summary>清除成功。</summary>
+        ClearSucceeded = 85,
+        /// <summary>清除失败。</summary>
+        ClearFailed = 102
     }
 }

@@ -160,19 +160,19 @@ namespace HH.TiYu.SQLite
 				{
 					if (record.SpecialResult == 160)
 					{
-						studentRawScore2.SpecialType = SpecialScoreType.犯规;
+						studentRawScore2.SpecialType = SpecialScoreType.Foul;
 					}
 					else if (record.SpecialResult == 161)
 					{
-						studentRawScore2.SpecialType = SpecialScoreType.放弃;
+						studentRawScore2.SpecialType = SpecialScoreType.Abandoned;
 					}
 					else if (record.SpecialResult == 162)
 					{
-						studentRawScore2.SpecialType = SpecialScoreType.未完成;
+						studentRawScore2.SpecialType = SpecialScoreType.Incomplete;
 					}
 					else
 					{
-						studentRawScore2.SpecialType = SpecialScoreType.犯规;
+						studentRawScore2.SpecialType = SpecialScoreType.Foul;
 					}
 				}
 				_UnsavedItems.Add(studentRawScore2);

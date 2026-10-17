@@ -272,7 +272,7 @@ namespace HH.DataCollection.Wifi.Sync
                 int rawGrade = grade.Value<int>();
                 // 契约 §3.2 年级编码表只有小学一至六年级(11-16)、初中(21-23)、
                 // 高中(31-33)、大学(41-44);越界属契约违规,不落库、不阻断整页
-                if (rawGrade >= GradeHelper.一年级 && rawGrade <= GradeHelper.大四)
+                if (rawGrade >= GradeHelper.PrimaryGrade1 && rawGrade <= GradeHelper.UniversityYear4)
                 {
                     st.Grade = rawGrade;
                 }

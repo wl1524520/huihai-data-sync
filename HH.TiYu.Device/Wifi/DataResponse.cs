@@ -125,18 +125,18 @@ namespace HH.Zhongkao.Device.Wifi
                 int num = 31;
                 if (ScoreData[num] == 48)
                 {
-                    return IDSource.未知;
+                    return IDSource.Unknown;
                 }
                 if (ScoreData[num] == 49)
                 {
-                    return IDSource.未知;
+                    return IDSource.Unknown;
                 }
                 int num2 = ScoreData[num] & 0xF0;
                 if (Enum.IsDefined(typeof(IDSource), num2))
                 {
                     return (IDSource)num2;
                 }
-                return IDSource.未知;
+                return IDSource.Unknown;
             }
         }
 

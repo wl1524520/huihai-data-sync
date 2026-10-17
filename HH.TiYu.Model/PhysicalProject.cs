@@ -8,11 +8,14 @@ namespace HH.TiYu.Model
 {
     public class PhysicalProject : IEntity<string>
     {
-        public static string 默认学生体测项目 = "TizhiCheshi";
+        /// <summary>默认学生体测项目的固定标识，用于识别系统自建项目。</summary>
+        public static string DefaultStudentFitnessProjectId = "TizhiCheshi";
 
-        public static string 默认中考项目 = "Zhongkao";
+        /// <summary>默认中考项目的固定标识，用于识别系统自建项目。</summary>
+        public static string DefaultEntranceExamProjectId = "Zhongkao";
 
-        public static string 默认国民体测项目 = "GuomingTiChe";
+        /// <summary>默认国民体测项目的固定标识，用于识别系统自建项目。</summary>
+        public static string DefaultNationalFitnessProjectId = "GuomingTiChe";
 
         private Dictionary<string, Facility> _Facilities;
 

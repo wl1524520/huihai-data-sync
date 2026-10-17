@@ -14,13 +14,21 @@ namespace HH.TiYu.Model
 {
     public enum SpecialScoreType
     {
-        缺考 = 1,
-        免考,
-        伤病,
-        犯规,
-        放弃,
-        未完成,
-        缓考,
-        作废
+        /// <summary>缺考。</summary>
+        Absent = 1,
+        /// <summary>免考。</summary>
+        Exempt,
+        /// <summary>伤病。</summary>
+        InjuryOrIllness,
+        /// <summary>犯规。</summary>
+        Foul,
+        /// <summary>放弃。</summary>
+        Abandoned,
+        /// <summary>未完成。</summary>
+        Incomplete,
+        /// <summary>缓考。</summary>
+        Deferred,
+        /// <summary>作废。</summary>
+        Invalidated
     }
 }

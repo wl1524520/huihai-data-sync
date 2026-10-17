@@ -267,12 +267,12 @@ internal static class VerifyBusiness
                 Observe("parse/" + unit + "/" + digits + "/" + text, ok + ":" + result.ToString(CultureInfo.InvariantCulture));
             }
         }
-        foreach (int id in new[] { PhysicalItem._左眼串镜, PhysicalItem._右眼屈光不正 })
+        foreach (int id in new[] { PhysicalItem.LeftEyeLensScreeningItemId, PhysicalItem.RightEyeRefractiveErrorItemId })
         foreach (string value in new[] { "-1", "0", "1", "2", "3", "4", "1.5" })
         { decimal result; Observe("eye/" + id + "/" + value, new PhysicalItem { ID = id }.TryParse(value, out result) + ":" + result); }
         foreach (Sex sex in new[] { Sex.Male, Sex.Female })
         {
-            foreach (int id in new[] { PhysicalItem._800米, PhysicalItem._1000米, 1 }) Observe("item/" + sex + "/" + id, PhysicalItem.ConvertPhysicalItem(new Student { Sex = sex }, id));
+            foreach (int id in new[] { PhysicalItem.Run800MetersItemId, PhysicalItem.Run1000MetersItemId, 1 }) Observe("item/" + sex + "/" + id, PhysicalItem.ConvertPhysicalItem(new Student { Sex = sex }, id));
             foreach (var p in PhysicalProjectHelper.CreateStudentPhysicalProjects(sex)) Observe("formula/" + sex + "/" + p.Grade, p.PhysicalItems + "|" + p.TotalFormula);
         }
         // Student 的 Note JSON 扩展位(考试科目/引体向上改判)已随本轮瘦身整体移除:

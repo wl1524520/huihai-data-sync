@@ -205,10 +205,10 @@
   <data name="&gt;&gt;statusStrip1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="&gt;&gt;查看统计信息ToolStripMenuItem.Name" xml:space="preserve">
-    <value>查看统计信息ToolStripMenuItem</value>
+  <data name="&gt;&gt;viewStatisticsMenuItem.Name" xml:space="preserve">
+    <value>viewStatisticsMenuItem</value>
   </data>
-  <data name="&gt;&gt;查看统计信息ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;viewStatisticsMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="colFacility.HeaderText" xml:space="preserve">
@@ -290,11 +290,11 @@
   <data name="colName.Width" type="System.Int32, mscorlib">
     <value>54</value>
   </data>
-  <data name="&gt;&gt;保存所有记录ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;saveAllRecordsMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;保存所有记录ToolStripMenuItem.Name" xml:space="preserve">
-    <value>保存所有记录ToolStripMenuItem</value>
+  <data name="&gt;&gt;saveAllRecordsMenuItem.Name" xml:space="preserve">
+    <value>saveAllRecordsMenuItem</value>
   </data>
   <data name="colResult.HeaderText" xml:space="preserve">
     <value>得分</value>
@@ -323,10 +323,10 @@
   <data name="colRecordDate.Width" type="System.Int32, mscorlib">
     <value>120</value>
   </data>
-  <data name="查看统计信息ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="viewStatisticsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>148, 22</value>
   </data>
-  <data name="查看统计信息ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="viewStatisticsMenuItem.Text" xml:space="preserve">
     <value>查看统计信息</value>
   </data>
   <data name="colUnit.Width" type="System.Int32, mscorlib">
@@ -338,10 +338,10 @@
   <data name="&gt;&gt;colRecordDate.Name" xml:space="preserve">
     <value>colRecordDate</value>
   </data>
-  <data name="保存所有记录ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="saveAllRecordsMenuItem.Text" xml:space="preserve">
     <value>保存所有记录</value>
   </data>
-  <data name="保存所有记录ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="saveAllRecordsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>148, 22</value>
   </data>
   <data name="colUnit.HeaderText" xml:space="preserve">

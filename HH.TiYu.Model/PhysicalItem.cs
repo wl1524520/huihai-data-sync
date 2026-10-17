@@ -14,53 +14,77 @@ namespace HH.TiYu.Model
 {
     public class PhysicalItem : IEntity<int>
     {
-        public static int _身高 = 1;
+        /// <summary>身高的科目编号。</summary>
+        public static int HeightItemId = 1;
 
-        public static int _体重 = 2;
+        /// <summary>体重的科目编号。</summary>
+        public static int WeightItemId = 2;
 
-        public static int _引体向上 = 14;
+        /// <summary>引体向上的科目编号。</summary>
+        public static int PullUpItemId = 14;
 
+        /// <summary>身体质量指数（BMI）的科目编号。</summary>
         public static int _BMI = 24;
 
-        public static int _800米 = 10;
+        /// <summary>800米的科目编号。</summary>
+        public static int Run800MetersItemId = 10;
 
-        public static int _1000米 = 11;
+        /// <summary>1000米的科目编号。</summary>
+        public static int Run1000MetersItemId = 11;
 
-        public static int _左眼裸眼视力 = 71;
+        /// <summary>左眼裸眼视力的科目编号。</summary>
+        public static int LeftEyeUncorrectedVisionItemId = 71;
 
-        public static int _右眼裸眼视力 = 72;
+        /// <summary>右眼裸眼视力的科目编号。</summary>
+        public static int RightEyeUncorrectedVisionItemId = 72;
 
-        public static int _左眼串镜 = 90;
+        /// <summary>左眼串镜的科目编号。</summary>
+        public static int LeftEyeLensScreeningItemId = 90;
 
-        public static int _右眼串镜 = 91;
+        /// <summary>右眼串镜的科目编号。</summary>
+        public static int RightEyeLensScreeningItemId = 91;
 
-        public static int _左眼屈光不正 = 92;
+        /// <summary>左眼屈光不正的科目编号。</summary>
+        public static int LeftEyeRefractiveErrorItemId = 92;
 
-        public static int _右眼屈光不正 = 93;
+        /// <summary>右眼屈光不正的科目编号。</summary>
+        public static int RightEyeRefractiveErrorItemId = 93;
 
-        public static int _斜体引体向上 = 150;
+        /// <summary>斜体引体向上的科目编号。</summary>
+        public static int InclinedPullUpItemId = 150;
 
-        public static int _体脂肪率 = 151;
+        /// <summary>体脂肪率的科目编号。</summary>
+        public static int BodyFatPercentageItemId = 151;
 
-        public static int _内脂指数 = 152;
+        /// <summary>内脂指数的科目编号。</summary>
+        public static int VisceralFatIndexItemId = 152;
 
-        public static int _体水份率 = 153;
+        /// <summary>体水份率的科目编号。</summary>
+        public static int BodyWaterPercentageItemId = 153;
 
-        public static int _骨骼肌率 = 154;
+        /// <summary>骨骼肌率的科目编号。</summary>
+        public static int SkeletalMusclePercentageItemId = 154;
 
-        public static int _骨矿含量 = 155;
+        /// <summary>骨矿含量的科目编号。</summary>
+        public static int BoneMineralContentItemId = 155;
 
-        public static int _基础代谢 = 156;
+        /// <summary>基础代谢的科目编号。</summary>
+        public static int BasalMetabolicRateItemId = 156;
 
-        public static int _上肢平衡 = 157;
+        /// <summary>上肢平衡的科目编号。</summary>
+        public static int UpperLimbBalanceItemId = 157;
 
-        public static int _下肢平衡 = 158;
+        /// <summary>下肢平衡的科目编号。</summary>
+        public static int LowerLimbBalanceItemId = 158;
 
-        public static int _全身平衡 = 159;
+        /// <summary>全身平衡的科目编号。</summary>
+        public static int WholeBodyBalanceItemId = 159;
 
-        public static int _体成份综合评分 = 160;
+        /// <summary>体成份综合评分的科目编号。</summary>
+        public static int BodyCompositionScoreItemId = 160;
 
-        public static int _生理年龄 = 161;
+        /// <summary>生理年龄的科目编号。</summary>
+        public static int PhysiologicalAgeItemId = 161;
 
         public int ID { get; set; }
 
@@ -88,13 +112,13 @@ namespace HH.TiYu.Model
 
         public static int ConvertPhysicalItem(Student s, int physicalItem)
         {
-            if (s != null && s.Sex == Sex.Male && physicalItem == _800米)
+            if (s != null && s.Sex == Sex.Male && physicalItem == Run800MetersItemId)
             {
-                return _1000米;
+                return Run1000MetersItemId;
             }
-            if (s != null && s.Sex == Sex.Female && physicalItem == _1000米)
+            if (s != null && s.Sex == Sex.Female && physicalItem == Run1000MetersItemId)
             {
-                return _800米;
+                return Run800MetersItemId;
             }
             return physicalItem;
         }
@@ -125,11 +149,11 @@ namespace HH.TiYu.Model
             return Convert(value, PointCount);
         }
 
-        public decimal Convert(decimal value, int 小数位数)
+        public decimal Convert(decimal value, int decimalPlaces)
         {
             // 采集器不使用评分相关的舍入模式：原 UserSettings.Current 在采集端恒为 null，
             // 两个分支恒不执行，保留其实际生效的默认行为（向上取整）。
-            double num2 = Math.Ceiling((double)(value * System.Convert.ToDecimal(Math.Pow(10.0, 小数位数)))) / Math.Pow(10.0, 小数位数);
+            double num2 = Math.Ceiling((double)(value * System.Convert.ToDecimal(Math.Pow(10.0, decimalPlaces)))) / Math.Pow(10.0, decimalPlaces);
             return (decimal)num2;
         }
 
@@ -185,11 +209,11 @@ namespace HH.TiYu.Model
             {
                 return false;
             }
-            if ((ID == _左眼串镜 || ID == _右眼串镜) && value != 0m && value != -1m && value != 1m && value != 2m)
+            if ((ID == LeftEyeLensScreeningItemId || ID == RightEyeLensScreeningItemId) && value != 0m && value != -1m && value != 1m && value != 2m)
             {
                 return false;
             }
-            if ((ID == _左眼屈光不正 || ID == _右眼屈光不正) && value != 0m && value != 1m && value != 2m && value != 3m)
+            if ((ID == LeftEyeRefractiveErrorItemId || ID == RightEyeRefractiveErrorItemId) && value != 0m && value != 1m && value != 2m && value != 3m)
             {
                 return false;
             }

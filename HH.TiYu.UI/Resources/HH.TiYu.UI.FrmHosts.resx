@@ -117,27 +117,27 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="清空学生名单ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="clearStudentsMenuItem.Text" xml:space="preserve">
     <value>清空学生名单</value>
   </data>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-  <data name="清空学生名单ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="clearStudentsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
-  <data name="&gt;&gt;清空学生名单ToolStripMenuItem.Name" xml:space="preserve">
-    <value>清空学生名单ToolStripMenuItem</value>
+  <data name="&gt;&gt;clearStudentsMenuItem.Name" xml:space="preserve">
+    <value>clearStudentsMenuItem</value>
   </data>
-  <data name="&gt;&gt;清空学生名单ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;clearStudentsMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <assembly alias="mscorlib" name="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="指定序列号段的数据ToolStripMenuItem.Visible" type="System.Boolean, mscorlib">
+  <data name="collectDataBySerialRangeMenuItem.Visible" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
-  <data name="mnu_开始实时采集.Text" xml:space="preserve">
+  <data name="startRealtimeCollectionMenuItem.Text" xml:space="preserve">
     <value>开始实时采集</value>
   </data>
-  <data name="mnu_开始实时采集.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="startRealtimeCollectionMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
@@ -168,10 +168,10 @@
   <data name="colHostID.Width" type="System.Int32, mscorlib">
     <value>42</value>
   </data>
-  <data name="通讯质量检测ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="testCommunicationQualityMenuItem.Text" xml:space="preserve">
     <value>通讯质量检测</value>
   </data>
-  <data name="通讯质量检测ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="testCommunicationQualityMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
   <data name="colCheck.HeaderText" xml:space="preserve">
@@ -1324,19 +1324,19 @@
   <data name="btnAll.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="结束实时采集ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="stopRealtimeCollectionMenuItem.Text" xml:space="preserve">
     <value>结束实时采集</value>
   </data>
-  <data name="结束实时采集ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="stopRealtimeCollectionMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
   <data name="colOperation.Width" type="System.Int32, mscorlib">
     <value>70</value>
   </data>
-  <data name="&gt;&gt;指定序列号段的数据ToolStripMenuItem.Name" xml:space="preserve">
-    <value>指定序列号段的数据ToolStripMenuItem</value>
+  <data name="&gt;&gt;collectDataBySerialRangeMenuItem.Name" xml:space="preserve">
+    <value>collectDataBySerialRangeMenuItem</value>
   </data>
-  <data name="&gt;&gt;指定序列号段的数据ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;collectDataBySerialRangeMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;toolStripSeparator4.Type" xml:space="preserve">
@@ -1396,10 +1396,10 @@
   <data name="&gt;&gt;btnNone.Name" xml:space="preserve">
     <value>btnNone</value>
   </data>
-  <data name="集中采集指定时间段的数据ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="collectDataByTimeRangeMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>193, 22</value>
   </data>
-  <data name="集中采集指定时间段的数据ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="collectDataByTimeRangeMenuItem.Text" xml:space="preserve">
     <value>指定时间段的数据...</value>
   </data>
   <data name="&gt;&gt;lblCount.Parent" xml:space="preserve">
@@ -1417,25 +1417,25 @@
   <data name="&gt;&gt;panel1.ZOrder" xml:space="preserve">
     <value>1</value>
   </data>
-  <data name="mnu_集中采集所有数据.Text" xml:space="preserve">
+  <data name="collectAllDataMenuItem.Text" xml:space="preserve">
     <value>集中采集所有数据</value>
   </data>
-  <data name="mnu_集中采集所有数据.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="collectAllDataMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
   <data name="&gt;&gt;panel1.Parent" xml:space="preserve">
     <value>$this</value>
   </data>
-  <data name="&gt;&gt;增加主机USBToolStripMenuItem.Name" xml:space="preserve">
-    <value>增加主机USBToolStripMenuItem</value>
+  <data name="&gt;&gt;addUsbHostMenuItem.Name" xml:space="preserve">
+    <value>addUsbHostMenuItem</value>
   </data>
-  <data name="&gt;&gt;增加主机USBToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;addUsbHostMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="指定学号的数据ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="collectDataByStudentIdMenuItem.Text" xml:space="preserve">
     <value>指定学号的数据...</value>
   </data>
-  <data name="指定学号的数据ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="collectDataByStudentIdMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>193, 22</value>
   </data>
   <data name="btnSearch.Text" xml:space="preserve">
@@ -1480,11 +1480,11 @@
   <data name="lblCount.Text" xml:space="preserve">
     <value>共有 0 台主机</value>
   </data>
-  <data name="&gt;&gt;mnu_集中采集所有数据.Type" xml:space="preserve">
+  <data name="&gt;&gt;collectAllDataMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;mnu_集中采集所有数据.Name" xml:space="preserve">
-    <value>mnu_集中采集所有数据</value>
+  <data name="&gt;&gt;collectAllDataMenuItem.Name" xml:space="preserve">
+    <value>collectAllDataMenuItem</value>
   </data>
   <data name="btnRevert.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
@@ -1501,10 +1501,10 @@
   <data name="&gt;&gt;contextMenuStrip2.Name" xml:space="preserve">
     <value>contextMenuStrip2</value>
   </data>
-  <data name="关机ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="shutdownHostMenuItem.Text" xml:space="preserve">
     <value>关机</value>
   </data>
-  <data name="关机ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="shutdownHostMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
   <data name="btnNone.TabIndex" type="System.Int32, mscorlib">
@@ -1513,11 +1513,11 @@
   <data name="colPhysicalItem.HeaderText" xml:space="preserve">
     <value>测试项目</value>
   </data>
-  <data name="&gt;&gt;集中采集剩余数据ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;collectRemainingDataMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;集中采集剩余数据ToolStripMenuItem.Name" xml:space="preserve">
-    <value>集中采集剩余数据ToolStripMenuItem</value>
+  <data name="&gt;&gt;collectRemainingDataMenuItem.Name" xml:space="preserve">
+    <value>collectRemainingDataMenuItem</value>
   </data>
   <data name="&gt;&gt;dataGridView2.Parent" xml:space="preserve">
     <value>panel1</value>
@@ -1567,31 +1567,31 @@
   <data name="lblCount.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
     <value>MiddleCenter</value>
   </data>
-  <data name="&gt;&gt;指定学号的数据ToolStripMenuItem.Name" xml:space="preserve">
-    <value>指定学号的数据ToolStripMenuItem</value>
+  <data name="&gt;&gt;collectDataByStudentIdMenuItem.Name" xml:space="preserve">
+    <value>collectDataByStudentIdMenuItem</value>
   </data>
-  <data name="&gt;&gt;指定学号的数据ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;collectDataByStudentIdMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;btnSearch.Parent" xml:space="preserve">
     <value>panel1</value>
   </data>
-  <data name="&gt;&gt;通讯质量检测ToolStripMenuItem.Name" xml:space="preserve">
-    <value>通讯质量检测ToolStripMenuItem</value>
+  <data name="&gt;&gt;testCommunicationQualityMenuItem.Name" xml:space="preserve">
+    <value>testCommunicationQualityMenuItem</value>
   </data>
-  <data name="&gt;&gt;通讯质量检测ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;testCommunicationQualityMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="mnu下载学生名单.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="downloadStudentsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
-  <data name="mnu下载学生名单.Text" xml:space="preserve">
+  <data name="downloadStudentsMenuItem.Text" xml:space="preserve">
     <value>下载学生名单</value>
   </data>
-  <data name="增加主机USBToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="addUsbHostMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
-  <data name="增加主机USBToolStripMenuItem.Text" xml:space="preserve">
+  <data name="addUsbHostMenuItem.Text" xml:space="preserve">
     <value>增加主机_USB</value>
   </data>
   <data name="btnRevert.TabIndex" type="System.Int32, mscorlib">
@@ -1603,10 +1603,10 @@
   <data name="toolStripSeparator4.Size" type="System.Drawing.Size, System.Drawing">
     <value>169, 6</value>
   </data>
-  <data name="&gt;&gt;高级集中采集ToolStripMenuItem.Name" xml:space="preserve">
-    <value>高级集中采集ToolStripMenuItem</value>
+  <data name="&gt;&gt;advancedBatchCollectionMenuItem.Name" xml:space="preserve">
+    <value>advancedBatchCollectionMenuItem</value>
   </data>
-  <data name="&gt;&gt;高级集中采集ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;advancedBatchCollectionMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="&gt;&gt;btnNone.ZOrder" xml:space="preserve">
@@ -1624,11 +1624,11 @@
   <data name="btnNone.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Top, Right</value>
   </data>
-  <data name="&gt;&gt;关机ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;shutdownHostMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;关机ToolStripMenuItem.Name" xml:space="preserve">
-    <value>关机ToolStripMenuItem</value>
+  <data name="&gt;&gt;shutdownHostMenuItem.Name" xml:space="preserve">
+    <value>shutdownHostMenuItem</value>
   </data>
   <data name="&gt;&gt;btnAll.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -1639,19 +1639,19 @@
   <data name="dataGridView2.Location" type="System.Drawing.Point, System.Drawing">
     <value>3, 75</value>
   </data>
-  <data name="&gt;&gt;结束实时采集ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;stopRealtimeCollectionMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="btnAll.Location" type="System.Drawing.Point, System.Drawing">
     <value>160, 47</value>
   </data>
-  <data name="&gt;&gt;结束实时采集ToolStripMenuItem.Name" xml:space="preserve">
-    <value>结束实时采集ToolStripMenuItem</value>
+  <data name="&gt;&gt;stopRealtimeCollectionMenuItem.Name" xml:space="preserve">
+    <value>stopRealtimeCollectionMenuItem</value>
   </data>
-  <data name="集中采集剩余数据ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="collectRemainingDataMenuItem.Text" xml:space="preserve">
     <value>集中采集剩余数据</value>
   </data>
-  <data name="集中采集剩余数据ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="collectRemainingDataMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>193, 22</value>
   </data>
   <data name="toolStripSeparator2.Size" type="System.Drawing.Size, System.Drawing">
@@ -1684,10 +1684,10 @@
   <data name="panel1.TabIndex" type="System.Int32, mscorlib">
     <value>38</value>
   </data>
-  <data name="&gt;&gt;mnu_开始实时采集.Name" xml:space="preserve">
-    <value>mnu_开始实时采集</value>
+  <data name="&gt;&gt;startRealtimeCollectionMenuItem.Name" xml:space="preserve">
+    <value>startRealtimeCollectionMenuItem</value>
   </data>
-  <data name="&gt;&gt;mnu_开始实时采集.Type" xml:space="preserve">
+  <data name="&gt;&gt;startRealtimeCollectionMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="btnSearch.TabIndex" type="System.Int32, mscorlib">
@@ -1699,16 +1699,16 @@
   <data name="&gt;&gt;chkLog.Type" xml:space="preserve">
     <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="指定序列号段的数据ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="collectDataBySerialRangeMenuItem.Text" xml:space="preserve">
     <value>指定序列号段的数据...</value>
   </data>
-  <data name="指定序列号段的数据ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="collectDataBySerialRangeMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>193, 22</value>
   </data>
   <data name="&gt;&gt;btnRevert.Parent" xml:space="preserve">
     <value>panel1</value>
   </data>
-  <data name="指定学号的数据ToolStripMenuItem.Visible" type="System.Boolean, mscorlib">
+  <data name="collectDataByStudentIdMenuItem.Visible" type="System.Boolean, mscorlib">
     <value>False</value>
   </data>
   <data name="btnNone.Location" type="System.Drawing.Point, System.Drawing">
@@ -1726,16 +1726,16 @@
   <data name="chkLog.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
   </data>
-  <data name="&gt;&gt;同步时间ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;syncTimeMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="&gt;&gt;同步时间ToolStripMenuItem.Name" xml:space="preserve">
-    <value>同步时间ToolStripMenuItem</value>
+  <data name="&gt;&gt;syncTimeMenuItem.Name" xml:space="preserve">
+    <value>syncTimeMenuItem</value>
   </data>
-  <data name="同步时间ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="syncTimeMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
-  <data name="同步时间ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="syncTimeMenuItem.Text" xml:space="preserve">
     <value>同步时间</value>
   </data>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
@@ -1744,10 +1744,10 @@
   <data name="lblCount.TabIndex" type="System.Int32, mscorlib">
     <value>155</value>
   </data>
-  <data name="&gt;&gt;集中采集指定时间段的数据ToolStripMenuItem.Name" xml:space="preserve">
-    <value>集中采集指定时间段的数据ToolStripMenuItem</value>
+  <data name="&gt;&gt;collectDataByTimeRangeMenuItem.Name" xml:space="preserve">
+    <value>collectDataByTimeRangeMenuItem</value>
   </data>
-  <data name="&gt;&gt;集中采集指定时间段的数据ToolStripMenuItem.Type" xml:space="preserve">
+  <data name="&gt;&gt;collectDataByTimeRangeMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="contextMenuStrip2.Size" type="System.Drawing.Size, System.Drawing">
@@ -1759,16 +1759,16 @@
   <data name="btnAll.TabIndex" type="System.Int32, mscorlib">
     <value>151</value>
   </data>
-  <data name="&gt;&gt;mnu下载学生名单.Name" xml:space="preserve">
-    <value>mnu下载学生名单</value>
+  <data name="&gt;&gt;downloadStudentsMenuItem.Name" xml:space="preserve">
+    <value>downloadStudentsMenuItem</value>
   </data>
-  <data name="&gt;&gt;mnu下载学生名单.Type" xml:space="preserve">
+  <data name="&gt;&gt;downloadStudentsMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="高级集中采集ToolStripMenuItem.Text" xml:space="preserve">
+  <data name="advancedBatchCollectionMenuItem.Text" xml:space="preserve">
     <value>高级集中采集</value>
   </data>
-  <data name="高级集中采集ToolStripMenuItem.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="advancedBatchCollectionMenuItem.Size" type="System.Drawing.Size, System.Drawing">
     <value>172, 22</value>
   </data>
   <data name="&gt;&gt;colSer.Name" xml:space="preserve">

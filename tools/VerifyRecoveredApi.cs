@@ -53,8 +53,17 @@ internal static class VerifyRecoveredApi {
         using(var assembly=AssemblyDefinition.ReadAssembly(path,new ReaderParameters{AssemblyResolver=resolver})){
          foreach(var definition in AllDefinedTypes(assembly.MainModule.Types)){
           Require(!HasChinese(definition.Name),"Chinese type name: "+definition.FullName);
-          foreach(var method in definition.Methods.Where(m=>!m.IsGetter && !m.IsSetter && !m.IsAddOn && !m.IsRemoveOn))
+          foreach(var method in definition.Methods){
            Require(!HasChinese(method.Name),"Chinese method name: "+method.FullName);
+           foreach(var parameter in method.Parameters)
+            Require(!HasChinese(parameter.Name),"Chinese parameter name: "+method.FullName+":"+parameter.Name);
+          }
+          foreach(var field in definition.Fields)
+           Require(!HasChinese(field.Name),"Chinese field name: "+field.FullName);
+          foreach(var property in definition.Properties)
+           Require(!HasChinese(property.Name),"Chinese property name: "+property.FullName);
+          foreach(var item in definition.Events)
+           Require(!HasChinese(item.Name),"Chinese event name: "+item.FullName);
          }
          foreach(var type in assembly.MainModule.GetTypeReferences()){
           TypeReference root=type;while(root is TypeSpecification)root=((TypeSpecification)root).ElementType;

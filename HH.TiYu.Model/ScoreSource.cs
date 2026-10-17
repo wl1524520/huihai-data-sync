@@ -14,12 +14,19 @@ namespace HH.TiYu.Model
 {
     public enum ScoreSource
     {
-        汇海200型主机 = 1,
-        汇海100型主机,
-        汇海按键型主机,
-        人工增加,
-        文件导入,
-        其它设备,
-        其它系统
+        /// <summary>汇海200型主机。</summary>
+        Huihai200Host = 1,
+        /// <summary>汇海100型主机。</summary>
+        Huihai100Host,
+        /// <summary>汇海按键型主机。</summary>
+        HuihaiKeypadHost,
+        /// <summary>人工增加。</summary>
+        ManualEntry,
+        /// <summary>文件导入。</summary>
+        FileImport,
+        /// <summary>其它设备。</summary>
+        OtherDevice,
+        /// <summary>其它系统。</summary>
+        OtherSystem
     }
 }

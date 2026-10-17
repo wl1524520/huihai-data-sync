@@ -14,9 +14,13 @@ namespace HH.TiYu.Model
 {
     public enum PhysicalProjectClass
     {
-        中考,
-        学生体测,
-        国民体测,
-        运动会
+        /// <summary>中考。</summary>
+        EntranceExam,
+        /// <summary>学生体测。</summary>
+        StudentFitness,
+        /// <summary>国民体测。</summary>
+        NationalFitness,
+        /// <summary>运动会。</summary>
+        SportsMeet
     }
 }

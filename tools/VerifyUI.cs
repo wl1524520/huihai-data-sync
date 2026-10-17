@@ -46,6 +46,13 @@ internal static class VerifyUI
                 {
                     Check(control.Width > 0 && control.Height > 0, type.Name + " layout missing");
                     Check(!Walk(control).Any(c => c.Name.IndexOf("Photo", StringComparison.OrdinalIgnoreCase) >= 0), type.Name + " photo control retained");
+                    foreach (var field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Where(f => f.FieldType == typeof(ToolStripMenuItem) && f.Name.EndsWith("MenuItem")))
+                    {
+                        var item = (ToolStripMenuItem)field.GetValue(control);
+                        Check(item != null && item.Name == field.Name, "Renamed menu identity missing: " + field.Name);
+                        Check(!string.IsNullOrEmpty(item.Text), "Renamed menu resource caption missing: " + field.Name);
+                    }
                     if (control is Form) forms++; else controls++;
                     if (type == typeof(FrmHosts))
                     {
@@ -64,6 +71,10 @@ internal static class VerifyUI
                         // 组别列（colGroup）与得分列（colResult）随本轮精简移除：数据源恒空/权限恒 false。
                         Check(grid.Columns.Count == 9 && !grid.Columns.Contains("colGroup") && !grid.Columns.Contains("colResult"), "Score grid columns missing");
                         Check(grid.Columns["colStudentID"].HeaderText.Length > 0, "Score grid resource captions missing");
+                        var display = type.GetMethod("GetSpecialScoreText", BindingFlags.NonPublic | BindingFlags.Static);
+                        string[] captions = { "缺考", "免考", "伤病", "犯规", "放弃", "未完成", "缓考", "作废" };
+                        for (int i = 0; i < captions.Length; i++)
+                            Check((string)display.Invoke(null, new object[] { (SpecialScoreType)(i + 1) }) == captions[i], "Special score caption changed");
                     }
                 }
             }
