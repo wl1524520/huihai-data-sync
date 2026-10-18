@@ -7,7 +7,7 @@ namespace HH.TiYu.Model
     /// <summary>
     /// 内存中的成绩视图对象(本软件不建 PhysicalScore 表)。
     /// 原有的一套 Note JSON 扩展位(主机号/设备号/成绩序号/成绩来源)只写不读、
-    /// 且无处落库,同一批数据由 <c>HH.TiYu.Model.StudentRawScore</c> 的
+    /// 且无处落库,同一批数据由 <c>HH.TiYu.Model.StudentScore</c> 的
     /// HostSn/HostID/ScoreSer/ScoreFrom 独立列承载,故本轮移除。
     /// </summary>
     public class PhysicalScore : IEntity<Guid>

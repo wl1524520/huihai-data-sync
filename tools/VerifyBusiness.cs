@@ -122,7 +122,7 @@ internal static class VerifyBusiness
         "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_CardID","HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_CardID","HH.TiYu.Model.SearchCondition.StudentSearchCondition:CardID",
         "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_Graduation","HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_Graduation","HH.TiYu.Model.SearchCondition.StudentSearchCondition:Graduation",
         "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_WriteCard","HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_WriteCard","HH.TiYu.Model.SearchCondition.StudentSearchCondition:WriteCard",
-        // PhysicalScore:Note JSON 扩展位只写不读且无处落库,同一批数据由 StudentRawScore 的独立列承载。
+        // PhysicalScore:Note JSON 扩展位只写不读且无处落库,同一批数据由 StudentScore 的独立列承载。
         "HH.TiYu.Model.PhysicalScore:get_Note","HH.TiYu.Model.PhysicalScore:set_Note","HH.TiYu.Model.PhysicalScore:Note",
         "HH.TiYu.Model.PhysicalScore:GetProperty","HH.TiYu.Model.PhysicalScore:SetProperty","HH.TiYu.Model.PhysicalScore:Clone",
         // GradeHelper:101-110 年龄码不属平台契约(§3.2 只到 11-44),随 Student 年龄回退一并移除;
@@ -165,7 +165,7 @@ internal static class VerifyBusiness
                 }
                 CheckDeliberateRemovals();
             }
-            Require(Path.GetFileName(AppSettings.Current.StudentRawScoreDB) == (source ? "HuihaiTiyu.db" : "HHRawScore.db"), "Raw score database path differs");
+            Require(Path.GetFileName(AppSettings.Current.StudentScoreDB) == (source ? "HH_Data.db" : "HHRawScore.db"), "Raw score database path differs");
             CheckBehavior();
             File.WriteAllLines("behavior.txt", snapshot.ToArray(), System.Text.Encoding.UTF8);
             Require(!Directory.GetFiles(".", "*.db").Any(), "Pure behavior checks unexpectedly created a database");
@@ -234,7 +234,7 @@ internal static class VerifyBusiness
             oldTypes.Remove("HH.TiYu.Model.StudentPhoto");
             newTypes.Remove("HH.TiYu.Model.SyncConfigEntry");
             // Raw score contracts moved from the retired SQLite assembly; VerifySQLite checks their retained signatures.
-            foreach (string moved in new[] { "HH.TiYu.Model.StudentRawScore", "HH.TiYu.Model.SearchCondition.StudentRawScoreSearchCondition", "HH.TiYu.BLL.StudentRawScoresSavingService" }) newTypes.Remove(moved);
+            foreach (string moved in new[] { "HH.TiYu.Model.StudentScore", "HH.TiYu.Model.SearchCondition.StudentScoreSearchCondition", "HH.TiYu.BLL.StudentScoresSavingService" }) newTypes.Remove(moved);
             var removedTypes = new HashSet<string>(RemovedTypes.Concat(RemovedModelTypes), StringComparer.Ordinal);
             var missingTypes = oldTypes.Keys.Except(newTypes.Keys).ToList();
             Require(missingTypes.All(removedTypes.Contains), "Unexpected removed type: " + string.Join(",", missingTypes));

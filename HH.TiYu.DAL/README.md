@@ -35,13 +35,13 @@ Provider 在 `LinqProvider` 下按业务职责分组；组织、学生、体测�
 | ProjectPhysicalItems | 项目科目关联 |
 | Student | 学生名单 |
 | SyncConfig | 同步配置，ID 为配置键、Value 为配置值 |
-| StudentRawScore | 原始成绩；实体位于 Model，保存调度位于 BLL |
+| StudentScore | 原始成绩；实体位于 Model，保存调度位于 BLL |
 
 Student 仅映射 ID、StudentID、ProjectID、Name、Sex、FacilityID、Grade、ClassName、UpdateDate，九列与实体同名属性一一对应。
 StudentID 保存平台 test_no，映射容量为 64，平台约束最多 60 字符。名单下发不再用卡号替换标识。
 已修复重复 FacilityID、ID 重复 NOT NULL、科目 Min/Max 可空性和 Memo 长度声明。
 
-实际建库仍由采集器 `Db/LocalDb.cs` 负责，共七表。StudentRawScore 已并入本项目映射；Uploaded 不映射到成绩实体，由建表默认值 0 初始化并由上传模块维护，避免成绩写入覆盖已上传状态。
+实际建库仍由采集器 `Db/LocalDb.cs` 负责，共七表。StudentScore 已并入本项目映射；Uploaded 不映射到成绩实体，由建表默认值 0 初始化并由上传模块维护，避免成绩写入覆盖已上传状态。
 当前开发版本不提供旧库迁移。XML 不负责建表；字段调整需同步修改 LocalDb 和同步 SQL。
 
 ## Provider 与读写范围
@@ -49,9 +49,9 @@ StudentID 保存平台 test_no，映射容量为 64，平台约束最多 60 字�
 ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余契约一律抛出 NotSupportedException。
 工厂不再吞掉映射异常，也不存在可实例化的停用 Provider：本轮精简已删除 15 个停用 Provider 源码（Alarm、AppraiseTemplate、Discussion、Operator、PhysicalProjectState、PhysicalScore、Role、Sports、SportsStudentPair、SportSuggestion、Standard、StudentCheckRecord、StudentGroup、StudentGroupPair、Sysparameter）以及 `AutoNumberCreater`、`AutoCreateNumber` 两个编号类型，并移除了 DAL 项目对 `System.Data.SQLite` 的显式引用（保留的 Provider 只用 LINQ 映射，无 SQLite 类型使用）。旧实现仍可从原始 `lib/DAL.dll` 基线重新反编译恢复。
 
-- StudentRawScoreProvider 按项目与 Key 去重，已有行不覆盖；数据库结构与原始成绩字段保持不变。
+- StudentScoreProvider 按项目与 Key 去重，已有行不覆盖；数据库结构与原始成绩字段保持不变。
 - StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；查询条件只保留项目、学校（映射到 FacilityID）与标识集合三项，未映射字段修改明确失败。
-- 删除学生名单不删除已经采集的 StudentRawScore。
+- 删除学生名单不删除已经采集的 StudentScore。
 - PhysicalProjectProvider 使用 GUID 生成项目编号；当前已移除模板项目科目复制分支，项目编号不依赖任何编号表。
 - ProjectPhysicalItemProvider 的批量导入按性别与年级替换同组记录，批量删除按主键删除；`BatchPatch` 明确抛出 NotSupportedException，采集器不支持项目科目的批量修改。
 - 显式删除项目时，在一个事务中清理项目、学校、名单、科目关联和原始成绩；工作单元入口没有显式事务时拒绝执行。

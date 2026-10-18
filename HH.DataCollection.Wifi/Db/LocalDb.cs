@@ -8,15 +8,15 @@ namespace HH.DataCollection.Wifi.Db
 {
     /// <summary>
     /// 本地精简库的自建与初始化。
-    /// 库文件为程序目录下的 HuihaiTiyu.db,首次启动时创建,只含采集+同步必需的 7 张表:
+    /// 库文件为程序目录下的 HH_Data.db,首次启动时创建,只含采集+同步必需的 7 张表:
     /// PhysicalProject / Facility / PhysicalItem / ProjectPhysicalItems /
-    /// Student / StudentRawScore(唯一成绩表,带 Uploaded 上传标记) / SyncConfig。
+    /// Student / StudentScore(唯一成绩表,带 Uploaded 上传标记) / SyncConfig。
     /// 表结构仅包含当前采集与同步字段；DAL 映射源码位于 HH.TiYu.DAL/LinqProvider/DataMapping.xml。
     /// 修改列名/类型时须同步考虑实体模型与映射；当前版本仅维护当前开发结构。
     /// </summary>
     public static class LocalDb
     {
-        public const string DbFileName = "HuihaiTiyu.db";
+        public const string DbFileName = "HH_Data.db";
 
         public static string DbPath
         {
@@ -169,7 +169,7 @@ namespace HH.DataCollection.Wifi.Db
             //   StudentID 自 2026-10 起存放平台 test_no(学校 qrcode_field 决定的"学号或身份证",
             //   已去首尾空白,最多 60 字符)。链路闭环:
             //   平台 test_no → 本列 → 下发主机的 HostStudent.StudentID → 主机回传
-            //   PhysicalRecord.StudentNumber → StudentRawScore.StudentID → 上传 test_no
+            //   PhysicalRecord.StudentNumber → StudentScore.StudentID → 上传 test_no
             @"CREATE TABLE IF NOT EXISTS [Student] (
   [ID] uniqueidentifier NOT NULL,
   [StudentID] nvarchar(64) NOT NULL, -- 平台 test_no(去首尾空白,<=60 字符)
@@ -183,7 +183,7 @@ namespace HH.DataCollection.Wifi.Db
   CONSTRAINT [con_projectID_studentID] UNIQUE([StudentID], [ProjectID]) ON CONFLICT FAIL,
   CONSTRAINT [sqlite_autoindex_Student_1] PRIMARY KEY ([ID]))",
             // 唯一成绩表:设备上报的原始成绩,全量原样保存;Uploaded 为上传标记
-            @"CREATE TABLE IF NOT EXISTS [StudentRawScore] (
+            @"CREATE TABLE IF NOT EXISTS [StudentScore] (
   [ID] uniqueidentifier NOT NULL,
   [ProjectID] nvarchar(50) NOT NULL,
   [Key] nvarchar(50) NOT NULL,
@@ -199,7 +199,7 @@ namespace HH.DataCollection.Wifi.Db
   [HostID] INT,
   [ScoreSer] INT,
   [Uploaded] tinyint NOT NULL DEFAULT 0,
-  CONSTRAINT [sqlite_autoindex_StudentRawScore_1] PRIMARY KEY ([ID]))",
+  CONSTRAINT [sqlite_autoindex_StudentScore_1] PRIMARY KEY ([ID]))",
             // 同步配置
             @"CREATE TABLE IF NOT EXISTS [SyncConfig] (
   [ID] TEXT PRIMARY KEY NOT NULL,

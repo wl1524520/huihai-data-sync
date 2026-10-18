@@ -65,8 +65,8 @@
       <Column Name="Value" Member="Value" DbType="nvarchar(4000) not null" CanBeNull="false" UpdateCheck="Never" />
     </Type>
   </Table>
-  <Table Name="StudentRawScore" Member="HH.TiYu.Model.StudentRawScore">
-    <Type Name="HH.TiYu.Model.StudentRawScore">
+  <Table Name="StudentScore" Member="HH.TiYu.Model.StudentScore">
+    <Type Name="HH.TiYu.Model.StudentScore">
       <Column Name="ID" Member="ID"  DbType="uniqueidentifier not null" IsPrimaryKey="true"/>
       <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
       <Column Name="Key" Member="Key"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>

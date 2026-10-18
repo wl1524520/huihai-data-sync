@@ -22,6 +22,7 @@ internal static class LegacyApiNames
     };
     private static readonly Dictionary<string, string> Members = new Dictionary<string, string>
     {
+        { "HH.TiYu.Model.AppSettings:StudentRawScoreDB", "StudentScoreDB" },
         { "HH.TiYu.BLL.PhysicalProjectBLL:已移除加载项", "RemovedLoadOptions" },
         { "HH.Zhongkao.Device.IDSource:未知", "Unknown" },
         { "HH.Zhongkao.Device.IDSource:按键输入", "KeypadInput" },

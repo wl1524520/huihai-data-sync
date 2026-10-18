@@ -30,7 +30,7 @@
 .\tools\VerifyUI.ps1 -Configuration Debug
 ```
 
-当前数据库采用八表结构，统一由 DAL 映射（含 `SyncConfig` 和 `StudentRawScore`），原始成绩转换与后台保存由 BLL 维护。学生只存九个实际字段；不提供旧库迁移。详见 [DAL 数据契约](HH.TiYu.DAL/README.md)。
+当前数据库采用八表结构，统一由 DAL 映射（含 `SyncConfig` 和 `StudentScore`），原始成绩转换与后台保存由 BLL 维护。学生只存九个实际字段；不提供旧库迁移。详见 [DAL 数据契约](HH.TiYu.DAL/README.md)。
 
 所有验证也支持 `Release`，均在新建测试目录运行，并在成功结束后删除本次隔离目录（失败时保留残留供排查）。数据库测试使用隔离临时库，协议测试不连接设备，UI 只构造和释放窗口，不执行 Show/Load。未进行设备和云平台实测。
 

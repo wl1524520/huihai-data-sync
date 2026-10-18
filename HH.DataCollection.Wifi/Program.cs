@@ -14,7 +14,7 @@ namespace HH.DataCollection.Wifi
     /// <summary>
     /// 汇海体测软件"成绩采集_Wifi"功能的独立薄壳入口。
     /// 跳过原软件的登录/加密狗启动链,直接填充前置状态后进入主界面(采集 + 数据同步)。
-    /// 本地库为程序目录下自建的精简 HuihaiTiyu.db(7 张表),不再从主系统拷贝。
+    /// 本地库为程序目录下自建的精简 HH_Data.db(7 张表),不再从主系统拷贝。
     /// </summary>
     static class Program
     {
@@ -93,20 +93,20 @@ namespace HH.DataCollection.Wifi
                 }
 
                 // 5) 启用原始成绩落盘服务。Model 源码中的配置已统一到主库,
-                //    StudentRawScoreDB 指向主库 HuihaiTiyu.db;此处校验部署配置,防止静默写丢
-                if (AppSettings.Current.StudentRawScoreDB.IndexOf(LocalDb.DbFileName, StringComparison.OrdinalIgnoreCase) < 0)
+                //    StudentScoreDB 指向主库 HH_Data.db;此处校验部署配置,防止静默写丢
+                if (AppSettings.Current.StudentScoreDB.IndexOf(LocalDb.DbFileName, StringComparison.OrdinalIgnoreCase) < 0)
                 {
-                    MessageBox.Show("Model 原始成绩数据库配置不正确(原始成绩仍指向 HHRawScore.db)。\r\n请重新编译部署。",
+                    MessageBox.Show("Model 原始成绩数据库配置不正确(应指向 HH_Data.db)。\r\n请重新编译部署。",
                         "部署错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-                HH.TiYu.BLL.StudentRawScoresSavingService.Current = new HH.TiYu.BLL.StudentRawScoresSavingService();
-                HH.TiYu.BLL.StudentRawScoresSavingService.Current.Start();
+                HH.TiYu.BLL.StudentScoresSavingService.Current = new HH.TiYu.BLL.StudentScoresSavingService();
+                HH.TiYu.BLL.StudentScoresSavingService.Current.Start();
 
                 // 6) 主界面:采集(FrmHosts) + 数据同步
                 Application.Run(new FrmMain());
 
-                var svc = HH.TiYu.BLL.StudentRawScoresSavingService.Current;
+                var svc = HH.TiYu.BLL.StudentScoresSavingService.Current;
                 while (svc != null && !svc.Stop(TimeSpan.FromSeconds(10)))
                 {
                     WriteLog("ERROR", "退出时原始成绩未保存完毕，待保存数量：" + svc.PendingCount);

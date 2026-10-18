@@ -11,8 +11,8 @@
 | `Students/StudentBLL.cs` | 学生业务入口，当前仅继承通用查询、增删改 |
 | `PhysicalTests/PhysicalProjectBLL.cs` | 加载项目的学校、学生及测试科目，保存项目科目，查询年度学生体测项目，保护系统项目不被删除 |
 | `PhysicalTests/PhysicalItemBLL.cs` | 测试科目字典维护与中考科目排序 |
-| `Scores/StudentRawScoreConverter.cs` | 将设备记录转换为 Model 原始成绩，统一维护 Key、时间及特殊成绩码 |
-| `Scores/StudentRawScoresSavingService.cs` | 后台队列、按项目分批提交、失败重试与退出排空 |
+| `Scores/StudentScoreConverter.cs` | 将设备记录转换为 Model 原始成绩，统一维护 Key、时间及特殊成绩码 |
+| `Scores/StudentScoresSavingService.cs` | 后台队列、按项目分批提交、失败重试与退出排空 |
 | `Properties/AssemblyInfo.cs` | 程序集元数据 |
 
 目录按业务职责组织，保持一层；新增代码优先放入对应业务目录，不预建空目录。学校属于组织管理，体测项目与测试科目属于体测业务。只有确实跨业务复用的基础机制才放入 `Infrastructure`，不将业务规则归入该目录。
@@ -35,7 +35,7 @@
 ## 已有采集器适配
 
 - `StudentBLL` 当前未提供批量名单删除或内存展示清理入口；继承的 `Delete` 通过 DAL 删除学生记录。
-- 原始成绩由本项目 `StudentRawScoresSavingService` 调用 DAL 写入，设备转换集中在内部 `StudentRawScoreConverter`，UI 仅调用保存入口；Program 负责服务启停。保存服务保留 `AddScore`、`Current`、`Start`、`Flush`、`Stop` 和 `PendingCount` 的使用方式。
+- 原始成绩由本项目 `StudentScoresSavingService` 调用 DAL 写入，设备转换集中在内部 `StudentScoreConverter`，UI 仅调用保存入口；Program 负责服务启停。保存服务保留 `AddScore`、`Current`、`Start`、`Flush`、`Stop` 和 `PendingCount` 的使用方式。
 - 项目加载学生不再附加 Graduation 筛选；DAL 统一提供采集器七表访问。
 
 除上述删除与裁剪以外，业务实现按原 DLL 还原；未顺便修复原有空值假设、`PhysicalProject.Current` 全局状态依赖、异常处理和事务边界。反编译得到的局部变量名不是原作者命名。

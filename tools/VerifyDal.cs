@@ -85,7 +85,7 @@ internal static class VerifyDal
                 var doc = XDocument.Load(stream); XNamespace ns = doc.Root.Name.Namespace;
                 var tables = doc.Root.Elements(ns + "Table").ToList();
                 Check((string)doc.Root.Attribute("Name") == "HuihaiTiyu", "Database contract name");
-                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentRawScore" }.OrderBy(n => n)), "Seven-table DAL contract");
+                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentScore" }.OrderBy(n => n)), "Seven-table DAL contract");
                 foreach (var table in tables)
                 {
                     string name = (string)table.Attribute("Name"); var columns = new HashSet<string>();
@@ -96,7 +96,7 @@ internal static class VerifyDal
                     }
                     var mapped = table.Element(ns + "Type").Elements(ns + "Column").Select(c => (string)c.Attribute("Name")).ToList();
                     Check(mapped.Count == mapped.Distinct().Count(), "Duplicate mapping: " + name);
-                    if (name == "StudentRawScore") { Check(columns.Remove("Uploaded"), "Raw score upload flag exists outside mapping"); Check(!mapped.Contains("Uploaded"), "Upload flag must not be overwritten by raw score mapping"); }
+                    if (name == "StudentScore") { Check(columns.Remove("Uploaded"), "Raw score upload flag exists outside mapping"); Check(!mapped.Contains("Uploaded"), "Upload flag must not be overwritten by raw score mapping"); }
                     Check(columns.SetEquals(mapped), "Mapping does not match actual table: " + name);
                     if (name == "Facility") Check(!columns.Contains("DivisionID"), "Retired region link remains");
                     if (name == "Student") Check(columns.Count == 9, "Student must have only nine persisted fields");
@@ -106,7 +106,7 @@ internal static class VerifyDal
     }
     private static void CheckFactories()
     {
-        string[] supported = { "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentRawScoreProvider" };
+        string[] supported = { "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentScoreProvider" };
         string[] removed = { "DivisionProvider", "AlarmProvider", "AppraiseTemplateProvider", "DiscussionProvider", "OperatorProvider", "PhysicalProjectStateProvider", "PhysicalScoreProvider", "RoleProvider", "SportsProvider", "SportsStudentPairProvider", "SportSuggestionProvider", "StandardProvider", "StudentCheckRecordProvider", "StudentGroupPairProvider", "StudentGroupProvider", "SysparameterProvider" };
         var assembly = typeof(ProviderFactory).Assembly;
         foreach (var name in removed)
@@ -235,15 +235,15 @@ internal static class VerifyDal
         Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "ClassName", Value = "三班" } }).Result == ResultCode.Successful, "Student mapped field patch");
         Check(students.GetByID(student.ID).QueryObject.ClassName == "三班", "Student patch persisted");
         Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "Note", Value = "unsupported" } }).Result == ResultCode.Fail, "Unmapped patch falsely succeeded");
-        Execute("INSERT INTO StudentRawScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Uploaded) VALUES('11111111-2222-3333-4444-555555555555','P''1','raw','student',1,0,'2026-10-16',1)");
+        Execute("INSERT INTO StudentScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Uploaded) VALUES('11111111-2222-3333-4444-555555555555','P''1','raw','student',1,0,'2026-10-16',1)");
         Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on seven-table schema");
-        Check(students.GetByID(student.ID).Result == ResultCode.Fail && Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore WHERE Uploaded=1")) == 1, "Roster deletion lost collected scores");
+        Check(students.GetByID(student.ID).Result == ResultCode.Fail && Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore WHERE Uploaded=1")) == 1, "Roster deletion lost collected scores");
         Execute("CREATE TRIGGER fail_project BEFORE DELETE ON PhysicalProject BEGIN SELECT RAISE(ABORT,'forced deletion failure'); END");
         Check(projects.Delete(project).Result == ResultCode.Fail, "Project deletion failure must propagate");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 1 && facilities.GetItems(null).QueryObjects.Count == 1, "Project deletion partially committed");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore")) == 1 && facilities.GetItems(null).QueryObjects.Count == 1, "Project deletion partially committed");
         Execute("DROP TRIGGER fail_project");
         Check(projects.Delete(project).Result == ResultCode.Successful, "Project deletion on seven-table schema");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentRawScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0 && facilities.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0 && facilities.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
         var generated = new PhysicalProject { Name = "新项目", CreateDate = DateTime.Now };
         Check(projects.Insert(generated).Result == ResultCode.Successful && !string.IsNullOrEmpty(generated.ID), "Project ID must not require legacy numbering table");
         PhysicalProject.Current = generated;

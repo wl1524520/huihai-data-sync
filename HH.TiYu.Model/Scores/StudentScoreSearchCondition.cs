@@ -3,7 +3,7 @@ using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model.SearchCondition
 {
-	public class StudentRawScoreSearchCondition : HH.GeneralLibrary.Core.DAL.SearchCondition
+	public class StudentScoreSearchCondition : HH.GeneralLibrary.Core.DAL.SearchCondition
 	{
 		public DateTimeRange DateTimeRange { get; set; }
 

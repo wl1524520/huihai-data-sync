@@ -579,7 +579,7 @@ namespace HH.DataCollection.Wifi
                         "r.Score || COALESCE(' ' || NULLIF(i.Unit, ''), '') AS 成绩, " +
                         "r.CreateTime AS 采集时间, r.HostSn AS 设备号, " +
                         "CASE r.Uploaded WHEN 1 THEN '已上传' ELSE '待上传' END AS 状态 " +
-                        "FROM StudentRawScore r LEFT JOIN PhysicalItem i ON i.ID = r.TestID " +
+                        "FROM StudentScore r LEFT JOIN PhysicalItem i ON i.ID = r.TestID " +
                         "WHERE r.ProjectID = @p AND r.StudentID = @s ORDER BY r.CreateTime DESC";
                     cmd.Parameters.AddWithValue("@p", PhysicalProject.Current.ID);
                     cmd.Parameters.AddWithValue("@s", studentID);

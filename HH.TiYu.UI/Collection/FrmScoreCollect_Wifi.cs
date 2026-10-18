@@ -137,9 +137,9 @@ namespace HH.TiYu.UI
 							{
 								ShowRecord(record);
 							}
-							if (StudentRawScoresSavingService.Current != null)
+							if (StudentScoresSavingService.Current != null)
 							{
-								StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, _Reader.HostSN);
+								StudentScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, _Reader.HostSN);
 							}
 						}
 						FileLog.Log("原始采集记录", record.ToString());

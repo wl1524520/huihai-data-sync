@@ -35,8 +35,8 @@
   <ItemGroup>
     <!-- 保留采集器实际使用的业务类与原始成绩保存服务；失效业务类与空评分服务已随本轮精简删除。 -->
     <Compile Include="Infrastructure\BLLBase.cs" />
-    <Compile Include="Scores\StudentRawScoreConverter.cs" />
-    <Compile Include="Scores\StudentRawScoresSavingService.cs" />
+    <Compile Include="Scores\StudentScoreConverter.cs" />
+    <Compile Include="Scores\StudentScoresSavingService.cs" />
     <Compile Include="Organizations\FacilityBLL.cs" />
     <Compile Include="PhysicalTests\PhysicalItemBLL.cs" />
     <Compile Include="PhysicalTests\PhysicalProjectBLL.cs" />

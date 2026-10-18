@@ -28,7 +28,7 @@
 
 `StudentSync` 和 `ScoreUpload` 存在直接 SQL 路径，不会自动经过 BLL/DAL。调整学生或成绩字段时，应同时检查 `Db/LocalDb.cs`、Model 实体、DAL 映射及同步 SQL。当前库为七表，由 DAL 统一映射；原始成绩实体在 Model，设备转换与后台保存服务在 BLL，Program 负责服务启停。
 
-启动使用应用目录下的 `HuihaiTiyu.db`，错误日志位于 `logs/error.log`；源码目录不决定运行时文件位置。单实例、保存队列与退出排空流程由 `Program` 协调，目录调整保持现有行为。
+启动使用应用目录下的 `HH_Data.db`，错误日志位于 `logs/error.log`；源码目录不决定运行时文件位置。单实例、保存队列与退出排空流程由 `Program` 协调，目录调整保持现有行为。
 
 ## 资源、配置与部署
 

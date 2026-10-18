@@ -7,13 +7,13 @@ namespace HH.DataCollection.Wifi.Tools
 {
     /// <summary>
     /// 历史对照工具：Model/BLL 已还原为源码，本解决方案不再调用此工具。
-    /// 适配行为现位于 AppSettings.StudentRawScoreDB 和 PhysicalScoresSavingService。
+    /// 适配行为现位于 AppSettings.StudentScoreDB 和 PhysicalScoresSavingService。
     /// 构建后补丁工具,只修改本软件输出目录中的 DLL 拷贝,Guojiatizhi 原始发布目录不受影响。
     /// 按目标文件自动选择补丁:
     ///   BLL.dll   —— 摘空 PhysicalScoresSavingService.AddScore/AddScores,主库评分成绩路径不写库
     ///               (精简库根本没有 PhysicalScore 表,留着只会刷错误日志)
-    ///   Model.dll —— 把 AppSettings.StudentRawScoreDB 里硬编码的 "HHRawScore.db"
-    ///               改为 "HuihaiTiyu.db",原始成绩落进主库(单库方案)
+    ///   Model.dll —— 把 AppSettings.StudentScoreDB 里硬编码的 "HHRawScore.db"
+    ///               改为 "HH_Data.db",原始成绩落进主库(单库方案)
     /// 用法: PatchBll.exe &lt;DLL路径&gt;
     /// </summary>
     static class PatchBll
@@ -63,11 +63,11 @@ namespace HH.DataCollection.Wifi.Tools
             return 0;
         }
 
-        /// <summary>把 Model.dll 中所有 ldstr "HHRawScore.db" 替换为 "HuihaiTiyu.db"。</summary>
+        /// <summary>把 Model.dll 中所有 ldstr "HHRawScore.db" 替换为 "HH_Data.db"。</summary>
         static int PatchModelDll(string path)
         {
             const string oldStr = "HHRawScore.db";
-            const string newStr = "HuihaiTiyu.db";
+            const string newStr = "HH_Data.db";
             var asm = AssemblyDefinition.ReadAssembly(path, new ReaderParameters { ReadingMode = ReadingMode.Immediate, InMemory = true });
             int patched = 0;
             bool alreadyPatched = false;

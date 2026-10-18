@@ -42,6 +42,34 @@ internal static class VerifyMainFilters
         Sql(string.Format("INSERT INTO Student(ID,StudentID,ProjectID,Name,Sex,FacilityID,Grade,ClassName) " +
             "VALUES('{0}','{1}','{2}','{3}',{4},'school',{5},'{6}')", Guid.NewGuid(), id, project, name, sex, grade, cls));
     }
+    private static void VerifyScores(FrmMain form)
+    {
+        var grid = Field<DataGridView>(form, "_gridStudents");
+        grid.BindingContext = new BindingContext();
+        grid.Rows[0].Selected = true;
+        string studentID = Convert.ToString(((DataRowView)grid.Rows[0].DataBoundItem)["标识"]);
+        int item = ((int[])typeof(ScoreUpload).GetField("UploadableItems", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null))[0];
+        string insert = "INSERT INTO StudentScore([Key],ID,ProjectID,StudentID,TestID,ScoreFrom,Score,CreateTime,SpecialType) VALUES('fixture',";
+        Sql(insert + "'" + Guid.NewGuid() + "','filters','" + studentID + "'," + item + ",0,12.3456,'2026-10-18 12:00:00',NULL)");
+        Sql(insert + "'" + Guid.NewGuid() + "','other','" + studentID + "'," + item + ",0,99,'2026-10-18 12:00:00',NULL)");
+        Sql(insert + "'" + Guid.NewGuid() + "','filters','" + studentID + "'," + item + ",0,0,'2026-10-18 12:00:00',1)");
+        typeof(FrmMain).GetMethod("GridStudents_SelectionChanged", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, new object[] { grid, EventArgs.Empty });
+        Check(((DataTable)Field<DataGridView>(form, "_gridScores").DataSource).Rows.Count == 2,
+            "Main score display must read StudentScore for the selected student and project");
+        var uploader = new ScoreUpload(null, "filters");
+        var pending = typeof(ScoreUpload).GetMethod("GetPendingScores", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(uploader, null);
+        Check(((System.Collections.IList)pending).Count == 1, "Pending query must exclude other projects and special scores");
+        var counts = ScoreUpload.CountByUploaded("filters");
+        Check(counts.Item1 == 1 && counts.Item2 == 0, "New score must count as pending");
+        typeof(ScoreUpload).GetMethod("MarkUploaded", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(uploader, new object[] { pending });
+        counts = ScoreUpload.CountByUploaded("filters");
+        Check(counts.Item1 == 0 && counts.Item2 == 1, "Acknowledged score must count as uploaded");
+        Check(ScoreUpload.ResetUploaded("filters") == 1, "Reset must affect only uploadable scores in the current project");
+        counts = ScoreUpload.CountByUploaded("filters");
+        Check(counts.Item1 == 1 && counts.Item2 == 0 && ScoreUpload.CountByUploaded("other").Item1 == 1,
+            "Reset must preserve other projects and make the score pending again");
+    }
     [STAThread]
     private static int Main()
     {
@@ -65,6 +93,7 @@ internal static class VerifyMainFilters
                     "Initial filters must contain only the current project's data");
                 var studentCount = Field<ToolStripStatusLabel>(form, "_lblStudents");
                 Check(studentCount.Text == "学生总数 4 人 / 当前显示 4 人", "Student total must exclude other projects");
+                VerifyScores(form);
                 cls.SelectedItem = "1班";
                 Check(Count(form) == 2, "Same class name must match across all grades");
                 Check(studentCount.Text == "学生总数 4 人 / 当前显示 2 人", "Filtering must preserve total and update displayed count");

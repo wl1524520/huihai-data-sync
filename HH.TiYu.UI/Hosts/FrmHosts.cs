@@ -661,9 +661,9 @@ namespace HH.TiYu.UI
 								continue;
 							}
 						}
-						if (StudentRawScoresSavingService.Current != null)
+						if (StudentScoresSavingService.Current != null)
 						{
-							StudentRawScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, reader.HostSN);
+							StudentScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, reader.HostSN);
 						}
 						FileLog.Log("原始采集记录", record.ToString());
 					}

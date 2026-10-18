@@ -11,7 +11,7 @@
 | `Organizations/` | 学校实体及对应查询条件 |
 | `Students/` | 学生九列字段、年级规则 `GradeHelper` 和学生查询条件 |
 | `PhysicalTests/` | 体测项目、测试科目、项目科目关联、项目分类与加载选项、默认科目生成和查询条件 |
-| `Scores/` | 原始成绩实体 `StudentRawScore` 与查询条件、内存成绩视图 `PhysicalScore`、成绩来源与特殊成绩类型枚举 |
+| `Scores/` | 原始成绩实体 `StudentScore` 与查询条件、内存成绩视图 `PhysicalScore`、成绩来源与特殊成绩类型枚举 |
 | `Configuration/` | 应用配置 `AppSettings`、同步配置实体 `SyncConfigEntry` |
 | `Security/` | 当前操作员身份 `Operator`，不提供旧权限系统 |
 | `Shared/` | 跨业务使用的性别枚举 `Sex`、时间范围 `DateTimeRange` |
@@ -29,7 +29,7 @@
 
 本项目是数据采集器，不做评分。相对原始 DLL 的主动改变：
 
-1. `AppSettings.StudentRawScoreDB` 返回启动目录下的 `HuihaiTiyu.db`（沿用此前二进制补丁的单库方案）；原 DLL 返回 `HHRawScore.db`。源码构建后不再需要 Model 补丁。
+1. `AppSettings.StudentScoreDB` 返回启动目录下的 `HH_Data.db`（沿用此前二进制补丁的单库方案）；原 DLL 返回 `HHRawScore.db`。源码构建后不再需要 Model 补丁。
 2. `AppSettings.ConnStr` 恒返回 `LocalDB`：原 `RemoteDB` 覆盖开关已删除。
 3. 删除评分与排名链（`CalResult`、`CalTotal*`、`GetTotalRank`、`GetScores`、标准/评价/运动建议模板等），见 `docs/model-cleanup-result.md`。
 4. 删除权限系统（`Permission`/`Role`/`PermissionResolver`/`OperatorRightAttribute`），只保留 `Operator.Current/ID/Name/DefaultLogID/CanDelete/CanEdit`。

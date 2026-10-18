@@ -11,7 +11,7 @@ namespace HH.TiYu.Model
     /// 采集器配置。原 Model.dll 的硬件与远程库开关（串口、读卡器、条码枪、语音、
     /// 相机、远程服务器/端口、离线、库升级、记住登录 ID、成绩单模式、用于抽测）
     /// 在本轮精简中移除：采集器固定使用本机 SQLite 单库，这些开关在运行时恒为默认值。
-    /// 仅保留 LocalDB / StudentRawScoreDB / ProjectID 与年级区间。
+    /// 仅保留 LocalDB / StudentScoreDB / ProjectID 与年级区间。
     /// </summary>
     public class AppSettings
     {
@@ -46,12 +46,12 @@ namespace HH.TiYu.Model
 
         public string LocalDB { get; set; }
 
-        public string StudentRawScoreDB
+        public string StudentScoreDB
         {
             get
             {
                 // Collector single-database policy; replaces the former Model.dll build patch.
-                return "SQLITE:Data Source=" + Path.Combine(Application.StartupPath, "HuihaiTiyu.db");
+                return "SQLITE:Data Source=" + Path.Combine(Application.StartupPath, "HH_Data.db");
             }
         }
 

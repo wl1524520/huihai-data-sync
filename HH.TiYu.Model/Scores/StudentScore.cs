@@ -3,7 +3,7 @@ using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
 {
-	public class StudentRawScore : IEntity<Guid>
+	public class StudentScore : IEntity<Guid>
 	{
 		public Guid ID { get; set; }
 

@@ -7,7 +7,7 @@ namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
     /// 成绩上传(本地 → 平台),移植自 unite-data-sync 的 upload_scores,按本软件方案调整:
-    ///   - 数据源为唯一成绩表 StudentRawScore 中 Uploaded=0 的行,原样全传(不去重);
+    ///   - 数据源为唯一成绩表 StudentScore 中 Uploaded=0 的行,原样全传(不去重);
     ///     行内 StudentID 即学生标识(= 平台下发的 test_no,链路见 Student 表建表注释)
     ///   - 仅 CodeMap 内的科目上传。code 显式写死,不再用 TestID+10000 推导:文档 §5.1 要求
     ///     "根据数据源中的项目含义进行映射",并明确告诫不能按未经核对的编号规则推算;
@@ -275,7 +275,7 @@ namespace HH.DataCollection.Wifi.Sync
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText =
-                        "SELECT HEX(ID) AS Mono, StudentID, StudentName, TestID, Score, CreateTime FROM StudentRawScore " +
+                        "SELECT HEX(ID) AS Mono, StudentID, StudentName, TestID, Score, CreateTime FROM StudentScore " +
                         "WHERE ProjectID = @p AND Uploaded = 0 AND " + UploadableWhere + " " +
                         "ORDER BY CreateTime";
                     cmd.Parameters.AddWithValue("@p", _projectID);
@@ -332,7 +332,7 @@ namespace HH.DataCollection.Wifi.Sync
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.Transaction = tx;
-                    cmd.CommandText = "UPDATE StudentRawScore SET Uploaded = 1 WHERE HEX(ID) = @mono";
+                    cmd.CommandText = "UPDATE StudentScore SET Uploaded = 1 WHERE HEX(ID) = @mono";
                     var p = cmd.Parameters.Add("@mono", System.Data.DbType.String);
                     foreach (var row in batch)
                     {
@@ -360,7 +360,7 @@ namespace HH.DataCollection.Wifi.Sync
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "UPDATE StudentRawScore SET Uploaded = 0 WHERE ProjectID = @p AND " + UploadableWhere;
+                    cmd.CommandText = "UPDATE StudentScore SET Uploaded = 0 WHERE ProjectID = @p AND " + UploadableWhere;
                     cmd.Parameters.AddWithValue("@p", projectID);
                     return cmd.ExecuteNonQuery();
                 }
@@ -383,7 +383,7 @@ namespace HH.DataCollection.Wifi.Sync
         {
             using (var cmd = conn.CreateCommand())
             {
-                cmd.CommandText = "SELECT COUNT(*) FROM StudentRawScore WHERE ProjectID = @p " +
+                cmd.CommandText = "SELECT COUNT(*) FROM StudentScore WHERE ProjectID = @p " +
                                   "AND Uploaded = " + uploaded + " AND " + UploadableWhere;
                 cmd.Parameters.AddWithValue("@p", projectID);
                 return Convert.ToInt32(cmd.ExecuteScalar());

@@ -6,12 +6,12 @@
 
 | 原内容 | 当前文件 / 归属 |
 | --- | --- |
-| StudentRawScore | HH.TiYu.Model/Scores/StudentRawScore.cs，HH.TiYu.Model 命名空间 |
-| StudentRawScoreSearchCondition | HH.TiYu.Model/Scores/StudentRawScoreSearchCondition.cs，HH.TiYu.Model.SearchCondition 命名空间 |
-| StudentRawScoreProvider | HH.TiYu.DAL/LinqProvider/Scores/StudentRawScoreProvider.cs |
+| StudentScore | HH.TiYu.Model/Scores/StudentScore.cs，HH.TiYu.Model 命名空间 |
+| StudentScoreSearchCondition | HH.TiYu.Model/Scores/StudentScoreSearchCondition.cs，HH.TiYu.Model.SearchCondition 命名空间 |
+| StudentScoreProvider | HH.TiYu.DAL/LinqProvider/Scores/StudentScoreProvider.cs |
 | ProviderFactory / DataMapping.xml | 合并到 DAL 的现有工厂与 HH.TiYu.DAL.LinqProvider.DataMapping.xml 资源 |
-| 设备记录转换 | HH.TiYu.BLL/Scores/StudentRawScoreConverter.cs，内部纯转换类 |
-| 后台保存服务 | HH.TiYu.BLL/Scores/StudentRawScoresSavingService.cs |
+| 设备记录转换 | HH.TiYu.BLL/Scores/StudentScoreConverter.cs，内部纯转换类 |
+| 后台保存服务 | HH.TiYu.BLL/Scores/StudentScoresSavingService.cs |
 
 BLL 引用 Device 获取 PhysicalRecord，调用 DAL 执行成绩读写；Model、DAL 不依赖 Device。
 UI 两个成绩入口调用 BLL，Program 保持创建、启动、停止和退出重试流程。
@@ -21,7 +21,7 @@ System.Data.SQLite.dll 数据库驱动继续保留。
 ## 保持的行为与边界
 
 - 数据库八张表、字段及同步 SQL 未改变，没有新增数据库迁移。
-- StudentRawScore 与查询条件仅改变程序集归属和命名空间；调用方统一重新编译，不保证旧二进制兼容。
+- StudentScore 与查询条件仅改变程序集归属和命名空间；调用方统一重新编译，不保证旧二进制兼容。
 - 去重仍按 ProjectID + Key，已有行不覆盖；Key 的组成、秒级时间精度、特殊成绩码 160/161/162/其他值映射保持不变。
 - 设备时间为空时只取一次当前时间，同时生成 Key 与 CreateTime。
 - Uploaded 不进入实体和映射；新行依赖数据库 DEFAULT 0，已上传行在重复采集时保留状态。

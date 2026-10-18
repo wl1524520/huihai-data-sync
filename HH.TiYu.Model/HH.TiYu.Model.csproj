@@ -46,8 +46,8 @@
     <Compile Include="PhysicalTests\PhysicalProjectClass.cs" />
     <Compile Include="PhysicalTests\PhysicalProjectHelper.cs" />
     <Compile Include="Scores\PhysicalScore.cs" />
-    <Compile Include="Scores\StudentRawScore.cs" />
-    <Compile Include="Scores\StudentRawScoreSearchCondition.cs" />
+    <Compile Include="Scores\StudentScore.cs" />
+    <Compile Include="Scores\StudentScoreSearchCondition.cs" />
     <Compile Include="PhysicalTests\ProjectPhysicalItem.cs" />
     <Compile Include="Shared\Sex.cs" />
     <Compile Include="Scores\SpecialScoreType.cs" />

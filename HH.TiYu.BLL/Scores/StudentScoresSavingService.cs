@@ -13,17 +13,17 @@ using HH.GeneralLibrary.LOG;
 
 namespace HH.TiYu.BLL
 {
-	public class StudentRawScoresSavingService
+	public class StudentScoresSavingService
 	{
         private readonly object _UnsavedRecordsLocker = new object();
         private readonly object _lifecycleLocker = new object();
-        private readonly List<StudentRawScore> _UnsavedItems = new List<StudentRawScore>();
+        private readonly List<StudentScore> _UnsavedItems = new List<StudentScore>();
         private readonly AutoResetEvent _wake = new AutoResetEvent(false);
         private Thread _SaveRecordsTask;
         private bool _stopping;
         private bool _stopRequested;
 
-        public static StudentRawScoresSavingService Current { get; set; }
+        public static StudentScoresSavingService Current { get; set; }
 
         /// <summary>包含正在提交的批次；只有提交成功才从队列移除。</summary>
         public int PendingCount { get { lock (_UnsavedRecordsLocker) return _UnsavedItems.Count; } }
@@ -32,7 +32,7 @@ namespace HH.TiYu.BLL
         {
             while (true)
             {
-                List<StudentRawScore> batch;
+                List<StudentScore> batch;
                 lock (_UnsavedRecordsLocker)
                 {
                     if (_stopRequested) return;
@@ -45,7 +45,7 @@ namespace HH.TiYu.BLL
                 {
                     try
                     {
-                        CommandResult result = ProviderFactory.Create<StudentRawScoreProvider>(AppSettings.Current.StudentRawScoreDB).BatchAdd(batch, batch[0].ProjectID);
+                        CommandResult result = ProviderFactory.Create<StudentScoreProvider>(AppSettings.Current.StudentScoreDB).BatchAdd(batch, batch[0].ProjectID);
                         saved = result != null && result.Result == ResultCode.Successful;
                         if (!saved) FileLog.Log("原始成绩保存", "原始成绩保存到本地失败：" + (result == null ? "无返回结果" : result.Message));
                     }
@@ -54,7 +54,7 @@ namespace HH.TiYu.BLL
                     {
                         lock (_UnsavedRecordsLocker)
                         {
-                            foreach (StudentRawScore item in batch) _UnsavedItems.Remove(item);
+                            foreach (StudentScore item in batch) _UnsavedItems.Remove(item);
                             Monitor.PulseAll(_UnsavedRecordsLocker);
                         }
                     }
@@ -134,7 +134,7 @@ namespace HH.TiYu.BLL
 			lock (_UnsavedRecordsLocker)
 			{
                 if (_stopping) throw new InvalidOperationException("保存服务正在停止，不能再添加成绩。");
-				_UnsavedItems.Add(StudentRawScoreConverter.Convert(projectID, record, scoreFrom, hostSN));
+				_UnsavedItems.Add(StudentScoreConverter.Convert(projectID, record, scoreFrom, hostSN));
                 _wake.Set();
 			}
 		}
