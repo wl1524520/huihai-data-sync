@@ -73,11 +73,16 @@ class VerifyDevice
         Properties("parameter.values",ps);
         var downloader=StudentDownloader.CreateInstance(7,"127.0.0.1",null); // Constructor only; never Open/Send.
         var students=new[]{
-          new HostStudent{StudentID="1234567890123456789012345",Name="测试学生",Sex="男",Grade=5,ClassName="一年级一班",CardID="987654321012345"},
+          new HostStudent{StudentID="1234567890123456789012345",Name="测试学生",Sex="男",Grade=(byte)(args.Contains("--require-empty-grade")?5:0),ClassName="一年级一班",CardID="987654321012345"},
           new HostStudent{StudentID="AB123",Name="",Sex="0",Grade=0,ClassName=null,CardID=null}
         };
         foreach(string method in new[]{"CreateDownloadStudentsCmd","CreateDownloadTestStudentsCmd"}) {
           object cmd=Call(downloader,method,(byte)7,students);
+          byte[] data=(byte[])cmd.GetType().GetProperty("data",All).GetValue(cmd,null);
+          if(data.Length!=15+72*students.Length+2 || data[12]!=72)throw new Exception(method+": student record length changed");
+          for(int i=0;i<students.Length;i++)
+            if(data[15+72*i+41]!=0)throw new Exception(method+": grade must be empty");
+          if(args.Contains("--require-empty-grade") && students[0].Grade!=5)throw new Exception(method+": input grade was modified");
           foreach(var f in cmd.GetType().GetFields(All).OrderBy(f=>f.Name))Observe(method+"."+f.Name,f.GetValue(cmd));
         }
         foreach(string method in new[]{"CreateCompleteDownloadCmd","CreateClearStudentsCmd"}){

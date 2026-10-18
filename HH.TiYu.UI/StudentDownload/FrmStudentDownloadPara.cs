@@ -52,11 +52,7 @@ namespace HH.TiYu.UI
 
 		private Label label8;
 
-		private Label label1;
-
 		private Button btnQuery;
-
-		private Label label2;
 
 		private Label label5;
 
@@ -66,8 +62,6 @@ namespace HH.TiYu.UI
 
 		private Label label3;
 
-		private DBCTextBox txtStudentID1;
-
 		private Panel panel2;
 
 		private RadioButton rdSexAll;
@@ -75,12 +69,6 @@ namespace HH.TiYu.UI
 		private RadioButton rdFemale;
 
 		private RadioButton rdMale;
-
-		private Label label7;
-
-		private DBCTextBox txtStudentID2;
-
-		private DBCTextBox txtName;
 
 		private Button btnAll;
 
@@ -173,10 +161,6 @@ namespace HH.TiYu.UI
 			{
 				List<Student> list = null;
 				list = allStudents.Values.ToList();
-				if (!string.IsNullOrEmpty(txtStudentID1.Text))
-				{
-					list = ((!string.IsNullOrEmpty(txtStudentID2.Text)) ? list.Where((Student item) => string.Compare(item.StudentID, txtStudentID1.Text) >= 0 && string.Compare(item.StudentID, txtStudentID2.Text) <= 0).ToList() : list.Where((Student item) => item.StudentID.Contains(txtStudentID1.Text)).ToList());
-				}
 				if (rdMale.Checked)
 				{
 					list = list.Where((Student item) => item.Sex == Sex.Male).ToList();
@@ -184,10 +168,6 @@ namespace HH.TiYu.UI
 				if (rdFemale.Checked)
 				{
 					list = list.Where((Student item) => item.Sex == Sex.Female).ToList();
-				}
-				if (!string.IsNullOrEmpty(txtName.Text))
-				{
-					list = list.Where((Student item) => item.Name.Contains(txtName.Text)).ToList();
 				}
 				if (!string.IsNullOrEmpty(txtGrade.Text))
 				{
@@ -197,7 +177,7 @@ namespace HH.TiYu.UI
 				{
 					list = list.Where((Student item) => item.ClassName != null && item.ClassName.Contains(txtClassName.Text)).ToList();
 				}
-				if (!string.IsNullOrEmpty(cmbFacility.Text))
+				if (!string.IsNullOrEmpty(cmbFacility.SelectedFacilityID))
 				{
 					Facility f = cmbFacility.SelectedItem as Facility;
 					if (f != null)
@@ -300,21 +280,15 @@ namespace HH.TiYu.UI
 			this.cmbFacility = new HH.TiYu.UI.Controls.FacilityComboBox(this.components);
 			this.txtClassName = new HH.TiYu.UI.UserControl.ClassNameCombox(this.components);
 			this.label8 = new System.Windows.Forms.Label();
-			this.label1 = new System.Windows.Forms.Label();
 			this.btnQuery = new System.Windows.Forms.Button();
-			this.label2 = new System.Windows.Forms.Label();
 			this.label5 = new System.Windows.Forms.Label();
 			this.txtGrade = new HH.TiYu.UI.Controls.GradeComboBox(this.components);
 			this.label6 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
-			this.txtStudentID1 = new HH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
 			this.panel2 = new System.Windows.Forms.Panel();
 			this.rdSexAll = new System.Windows.Forms.RadioButton();
 			this.rdFemale = new System.Windows.Forms.RadioButton();
 			this.rdMale = new System.Windows.Forms.RadioButton();
-			this.label7 = new System.Windows.Forms.Label();
-			this.txtStudentID2 = new HH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
-			this.txtName = new HH.GeneralLibrary.WinformControl.DBCTextBox(this.components);
 			this.btnAll = new System.Windows.Forms.Button();
 			this.btnNone = new System.Windows.Forms.Button();
 			this.btnRevert = new System.Windows.Forms.Button();
@@ -386,10 +360,10 @@ namespace HH.TiYu.UI
 			this.gpStudent.Controls.Add(this.txtMaxPertime);
 			this.gpStudent.Controls.Add(this.label9);
 			this.gpStudent.Controls.Add(this.chkClearFirst);
-			this.gpStudent.Location = new System.Drawing.Point(828, 358);
+			this.gpStudent.Location = new System.Drawing.Point(828, 247);
 			this.gpStudent.Name = "gpStudent";
-			this.gpStudent.Size = new System.Drawing.Size(283, 214);
-			this.gpStudent.TabIndex = 144;
+			this.gpStudent.Size = new System.Drawing.Size(283, 325);
+			this.gpStudent.TabIndex = 1;
 			this.gpStudent.TabStop = false;
 			this.gpStudent.Text = "第二步  选项";
 			this.button2.Location = new System.Drawing.Point(20, 144);
@@ -400,11 +374,11 @@ namespace HH.TiYu.UI
 			this.button2.UseVisualStyleBackColor = true;
 			this.button2.Click += new System.EventHandler(btnOk_Click);
 			this.txtMaxPertime.ImeMode = System.Windows.Forms.ImeMode.On;
-			this.txtMaxPertime.Location = new System.Drawing.Point(186, 27);
+			this.txtMaxPertime.Location = new System.Drawing.Point(203, 27);
 			this.txtMaxPertime.MaxValue = 100;
 			this.txtMaxPertime.MinValue = 1;
 			this.txtMaxPertime.Name = "txtMaxPertime";
-			this.txtMaxPertime.Size = new System.Drawing.Size(63, 21);
+			this.txtMaxPertime.Size = new System.Drawing.Size(57, 21);
 			this.txtMaxPertime.TabIndex = 146;
 			this.txtMaxPertime.Text = "100";
 			this.label9.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
@@ -413,7 +387,7 @@ namespace HH.TiYu.UI
 			this.label9.Name = "label9";
 			this.label9.Size = new System.Drawing.Size(173, 12);
 			this.label9.TabIndex = 145;
-			this.label9.Text = "单次下载最大学生数量（1-20）";
+			this.label9.Text = "单次下载最大学生数量（1-100）";
 			this.chkClearFirst.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 			this.chkClearFirst.AutoSize = true;
 			this.chkClearFirst.ForeColor = System.Drawing.Color.Red;
@@ -429,66 +403,46 @@ namespace HH.TiYu.UI
 			this.gpStep1.Controls.Add(this.cmbFacility);
 			this.gpStep1.Controls.Add(this.txtClassName);
 			this.gpStep1.Controls.Add(this.label8);
-			this.gpStep1.Controls.Add(this.label1);
 			this.gpStep1.Controls.Add(this.btnQuery);
-			this.gpStep1.Controls.Add(this.label2);
 			this.gpStep1.Controls.Add(this.label5);
 			this.gpStep1.Controls.Add(this.txtGrade);
 			this.gpStep1.Controls.Add(this.label6);
 			this.gpStep1.Controls.Add(this.label3);
-			this.gpStep1.Controls.Add(this.txtStudentID1);
 			this.gpStep1.Controls.Add(this.panel2);
-			this.gpStep1.Controls.Add(this.label7);
-			this.gpStep1.Controls.Add(this.txtStudentID2);
-			this.gpStep1.Controls.Add(this.txtName);
 			this.gpStep1.Location = new System.Drawing.Point(828, 7);
 			this.gpStep1.Name = "gpStep1";
-			this.gpStep1.Size = new System.Drawing.Size(283, 345);
-			this.gpStep1.TabIndex = 140;
+			this.gpStep1.Size = new System.Drawing.Size(283, 228);
+			this.gpStep1.TabIndex = 0;
 			this.gpStep1.TabStop = false;
 			this.gpStep1.Text = "第一步  查询";
 			this.cmbFacility.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.cmbFacility.FormattingEnabled = true;
-			this.cmbFacility.Location = new System.Drawing.Point(69, 186);
+			this.cmbFacility.Location = new System.Drawing.Point(69, 30);
 			this.cmbFacility.Name = "cmbFacility";
 			this.cmbFacility.Size = new System.Drawing.Size(159, 20);
-			this.cmbFacility.TabIndex = 205;
+			this.cmbFacility.TabIndex = 0;
 			this.cmbFacility.SelectedIndexChanged += new System.EventHandler(cmbFacility_SelectedIndexChanged);
 			this.txtClassName.FormattingEnabled = true;
-			this.txtClassName.Location = new System.Drawing.Point(69, 218);
+			this.txtClassName.Location = new System.Drawing.Point(69, 102);
 			this.txtClassName.Name = "txtClassName";
 			this.txtClassName.Size = new System.Drawing.Size(159, 20);
-			this.txtClassName.TabIndex = 172;
+			this.txtClassName.TabIndex = 2;
 			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(34, 189);
+			this.label8.Location = new System.Drawing.Point(31, 33);
 			this.label8.Name = "label8";
 			this.label8.Size = new System.Drawing.Size(29, 12);
 			this.label8.TabIndex = 134;
 			this.label8.Text = "学校";
 			this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(31, 34);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(29, 12);
-			this.label1.TabIndex = 120;
-			this.label1.Text = "学号";
-			this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.btnQuery.Location = new System.Drawing.Point(69, 272);
+			this.btnQuery.Location = new System.Drawing.Point(69, 178);
 			this.btnQuery.Name = "btnQuery";
-			this.btnQuery.Size = new System.Drawing.Size(181, 28);
-			this.btnQuery.TabIndex = 133;
+			this.btnQuery.Size = new System.Drawing.Size(181, 30);
+			this.btnQuery.TabIndex = 4;
 			this.btnQuery.Text = "查询(&Q)";
 			this.btnQuery.UseVisualStyleBackColor = true;
 			this.btnQuery.Click += new System.EventHandler(btnQuery_Click);
-			this.label2.AutoSize = true;
-			this.label2.Location = new System.Drawing.Point(31, 92);
-			this.label2.Name = "label2";
-			this.label2.Size = new System.Drawing.Size(29, 12);
-			this.label2.TabIndex = 121;
-			this.label2.Text = "姓名";
-			this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(31, 221);
+			this.label5.Location = new System.Drawing.Point(31, 105);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(29, 12);
 			this.label5.TabIndex = 122;
@@ -496,36 +450,31 @@ namespace HH.TiYu.UI
 			this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.txtGrade.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.txtGrade.FormattingEnabled = true;
-			this.txtGrade.Location = new System.Drawing.Point(69, 151);
+			this.txtGrade.Location = new System.Drawing.Point(69, 66);
 			this.txtGrade.Name = "txtGrade";
 			this.txtGrade.Size = new System.Drawing.Size(159, 20);
-			this.txtGrade.TabIndex = 131;
+			this.txtGrade.TabIndex = 1;
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(31, 125);
+			this.label6.Location = new System.Drawing.Point(31, 142);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(29, 12);
 			this.label6.TabIndex = 123;
 			this.label6.Text = "性别";
 			this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(31, 155);
+			this.label3.Location = new System.Drawing.Point(31, 69);
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size(29, 12);
 			this.label3.TabIndex = 130;
 			this.label3.Text = "年级";
 			this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.txtStudentID1.ImeMode = System.Windows.Forms.ImeMode.On;
-			this.txtStudentID1.Location = new System.Drawing.Point(69, 31);
-			this.txtStudentID1.Name = "txtStudentID1";
-			this.txtStudentID1.Size = new System.Drawing.Size(159, 21);
-			this.txtStudentID1.TabIndex = 124;
 			this.panel2.Controls.Add(this.rdSexAll);
 			this.panel2.Controls.Add(this.rdFemale);
 			this.panel2.Controls.Add(this.rdMale);
-			this.panel2.Location = new System.Drawing.Point(69, 119);
+			this.panel2.Location = new System.Drawing.Point(69, 138);
 			this.panel2.Name = "panel2";
 			this.panel2.Size = new System.Drawing.Size(159, 21);
-			this.panel2.TabIndex = 129;
+			this.panel2.TabIndex = 3;
 			this.rdSexAll.AutoSize = true;
 			this.rdSexAll.Checked = true;
 			this.rdSexAll.Location = new System.Drawing.Point(3, 3);
@@ -549,23 +498,6 @@ namespace HH.TiYu.UI
 			this.rdMale.TabIndex = 5;
 			this.rdMale.Text = "男";
 			this.rdMale.UseVisualStyleBackColor = true;
-			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point(43, 59);
-			this.label7.Name = "label7";
-			this.label7.Size = new System.Drawing.Size(17, 12);
-			this.label7.TabIndex = 125;
-			this.label7.Text = "到";
-			this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.txtStudentID2.ImeMode = System.Windows.Forms.ImeMode.On;
-			this.txtStudentID2.Location = new System.Drawing.Point(69, 56);
-			this.txtStudentID2.Name = "txtStudentID2";
-			this.txtStudentID2.Size = new System.Drawing.Size(159, 21);
-			this.txtStudentID2.TabIndex = 126;
-			this.txtName.ImeMode = System.Windows.Forms.ImeMode.On;
-			this.txtName.Location = new System.Drawing.Point(69, 88);
-			this.txtName.Name = "txtName";
-			this.txtName.Size = new System.Drawing.Size(159, 21);
-			this.txtName.TabIndex = 127;
 			this.btnAll.Location = new System.Drawing.Point(8, 8);
 			this.btnAll.Name = "btnAll";
 			this.btnAll.Size = new System.Drawing.Size(89, 25);

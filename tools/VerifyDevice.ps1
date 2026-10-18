@@ -18,7 +18,11 @@ foreach($variant in @('source','legacy')){
  & (Join-Path $framework 'csc.exe') /nologo /target:exe /platform:x86 /langversion:4 /codepage:65001 "/out:$dir\VerifyDevice.exe" /reference:System.Core.dll "/reference:$dir\Device.dll" (Join-Path $PSScriptRoot 'VerifyDevice.cs')
  if($LASTEXITCODE -ne 0){throw 'Device verification compile failed'}
  Push-Location $dir
- try{& (Join-Path $dir 'VerifyDevice.exe');if($LASTEXITCODE -ne 0){throw "Device verification failed: $variant"}}finally{Pop-Location}
+ # Compare source with a nonzero input grade against the original encoder with an
+ # empty grade: all packet bytes, including other fields and CRC, must match.
+ $verificationArgs = @()
+ if($variant -eq 'source') { $verificationArgs = @('--require-empty-grade') }
+ try{& (Join-Path $dir 'VerifyDevice.exe') @verificationArgs;if($LASTEXITCODE -ne 0){throw "Device verification failed: $variant"}}finally{Pop-Location}
 }
 if((Get-FileHash (Join-Path $run 'source\device-behavior.txt')).Hash -ne (Get-FileHash (Join-Path $run 'legacy\device-behavior.txt')).Hash){throw "Device behavior snapshots differ: $run"}
 # Delete this run's isolated directory after a successful verification, so tools\bin does not
@@ -28,4 +32,4 @@ for ($attempt = 0; $attempt -lt 5 -and (Test-Path -LiteralPath $run); $attempt++
     Remove-Item -LiteralPath $run -Recurse -Force -ErrorAction SilentlyContinue
 }
 if (Test-Path -LiteralPath $run) { throw "Verification artifacts could not be removed: $run" }
-Write-Host "Device offline behavior matches original. Artifacts verified and removed: $run"
+Write-Host "Device offline behavior matches original with empty download grades. Artifacts verified and removed: $run"

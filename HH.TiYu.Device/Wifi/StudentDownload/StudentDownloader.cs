@@ -184,7 +184,7 @@ namespace HH.Zhongkao.Device.Wifi
                     {
                         list.Add(48);
                     }
-                    list.Add(hostStudent.Grade);
+                    list.Add(0); // 年级留空，保留协议字段位置和记录长度。
                     array = new byte[20];
                     if (!string.IsNullOrEmpty(hostStudent.ClassName))
                     {
@@ -250,7 +250,7 @@ namespace HH.Zhongkao.Device.Wifi
                     {
                         list.Add(48);
                     }
-                    list.Add(hostStudent.Grade);
+                    list.Add(0); // 年级留空，保留协议字段位置和记录长度。
                     array = new byte[20];
                     if (!string.IsNullOrEmpty(hostStudent.ClassName))
                     {

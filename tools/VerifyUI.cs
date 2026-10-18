@@ -102,6 +102,47 @@ internal static class VerifyUI
                 var grid = (DataGridView)form.Controls.Find("dataGridView1", true).Single();
                 Check(grid.Columns.Count == 7 && !grid.Columns.Contains("colCardID"), "Student list retained card column");
                 Check(!Walk(form).Any(c => c.Name == "chkCardIDForStudentID"), "Card identity checkbox retained");
+                Check(!Walk(form).Any(c => new[] { "txtStudentID1", "txtStudentID2", "txtName" }.Contains(c.Name)), "Removed student query fields retained");
+                PhysicalProject.Current.AddStudents(new List<Student> {
+                    new Student { StudentID = "S1", FacilityID = "F1", Grade = GradeHelper.JuniorHighGrade1, ClassName = "一班", Sex = Sex.Male },
+                    new Student { StudentID = "S2", FacilityID = "F1", Grade = GradeHelper.JuniorHighGrade1, ClassName = "一班", Sex = Sex.Female },
+                    new Student { StudentID = "S3", FacilityID = "F1", Grade = GradeHelper.JuniorHighGrade2, ClassName = "二班", Sex = Sex.Male },
+                    new Student { StudentID = "S4", FacilityID = "F2", Grade = GradeHelper.JuniorHighGrade1, ClassName = "三班", Sex = Sex.Male },
+                    new Student { StudentID = "S5", FacilityID = "F1", Grade = null, ClassName = null, Sex = Sex.Female }
+                });
+                var school = (HH.TiYu.UI.Controls.FacilityComboBox)form.Controls.Find("cmbFacility", true).Single();
+                var grade = (HH.TiYu.UI.Controls.GradeComboBox)form.Controls.Find("txtGrade", true).Single();
+                var className = (ComboBox)form.Controls.Find("txtClassName", true).Single();
+                var male = (RadioButton)form.Controls.Find("rdMale", true).Single();
+                var female = (RadioButton)form.Controls.Find("rdFemale", true).Single();
+                var all = (RadioButton)form.Controls.Find("rdSexAll", true).Single();
+                var query = typeof(FrmStudentDownloadPara).GetMethod("btnQuery_Click", BindingFlags.NonPublic | BindingFlags.Instance);
+                school.BindingContext = new BindingContext();
+                school.Init();
+                grade.Init();
+                Action<int> expectRows = expected => {
+                    query.Invoke(form, new object[] { null, EventArgs.Empty });
+                    Check(grid.Rows.Count == expected, "Student query result count: expected " + expected + ", got " + grid.Rows.Count + "; school=" + school.Text + "; grade=" + grade.Text + "; class=" + className.Text);
+                };
+                expectRows(5);
+                school.SelectedFacilityID = "F1";
+                Check(className.Items.Contains("一班") && !className.Items.Contains("三班"), "School must refresh class choices");
+                expectRows(4);
+                grade.SelectedGrade = GradeHelper.JuniorHighGrade1;
+                expectRows(2);
+                className.Text = "一";
+                male.Checked = true;
+                expectRows(1);
+                female.Checked = true;
+                expectRows(1);
+                all.Checked = true;
+                className.Text = "不存在";
+                expectRows(0);
+                school.SelectedIndex = 0;
+                grade.SelectedIndex = 0;
+                className.Text = string.Empty;
+                expectRows(5);
+                Check(PhysicalProject.Current.GetStudentByID("S1").Grade == GradeHelper.JuniorHighGrade1, "Query changed the local student grade");
             }
             Console.WriteLine("UI verification passed: " + checks + " checks, " + forms + " windows and " + controls + " controls constructed/disposed without showing windows or opening devices.");
             return 0;

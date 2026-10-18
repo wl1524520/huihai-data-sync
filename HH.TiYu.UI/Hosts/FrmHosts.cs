@@ -899,7 +899,7 @@ namespace HH.TiYu.UI
 							StudentID = student.StudentID,
 							Name = student.Name,
 							Sex = ((student.Sex == Sex.Male) ? "男" : "女"),
-							Grade = (byte)(student.Grade.HasValue ? ((uint)student.Grade.Value) : 0u),
+							Grade = 0, // 下发名单不携带年级，本地年级仍用于筛选。
 							ClassName = student.ClassName,
 						});
 						num++;
