@@ -40,7 +40,7 @@ namespace HH.DataCollection.Wifi.Sync
             _btnInfo.Click += (s, e) => StartTask(TaskReadInfo);
             grpTask.Controls.Add(_btnInfo);
             _btnStudents = new Button { Text = "下发学生名单", Location = new Point(122, 25), Width = 100 };
-            _btnStudents.Click += (s, e) => StartTask(TaskSyncStudents);
+            _btnStudents.Click += (s, e) => StartTask(TaskSyncStudents, true);
             grpTask.Controls.Add(_btnStudents);
             _btnUploadOnce = new Button { Text = "上传成绩一次", Location = new Point(232, 25), Width = 100 };
             _btnUploadOnce.Click += (s, e) => StartTask(TaskUploadOnce);
@@ -180,7 +180,10 @@ namespace HH.DataCollection.Wifi.Sync
             return new SyncApi(conf.ApiUrl, conf.ApiToken);
         }
 
-        private void StartTask(Action<Action<string>, Func<bool>> task)
+        /// <summary>学生同步结束(含停止或部分失败)后在 UI 线程通知主界面刷新本地数据。</summary>
+        public event EventHandler StudentsSynchronized;
+
+        private void StartTask(Action<Action<string>, Func<bool>> task, bool syncStudents = false)
         {
             if (_worker != null && _worker.IsAlive)
             {
@@ -218,6 +221,8 @@ namespace HH.DataCollection.Wifi.Sync
                                 SetButtonsEnabled(true);
                                 _btnAutoUpload.Text = "开始自动上传";
                                 RefreshPendingCount();
+                                var handler = StudentsSynchronized;
+                                if (syncStudents && handler != null) handler(this, EventArgs.Empty);
                             }));
                         }
                     }

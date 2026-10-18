@@ -17,7 +17,7 @@ namespace HH.DataCollection.Wifi
     /// <summary>
     /// 主界面,布局参考汇海体测软件 FrmMain:
     ///   顶部工具栏:开始采集 / 同步任务 / 同步设置(图标提取自原软件资源);
-    ///   中部左右分栏:左=当前项目学生列表(班级筛选+搜索),右=选中学生的原始成绩(采集时间倒序);
+    ///   中部左右分栏:左=当前项目学生列表(年级/班级/性别筛选+搜索),右=选中学生的原始成绩(采集时间倒序);
     ///   底部状态栏:操作员 + "切换项目"链接 + 当前项目名 + 待上传/已上传计数。
     /// 采集(FrmHosts)为模态,打开期间本窗体不可操作;同步任务窗非模态,任务运行中禁止切换项目。
     /// </summary>
@@ -32,7 +32,10 @@ namespace HH.DataCollection.Wifi
         private readonly ToolStripButton _btnSettings;
         private readonly ToolStripStatusLabel _lnkSwitch;
         private Form _collectForm;
+        private readonly ComboBox _cboGrade;
         private readonly ComboBox _cboClass;
+        private readonly ComboBox _cboSex;
+        private bool _loadingFilters;
         private readonly TextBox _txtSearch;
         private readonly DataGridView _gridStudents;
         private readonly DataGridView _gridScores;
@@ -105,21 +108,37 @@ namespace HH.DataCollection.Wifi
             };
 
             // 左:学生列表 + 筛选行
-            var filterPanel = new Panel { Dock = DockStyle.Top, Height = 34 };
-            filterPanel.Controls.Add(new Label { Text = "班级:", AutoSize = true, Location = new Point(6, 9) });
-            _cboClass = new ComboBox { Location = new Point(45, 5), Width = 110, DropDownStyle = ComboBoxStyle.DropDownList };
+            var filterPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(3), WrapContents = true
+            };
+            _cboGrade = new ComboBox { Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
+            _cboGrade.SelectedIndexChanged += CboGrade_SelectedIndexChanged;
+            filterPanel.Controls.Add(CreateFilterGroup("年级:", _cboGrade));
+            _cboClass = new ComboBox { Width = 200, DropDownStyle = ComboBoxStyle.DropDownList };
             _cboClass.SelectedIndexChanged += CboClass_SelectedIndexChanged;
-            filterPanel.Controls.Add(_cboClass);
-            filterPanel.Controls.Add(new Label { Text = "搜索:", AutoSize = true, Location = new Point(165, 9) });
-            _txtSearch = new TextBox { Location = new Point(205, 6), Width = 120 };
-            _txtSearch.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) LoadStudents(); };
-            filterPanel.Controls.Add(_txtSearch);
-            var btnSearch = new Button { Text = "查询", Location = new Point(332, 4), Width = 55 };
+            filterPanel.Controls.Add(CreateFilterGroup("班级:", _cboClass));
+            _cboSex = new ComboBox { Width = 65, DropDownStyle = ComboBoxStyle.DropDownList };
+            _cboSex.Items.AddRange(new object[] { "(全部)", "男", "女" });
+            _cboSex.SelectedIndex = 0;
+            _cboSex.SelectedIndexChanged += CboClass_SelectedIndexChanged;
+            filterPanel.Controls.Add(CreateFilterGroup("性别:", _cboSex));
+            _txtSearch = new TextBox { Width = 120 };
+            _txtSearch.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode != Keys.Enter) return;
+                e.SuppressKeyPress = true;
+                LoadStudents();
+            };
+            var searchGroup = CreateFilterGroup("搜索:", _txtSearch);
+            var btnSearch = new Button { Text = "查询", Width = 55 };
             btnSearch.Click += (s, e) => LoadStudents();
-            filterPanel.Controls.Add(btnSearch);
-            var btnRefresh = new Button { Text = "刷新", Location = new Point(392, 4), Width = 55 };
+            searchGroup.Controls.Add(btnSearch);
+            var btnRefresh = new Button { Text = "刷新", Width = 55 };
             btnRefresh.Click += (s, e) => ReloadStudentsAndClasses();
-            filterPanel.Controls.Add(btnRefresh);
+            searchGroup.Controls.Add(btnRefresh);
+            filterPanel.Controls.Add(searchGroup);
             split.Panel1.Controls.Add(filterPanel);
 
             _gridStudents = new DataGridView
@@ -255,6 +274,7 @@ namespace HH.DataCollection.Wifi
                 return;
             }
             _tasksForm = new FrmSyncTasks();
+            _tasksForm.StudentsSynchronized += (s, args) => ReloadAll();
             _tasksForm.FormClosed += (s, args) => UpdateLockState();
             _tasksForm.Show(this);
             UpdateLockState();
@@ -353,9 +373,75 @@ namespace HH.DataCollection.Wifi
 
         private void ReloadStudentsAndClasses()
         {
+            int? keepGrade = SelectedGrade;
             string keepClass = _cboClass.SelectedItem != null && _cboClass.SelectedIndex > 0
                 ? _cboClass.SelectedItem.ToString() : null;
-            _cboClass.SelectedIndexChanged -= CboClass_SelectedIndexChanged;
+            _loadingFilters = true;
+            try
+            {
+                _cboGrade.Items.Clear();
+                _cboGrade.Items.Add("(全部)");
+                using (var conn = new SQLiteConnection(LocalDb.ConnStr))
+                {
+                    conn.Open();
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "SELECT DISTINCT Grade FROM Student WHERE ProjectID = @p " +
+                                          "AND Grade IS NOT NULL ORDER BY Grade";
+                        cmd.Parameters.AddWithValue("@p", PhysicalProject.Current.ID);
+                        using (var reader = cmd.ExecuteReader())
+                            while (reader.Read())
+                                _cboGrade.Items.Add(new GradeFilterItem(Convert.ToInt32(reader[0])));
+                    }
+                }
+                _cboGrade.SelectedIndex = 0;
+                for (int i = 1; i < _cboGrade.Items.Count; i++)
+                    if (((GradeFilterItem)_cboGrade.Items[i]).Code == keepGrade)
+                    {
+                        _cboGrade.SelectedIndex = i;
+                        break;
+                    }
+                ReloadClasses(keepClass);
+            }
+            finally { _loadingFilters = false; }
+            LoadStudents();
+        }
+
+        private int? SelectedGrade
+        {
+            get
+            {
+                var item = _cboGrade.SelectedItem as GradeFilterItem;
+                return item != null ? (int?)item.Code : null;
+            }
+        }
+
+        private sealed class GradeFilterItem
+        {
+            public readonly int Code;
+            public GradeFilterItem(int code) { Code = code; }
+            public override string ToString()
+            {
+                return GradeHelper.Instance.GetName(Code) ?? Code.ToString();
+            }
+        }
+
+        // 标签与输入框作为一组换行,窄窗口下仍能完整显示所有过滤组件。
+        private static FlowLayoutPanel CreateFilterGroup(string caption, Control input)
+        {
+            var group = new FlowLayoutPanel
+            {
+                AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                WrapContents = false, Margin = Padding.Empty
+            };
+            group.Controls.Add(new Label { Text = caption, AutoSize = true, Margin = new Padding(3, 7, 0, 0) });
+            input.Margin = new Padding(3, 3, 8, 3);
+            group.Controls.Add(input);
+            return group;
+        }
+
+        private void ReloadClasses(string keepClass)
+        {
             _cboClass.Items.Clear();
             _cboClass.Items.Add("(全部)");
             using (var conn = new SQLiteConnection(LocalDb.ConnStr))
@@ -364,7 +450,13 @@ namespace HH.DataCollection.Wifi
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = "SELECT DISTINCT ClassName FROM Student WHERE ProjectID = @p " +
-                                      "AND ClassName IS NOT NULL AND ClassName <> '' ORDER BY ClassName";
+                                      "AND ClassName IS NOT NULL AND ClassName <> ''";
+                    if (SelectedGrade.HasValue)
+                    {
+                        cmd.CommandText += " AND Grade = @g";
+                        cmd.Parameters.AddWithValue("@g", SelectedGrade.Value);
+                    }
+                    cmd.CommandText += " ORDER BY ClassName";
                     cmd.Parameters.AddWithValue("@p", PhysicalProject.Current.ID);
                     using (var reader = cmd.ExecuteReader())
                         while (reader.Read()) _cboClass.Items.Add(Convert.ToString(reader[0]));
@@ -373,13 +465,20 @@ namespace HH.DataCollection.Wifi
             _cboClass.SelectedIndex = 0;
             if (keepClass != null && _cboClass.Items.Contains(keepClass))
                 _cboClass.SelectedItem = keepClass;
-            _cboClass.SelectedIndexChanged += CboClass_SelectedIndexChanged;
+        }
+
+        private void CboGrade_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_loadingFilters) return;
+            _loadingFilters = true;
+            try { ReloadClasses(null); }
+            finally { _loadingFilters = false; }
             LoadStudents();
         }
 
         private void CboClass_SelectedIndexChanged(object sender, EventArgs e)
         {
-            LoadStudents();
+            if (!_loadingFilters) LoadStudents();
         }
 
         private void LoadStudents()
@@ -395,10 +494,20 @@ namespace HH.DataCollection.Wifi
                     string sql = "SELECT StudentID AS 标识, Name AS 姓名, " +
                                  "CASE Sex WHEN 1 THEN '男' WHEN 2 THEN '女' ELSE '' END AS 性别, " +
                                  "Grade, ClassName AS 班级 FROM Student WHERE ProjectID = @p";
+                    if (SelectedGrade.HasValue)
+                    {
+                        sql += " AND Grade = @g";
+                        cmd.Parameters.AddWithValue("@g", SelectedGrade.Value);
+                    }
                     if (_cboClass.SelectedIndex > 0)
                     {
                         sql += " AND ClassName = @c";
                         cmd.Parameters.AddWithValue("@c", _cboClass.SelectedItem.ToString());
+                    }
+                    if (_cboSex.SelectedIndex > 0)
+                    {
+                        sql += " AND Sex = @sex";
+                        cmd.Parameters.AddWithValue("@sex", _cboSex.SelectedIndex);
                     }
                     string keyword = _txtSearch.Text.Trim();
                     if (keyword.Length > 0)
