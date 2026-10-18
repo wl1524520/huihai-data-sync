@@ -63,8 +63,11 @@ internal static class VerifyMainFilters
                 Call(form, "ReloadStudentsAndClasses");
                 Check(Count(form) == 4 && grade.Items.Count == 3 && cls.Items.Count == 3 && sex.SelectedIndex == 0,
                     "Initial filters must contain only the current project's data");
+                var studentCount = Field<ToolStripStatusLabel>(form, "_lblStudents");
+                Check(studentCount.Text == "学生总数 4 人 / 当前显示 4 人", "Student total must exclude other projects");
                 cls.SelectedItem = "1班";
                 Check(Count(form) == 2, "Same class name must match across all grades");
+                Check(studentCount.Text == "学生总数 4 人 / 当前显示 2 人", "Filtering must preserve total and update displayed count");
                 grade.SelectedIndex = 1;
                 Check(grade.Text == "一年级" && cls.SelectedIndex == 0 && Count(form) == 2, "Grade change resets class");
                 sex.SelectedIndex = 2;
@@ -101,6 +104,7 @@ internal static class VerifyMainFilters
                 search.Text = "missing";
                 Call(form, "LoadStudents");
                 Check(Count(form) == 0, "No match returns an empty list");
+                Check(studentCount.Text == "学生总数 3 人 / 当前显示 0 人", "Refresh and empty results must update student counts");
 
                 var filters = (FlowLayoutPanel)grade.Parent.Parent;
                 var split = (SplitContainer)filters.Parent.Parent;
@@ -151,6 +155,7 @@ internal static class VerifyMainFilters
                     }
                     Check(notified && !FrmSyncTasks.IsBusy, "Partially failed student sync must notify completion");
                     Check(Count(form) == 4 && grade.Items.Count == 3, "Sync completion must refresh students and grades");
+                    Check(studentCount.Text == "学生总数 4 人 / 当前显示 4 人", "Sync completion must refresh student counts");
                 }
             }
             Console.WriteLine("Main filter verification passed: " + checks + " checks.");

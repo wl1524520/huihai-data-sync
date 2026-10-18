@@ -25,6 +25,7 @@ namespace HH.DataCollection.Wifi
     {
         private readonly ToolStripStatusLabel _lblSchool;
         private readonly ToolStripStatusLabel _lblProject;
+        private readonly ToolStripStatusLabel _lblStudents;
         private readonly ToolStripStatusLabel _lblPending;
         private readonly ToolStripStatusLabel _lblGate;
         private readonly ToolStripButton _btnCollect;
@@ -92,6 +93,9 @@ namespace HH.DataCollection.Wifi
             statusStrip.Items.Add(_lnkSwitch);
             _lblProject = new ToolStripStatusLabel();
             statusStrip.Items.Add(_lblProject);
+            statusStrip.Items.Add(new ToolStripSeparator());
+            _lblStudents = new ToolStripStatusLabel("学生总数 0 人 / 当前显示 0 人");
+            statusStrip.Items.Add(_lblStudents);
             statusStrip.Items.Add(new ToolStripStatusLabel { Spring = true });
             _lblGate = new ToolStripStatusLabel("请先在 同步设置 中保存接口地址与令牌") { ForeColor = Color.DarkRed };
             statusStrip.Items.Add(_lblGate);
@@ -147,12 +151,22 @@ namespace HH.DataCollection.Wifi
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AutoGenerateColumns = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
+                AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None,
                 RowHeadersVisible = false,
                 BackgroundColor = SystemColors.Window,
             };
+            _gridStudents.RowTemplate.Height = 23;
+            _gridStudents.Columns.AddRange(
+                new DataGridViewTextBoxColumn { Name = "标识", HeaderText = "学籍号", DataPropertyName = "标识", Width = 180 },
+                new DataGridViewTextBoxColumn { Name = "姓名", HeaderText = "姓名", DataPropertyName = "姓名", Width = 100 },
+                new DataGridViewTextBoxColumn { Name = "性别", HeaderText = "性别", DataPropertyName = "性别", Width = 60 },
+                new DataGridViewTextBoxColumn { Name = "年级", HeaderText = "年级", DataPropertyName = "年级", Width = 80 },
+                new DataGridViewTextBoxColumn { Name = "班级", HeaderText = "班级", DataPropertyName = "班级", Width = 200 });
             _gridStudents.SelectionChanged += GridStudents_SelectionChanged;
             split.Panel1.Controls.Add(_gridStudents);
             _gridStudents.BringToFront();
@@ -169,12 +183,15 @@ namespace HH.DataCollection.Wifi
                 ReadOnly = true,
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None,
                 RowHeadersVisible = false,
                 BackgroundColor = SystemColors.Window,
             };
+            _gridScores.RowTemplate.Height = 23;
             split.Panel2.Controls.Add(_gridScores);
             _gridScores.BringToFront();
 
@@ -484,13 +501,16 @@ namespace HH.DataCollection.Wifi
         private void LoadStudents()
         {
             var table = new DataTable();
+            long totalStudents;
             using (var conn = new SQLiteConnection(LocalDb.ConnStr))
             {
                 conn.Open();
                 using (var cmd = conn.CreateCommand())
                 {
-                    // 列头用"标识"而非"学号":平台 test_no 可能是学号也可能是身份证
-                    // (学校 qrcode_field 决定),客户端不区分
+                    // StudentID 承载平台 test_no，界面统一显示为“学籍号”。
+                    cmd.CommandText = "SELECT COUNT(*) FROM Student WHERE ProjectID = @p";
+                    cmd.Parameters.AddWithValue("@p", PhysicalProject.Current.ID);
+                    totalStudents = Convert.ToInt64(cmd.ExecuteScalar());
                     string sql = "SELECT StudentID AS 标识, Name AS 姓名, " +
                                  "CASE Sex WHEN 1 THEN '男' WHEN 2 THEN '女' ELSE '' END AS 性别, " +
                                  "Grade, ClassName AS 班级 FROM Student WHERE ProjectID = @p";
@@ -518,7 +538,6 @@ namespace HH.DataCollection.Wifi
                     }
                     sql += " ORDER BY ClassName, StudentID";
                     cmd.CommandText = sql;
-                    cmd.Parameters.AddWithValue("@p", PhysicalProject.Current.ID);
                     using (var adapter = new SQLiteDataAdapter(cmd))
                         adapter.Fill(table);
                 }
@@ -532,6 +551,7 @@ namespace HH.DataCollection.Wifi
             }
             table.Columns.Remove("Grade");
             _gridStudents.DataSource = table;
+            _lblStudents.Text = string.Format("学生总数 {0} 人 / 当前显示 {1} 人", totalStudents, table.Rows.Count);
         }
 
         private void GridStudents_SelectionChanged(object sender, EventArgs e)
