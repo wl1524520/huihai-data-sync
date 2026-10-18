@@ -17,49 +17,49 @@ internal static class LegacyApiNames
     {
         { "HH.TiYu.BLL.PhysicalProjectBLL:获取学生体测项目", "GetStudentPhysicalProjects" },
         { "HH.TiYu.Model.PhysicalProjectHelper:创建学生体测项目", "CreateStudentPhysicalProjects" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloader:Create下载测试学生Cmd", "CreateDownloadTestStudentsCmd" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloader:下载测试学生", "DownloadTestStudents" }
+        { "HH.TiYu.Device.Wifi.StudentDownloader:Create下载测试学生Cmd", "CreateDownloadTestStudentsCmd" },
+        { "HH.TiYu.Device.Wifi.StudentDownloader:下载测试学生", "DownloadTestStudents" }
     };
     private static readonly Dictionary<string, string> Members = new Dictionary<string, string>
     {
         { "HH.TiYu.Model.AppSettings:StudentRawScoreDB", "StudentScoreDB" },
         { "HH.TiYu.BLL.PhysicalProjectBLL:已移除加载项", "RemovedLoadOptions" },
-        { "HH.Zhongkao.Device.IDSource:未知", "Unknown" },
-        { "HH.Zhongkao.Device.IDSource:按键输入", "KeypadInput" },
-        { "HH.Zhongkao.Device.IDSource:IC卡物理卡号", "IcCardPhysicalNumber" },
-        { "HH.Zhongkao.Device.IDSource:IC卡学号", "IcCardStudentId" },
-        { "HH.Zhongkao.Device.IDSource:扫描枪读出", "BarcodeScanner" },
-        { "HH.Zhongkao.Device.IDSource:身份证读出", "IdentityCardReader" },
-        { "HH.Zhongkao.Device.IDSource:主机已存贮信息中读出", "HostStoredData" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:按键学号输入_学号最大长度", "KeypadStudentIdMaxLength" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:按键学号输入_递增间隔", "KeypadStudentIdIncrement" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:按键学号输入_人工确认", "KeypadStudentIdManualConfirmation" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:输入设备_扫描枪或身份证", "ScannerOrIdentityCardInput" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:输入设备_IC卡物理号", "IcCardPhysicalNumberInput" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:测试结果_确认方式", "ResultConfirmationMode" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:测试结果_写入IC卡", "ResultWriteToIcCard" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:测试结果_LED屏上显示", "ResultDisplayOnLed" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:辅助设备_无线音箱", "WirelessSpeaker" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:辅助设备_红外防枪跑器", "InfraredFalseStartDetector" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:测试限制_测试次数", "TestAttemptLimit" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:测试限制_总时间", "TestTimeLimit" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:测试限制_进行方式", "TestExecutionMode" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:引体向上_难度系数", "PullUpDifficulty" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:地毯式中长跑_跑道长度", "MatRunTrackLength" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:地毯式中长跑_男生测试长度", "MatRunMaleDistance" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:地毯式中长跑_女生测试长度", "MatRunFemaleDistance" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:地毯式中长跑_测试模式", "MatRunTestMode" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:标签式中长跑_圈数设定", "TagRunLapCount" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:标签式中长跑_测试模式", "TagRunTestMode" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:仰卧起坐_躺平模式", "SitUpLyingMode" },
-        { "HH.Zhongkao.Device.Wifi.HostParameters:短跑系列_项目选择", "SprintEventSelection" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:接收成功", "ReceiveSucceeded" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:接收失败", "ReceiveFailed" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:存储成功", "StorageSucceeded" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:存储失败", "StorageFailed" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:存储器已满", "StorageFull" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:清除成功", "ClearSucceeded" },
-        { "HH.Zhongkao.Device.Wifi.StudentDownloadResult:清除失败", "ClearFailed" },
+        { "HH.TiYu.Device.IDSource:未知", "Unknown" },
+        { "HH.TiYu.Device.IDSource:按键输入", "KeypadInput" },
+        { "HH.TiYu.Device.IDSource:IC卡物理卡号", "IcCardPhysicalNumber" },
+        { "HH.TiYu.Device.IDSource:IC卡学号", "IcCardStudentId" },
+        { "HH.TiYu.Device.IDSource:扫描枪读出", "BarcodeScanner" },
+        { "HH.TiYu.Device.IDSource:身份证读出", "IdentityCardReader" },
+        { "HH.TiYu.Device.IDSource:主机已存贮信息中读出", "HostStoredData" },
+        { "HH.TiYu.Device.Wifi.HostParameters:按键学号输入_学号最大长度", "KeypadStudentIdMaxLength" },
+        { "HH.TiYu.Device.Wifi.HostParameters:按键学号输入_递增间隔", "KeypadStudentIdIncrement" },
+        { "HH.TiYu.Device.Wifi.HostParameters:按键学号输入_人工确认", "KeypadStudentIdManualConfirmation" },
+        { "HH.TiYu.Device.Wifi.HostParameters:输入设备_扫描枪或身份证", "ScannerOrIdentityCardInput" },
+        { "HH.TiYu.Device.Wifi.HostParameters:输入设备_IC卡物理号", "IcCardPhysicalNumberInput" },
+        { "HH.TiYu.Device.Wifi.HostParameters:测试结果_确认方式", "ResultConfirmationMode" },
+        { "HH.TiYu.Device.Wifi.HostParameters:测试结果_写入IC卡", "ResultWriteToIcCard" },
+        { "HH.TiYu.Device.Wifi.HostParameters:测试结果_LED屏上显示", "ResultDisplayOnLed" },
+        { "HH.TiYu.Device.Wifi.HostParameters:辅助设备_无线音箱", "WirelessSpeaker" },
+        { "HH.TiYu.Device.Wifi.HostParameters:辅助设备_红外防枪跑器", "InfraredFalseStartDetector" },
+        { "HH.TiYu.Device.Wifi.HostParameters:测试限制_测试次数", "TestAttemptLimit" },
+        { "HH.TiYu.Device.Wifi.HostParameters:测试限制_总时间", "TestTimeLimit" },
+        { "HH.TiYu.Device.Wifi.HostParameters:测试限制_进行方式", "TestExecutionMode" },
+        { "HH.TiYu.Device.Wifi.HostParameters:引体向上_难度系数", "PullUpDifficulty" },
+        { "HH.TiYu.Device.Wifi.HostParameters:地毯式中长跑_跑道长度", "MatRunTrackLength" },
+        { "HH.TiYu.Device.Wifi.HostParameters:地毯式中长跑_男生测试长度", "MatRunMaleDistance" },
+        { "HH.TiYu.Device.Wifi.HostParameters:地毯式中长跑_女生测试长度", "MatRunFemaleDistance" },
+        { "HH.TiYu.Device.Wifi.HostParameters:地毯式中长跑_测试模式", "MatRunTestMode" },
+        { "HH.TiYu.Device.Wifi.HostParameters:标签式中长跑_圈数设定", "TagRunLapCount" },
+        { "HH.TiYu.Device.Wifi.HostParameters:标签式中长跑_测试模式", "TagRunTestMode" },
+        { "HH.TiYu.Device.Wifi.HostParameters:仰卧起坐_躺平模式", "SitUpLyingMode" },
+        { "HH.TiYu.Device.Wifi.HostParameters:短跑系列_项目选择", "SprintEventSelection" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:接收成功", "ReceiveSucceeded" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:接收失败", "ReceiveFailed" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:存储成功", "StorageSucceeded" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:存储失败", "StorageFailed" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:存储器已满", "StorageFull" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:清除成功", "ClearSucceeded" },
+        { "HH.TiYu.Device.Wifi.StudentDownloadResult:清除失败", "ClearFailed" },
         { "HH.TiYu.Model.GradeHelper:一年级", "PrimaryGrade1" },
         { "HH.TiYu.Model.GradeHelper:二年级", "PrimaryGrade2" },
         { "HH.TiYu.Model.GradeHelper:三年级", "PrimaryGrade3" },
@@ -182,6 +182,7 @@ internal static class LegacyApiNames
     }
     private static void RenameType(TypeReference type)
     {
+        if (AssemblyName(type) == "Device") type.Namespace = DeviceTypeName(type.Namespace);
         if (AssemblyName(type) == "LJH.GeneralLibrary" || AssemblyName(type) == "HH.GeneralLibrary")
         {
             if (type.Namespace == "LJH.GeneralLibrary" || type.Namespace.StartsWith("LJH.GeneralLibrary."))
@@ -196,7 +197,7 @@ internal static class LegacyApiNames
         name = null;
         string owner = AssemblyName(type);
         if (owner != "Model" && owner != "BLL" && owner != "Device") return false;
-        string typeName = type.FullName;
+        string typeName = owner == "Device" ? DeviceTypeName(type.FullName) : type.FullName;
         string renamed;
         if (Types.TryGetValue(typeName, out renamed)) typeName = type.Namespace + "." + renamed;
         return Members.TryGetValue(typeName + ":" + oldName, out name);
@@ -206,6 +207,13 @@ internal static class LegacyApiNames
         string name;
         if (TryMemberName(field.DeclaringType, field.Name, out name)) field.Name = name;
     }
+    private static string DeviceTypeName(string name)
+    {
+        const string oldPrefix = "HH.Zhongkao.Device";
+        if (name == oldPrefix || name.StartsWith(oldPrefix + ".", StringComparison.Ordinal))
+            return "HH.TiYu.Device" + name.Substring(oldPrefix.Length);
+        return name;
+    }
     private static void RenameMethod(MethodReference method)
     {
         string name;
@@ -213,8 +221,9 @@ internal static class LegacyApiNames
             TryMemberName(method.DeclaringType, method.Name.Substring(4), out name))
             method.Name = method.Name.Substring(0, 4) + name;
         string owner = AssemblyName(method.DeclaringType);
+        string typeName = owner == "Device" ? DeviceTypeName(method.DeclaringType.FullName) : method.DeclaringType.FullName;
         if ((owner == "Model" || owner == "BLL" || owner == "Device") &&
-            Methods.TryGetValue(method.DeclaringType.FullName + ":" + method.Name, out name)) method.Name = name;
+            Methods.TryGetValue(typeName + ":" + method.Name, out name)) method.Name = name;
     }
     private static int Main(string[] args)
     {

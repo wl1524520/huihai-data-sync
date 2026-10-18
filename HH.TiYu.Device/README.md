@@ -8,7 +8,7 @@
 23 个顶层类型：17 个 Wifi 协议/通信类型，加上 HostStudent、IDSource、
 PhysicalRecord、PhysicalRecordBuffer、PhysicalRecordReceivedArgs、PhysicalRecordReceivedHandler。
 保留 Wifi 搜索、参数、成绩报文解析、实时/批量读取、名单下发，仅使用网络通信。USB／COM 串口构造、端口操作和发送分支已移除；CreateInstance 不再将数字字符串解释为串口号。
-保留原始命名空间 HH.Zhongkao.Device，便于其他恢复程序集兼容调用。
+命名空间统一使用 HH.TiYu.Device 前缀，与项目名称一致；调用方同步使用该命名空间。
 
 不恢复 TSN USB、同方、澳亚特、旧主机与独立读卡器模块。
 StudentDownloader 的 DownloadStudentWithPhoto 及三个照片报文构造方法、照片分包方法均移除；
@@ -30,7 +30,7 @@ UI 已用的普通名单下发继续保留。
 
 成绩、项目代码、性别/标识来源、特殊成绩和时间解析位于 `Wifi/Collection/DataResponse.cs`；主机参数编解码位于 `Wifi/Control/GetParameterResponse.cs`；普通名单和测试名单的编码、分包与传输位于 `Wifi/StudentDownload/StudentDownloader.cs`。
 
-物理目录调整不改变命名空间：记录相关类型及 `HostStudent` 仍为 `HH.Zhongkao.Device`，其余现有 Wifi 类型仍为 `HH.Zhongkao.Device.Wifi`；`HostStudent` 随当前使用它的名单下发流程存放。类名、公开接口、枚举数值和程序集身份保持不变。新增源码须显式加入 `HH.TiYu.Device.csproj` 的 `Compile Include`。
+物理目录调整不改变命名空间：记录相关类型及 `HostStudent` 仍为 `HH.TiYu.Device`，其余现有 Wifi 类型仍为 `HH.TiYu.Device.Wifi`；`HostStudent` 随当前使用它的名单下发流程存放。类名、公开接口、枚举数值和程序集身份保持不变。新增源码须显式加入 `HH.TiYu.Device.csproj` 的 `Compile Include`。
 
 ## 兼容性与边界
 

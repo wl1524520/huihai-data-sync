@@ -19,7 +19,7 @@ using HH.GeneralLibrary.LOG;
 using HH.GeneralLibrary.Net;
 
 
-namespace HH.Zhongkao.Device.Wifi
+namespace HH.TiYu.Device.Wifi
 {
     /// <summary>主机参数，按设备协议原始编码读写；开关和模式保留 byte 值，含义以设备协议为准。</summary>
     public class HostParameters

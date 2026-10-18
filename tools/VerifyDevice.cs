@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using HH.Zhongkao.Device;
-using HH.Zhongkao.Device.Wifi;
+using HH.TiYu.Device;
+using HH.TiYu.Device.Wifi;
 
 class VerifyDevice
 {
@@ -28,7 +28,7 @@ class VerifyDevice
             catch(TargetInvocationException ex){Observe(prefix+"."+p.Name,ex.InnerException.GetType().Name);}
         }
     }
-    static object New(string name,byte[] bytes) {return Activator.CreateInstance(device.GetType("HH.Zhongkao.Device.Wifi."+name),All,null,new object[]{bytes},CultureInfo.InvariantCulture);}
+    static object New(string name,byte[] bytes) {return Activator.CreateInstance(device.GetType("HH.TiYu.Device.Wifi."+name),All,null,new object[]{bytes},CultureInfo.InvariantCulture);}
     static object Call(object o,string name,params object[] args){return o.GetType().GetMethod(name,All).Invoke(o,args);}
     static byte Bcd(int v){return (byte)((v/10)*16+v%10);}
     static int Main(string[] args) {
@@ -67,7 +67,7 @@ class VerifyDevice
         }
         var ps=new HostParameters();
         int pn=0;foreach(var p in typeof(HostParameters).GetProperties())if(p.CanWrite)p.SetValue(ps,p.PropertyType==typeof(byte)?(object)(byte)(++pn):Convert.ChangeType(++pn,p.PropertyType,CultureInfo.InvariantCulture),null);
-        var parameterType=device.GetType("HH.Zhongkao.Device.Wifi.GetParameterResponse");
+        var parameterType=device.GetType("HH.TiYu.Device.Wifi.GetParameterResponse");
         var parameterBytes=(byte[])parameterType.GetMethod("GetBytes",All).Invoke(null,new object[]{ps});
         Observe("parameter.bytes",parameterBytes);
         Properties("parameter.values",ps);

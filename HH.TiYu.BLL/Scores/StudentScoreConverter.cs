@@ -1,6 +1,6 @@
 ﻿using System;
 using HH.TiYu.Model;
-using HH.Zhongkao.Device;
+using HH.TiYu.Device;
 
 namespace HH.TiYu.BLL
 {

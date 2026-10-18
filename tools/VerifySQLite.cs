@@ -18,7 +18,7 @@ using StudentScoreSearchCondition = HH.TiYu.SQLite.StudentRawScoreSearchConditio
 using StudentScoresSavingService = HH.TiYu.SQLite.StudentRawScoresSavingService;
 #endif
 using HH.TiYu.Model;
-using HH.Zhongkao.Device;
+using HH.TiYu.Device;
 using HH.GeneralLibrary.Core.DAL;
 using Mono.Cecil;
 

@@ -19,7 +19,7 @@ using HH.GeneralLibrary.LOG;
 using HH.GeneralLibrary.Net;
 
 
-namespace HH.Zhongkao.Device.Wifi
+namespace HH.TiYu.Device.Wifi
 {
     public class HostWifiReader
     {

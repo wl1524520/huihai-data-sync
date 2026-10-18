@@ -17,8 +17,8 @@ using HH.TiYu.Model.SearchCondition;
 using HH.TiYu.Model.Security;
 using HH.TiYu.UI.Controls;
 using HH.TiYu.UI.UserControl;
-using HH.Zhongkao.Device;
-using HH.Zhongkao.Device.Wifi;
+using HH.TiYu.Device;
+using HH.TiYu.Device.Wifi;
 using HH.GeneralLibrary;
 using HH.GeneralLibrary.Core.DAL;
 using HH.GeneralLibrary.Core.UI;
@@ -869,7 +869,7 @@ namespace HH.TiYu.UI
 		private void UploadStudents(DataGridViewRow row, List<Student> students, int maxStudentPertime)
 		{
 			WifiHostInfo hi = row.Cells["colSer"].Tag as WifiHostInfo;
-			HH.Zhongkao.Device.Wifi.StudentDownloader sd = HH.Zhongkao.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
+			HH.TiYu.Device.Wifi.StudentDownloader sd = HH.TiYu.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
 			sd.Log = chkLog.Checked;
 			row.Tag = sd;
 			row.Cells["colOperation"].Value = "下载学生";
@@ -942,7 +942,7 @@ namespace HH.TiYu.UI
 		private void ClearStudents(DataGridViewRow row)
 		{
 			WifiHostInfo hi = row.Cells["colSer"].Tag as WifiHostInfo;
-			HH.Zhongkao.Device.Wifi.StudentDownloader sd = HH.Zhongkao.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
+			HH.TiYu.Device.Wifi.StudentDownloader sd = HH.TiYu.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
 			sd.Log = chkLog.Checked;
 			row.Tag = sd;
 			row.Cells["colOperation"].Value = "清空学生";

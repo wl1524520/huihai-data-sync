@@ -6,7 +6,7 @@ using System.Threading;
 using HH.TiYu.DAL;
 using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
-using HH.Zhongkao.Device;
+using HH.TiYu.Device;
 using HH.GeneralLibrary.Core.DAL;
 using HH.GeneralLibrary.ExceptionHandling;
 using HH.GeneralLibrary.LOG;

@@ -8,7 +8,7 @@ using HH.TiYu.Model;
 namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
-    /// 同步任务窗(非模态):读取远端信息/下发学生名单/上传成绩一次/自动上传轮询/重置上传标记 + 同步日志。
+    /// 同步任务窗(非模态):读取远端信息/下载学生名单/上传成绩一次/自动上传轮询/重置上传标记 + 同步日志。
     /// 与同步设置窗(FrmSyncSettings)分开,从主界面工具栏进入。
     /// 任务在后台线程执行,日志通过 BeginInvoke 回 UI 线程。
     /// </summary>
@@ -39,7 +39,7 @@ namespace HH.DataCollection.Wifi.Sync
             _btnInfo = new Button { Text = "读取远端信息", Location = new Point(12, 25), Width = 100 };
             _btnInfo.Click += (s, e) => StartTask(TaskReadInfo);
             grpTask.Controls.Add(_btnInfo);
-            _btnStudents = new Button { Text = "下发学生名单", Location = new Point(122, 25), Width = 100 };
+            _btnStudents = new Button { Text = "下载学生名单", Location = new Point(122, 25), Width = 100 };
             _btnStudents.Click += (s, e) => StartTask(TaskSyncStudents, true);
             grpTask.Controls.Add(_btnStudents);
             _btnUploadOnce = new Button { Text = "上传成绩一次", Location = new Point(232, 25), Width = 100 };

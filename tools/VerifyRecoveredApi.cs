@@ -32,7 +32,7 @@ internal static class VerifyRecoveredApi {
             Require(!newContract.Except(oldContract).Any(),"Changed retained contract: "+type.FullName+"\n"+string.Join("\n",newContract.Except(oldContract)));
           }
           if(name=="Device"){
-            Require(newTypes.Any(t=>t.FullName=="HH.Zhongkao.Device.Wifi.HostWifiReader"),"Wifi reader absent");
+            Require(newTypes.Any(t=>t.FullName=="HH.TiYu.Device.Wifi.HostWifiReader"),"Wifi reader absent");
             foreach(var type in newTypes){
              var expected=Contract(oldTypes[type.FullName]).Where(s=>!s.StartsWith("METHOD:DownloadStudentWithPhoto")).ToList();
              Require(expected.SequenceEqual(Contract(type)),"Device retained API incomplete: "+type.FullName);
