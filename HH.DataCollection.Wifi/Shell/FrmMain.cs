@@ -45,6 +45,7 @@ namespace HH.DataCollection.Wifi
         public FrmMain()
         {
             Text = "汇海主机数据采集器";
+            Icon = Icon.ExtractAssociatedIcon(typeof(FrmMain).Assembly.Location);
             StartPosition = FormStartPosition.CenterScreen;
             // 默认尺寸不小于采集窗口(FrmHosts 实测 1315x767)
             ClientSize = new Size(1340, 800);
