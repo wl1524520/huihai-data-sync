@@ -88,13 +88,11 @@ namespace HH.TiYu.UI
 
 		private Label lblCount;
 
-		private ToolStripSeparator toolStripSeparator3;
 
 		private ToolStripMenuItem testCommunicationQualityMenuItem;
 
 		private ToolStripSeparator toolStripSeparator4;
 
-		private ToolStripMenuItem addUsbHostMenuItem;
 
 		private ToolStripMenuItem stopRealtimeCollectionMenuItem;
 
@@ -1220,19 +1218,6 @@ namespace HH.TiYu.UI
 			frmP.Show();
 		}
 
-		private void AddUsbHostMenuItem_Click(object sender, EventArgs e)
-		{
-			FrmAddHost_USB frmAddHost_USB = new FrmAddHost_USB();
-			if (frmAddHost_USB.ShowDialog() == DialogResult.OK)
-			{
-				ShowHostInfo(new WifiHostInfo
-				{
-					IP = frmAddHost_USB.Commport.ToString(),
-					HostID = frmAddHost_USB.HostID,
-					SerialNumber = "COM" + frmAddHost_USB.Commport
-				});
-			}
-		}
 
 		protected override void Dispose(bool disposing)
 		{
@@ -1262,8 +1247,6 @@ namespace HH.TiYu.UI
 			this.colCheck = new System.Windows.Forms.DataGridViewCheckBoxColumn();
 			this.colOperation = new System.Windows.Forms.DataGridViewLinkColumn();
 			this.contextMenuStrip2 = new System.Windows.Forms.ContextMenuStrip(this.components);
-			this.addUsbHostMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
 			this.startRealtimeCollectionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.stopRealtimeCollectionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.collectAllDataMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -1355,18 +1338,13 @@ namespace HH.TiYu.UI
 			this.colOperation.ReadOnly = true;
 			this.colOperation.Resizable = System.Windows.Forms.DataGridViewTriState.True;
 			this.colOperation.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[14]
+			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[12]
 			{
-				this.addUsbHostMenuItem, this.toolStripSeparator3, this.startRealtimeCollectionMenuItem, this.stopRealtimeCollectionMenuItem, this.collectAllDataMenuItem, this.advancedBatchCollectionMenuItem, this.toolStripSeparator1, this.downloadStudentsMenuItem, this.clearStudentsMenuItem,
+				this.startRealtimeCollectionMenuItem, this.stopRealtimeCollectionMenuItem, this.collectAllDataMenuItem, this.advancedBatchCollectionMenuItem, this.toolStripSeparator1, this.downloadStudentsMenuItem, this.clearStudentsMenuItem,
 				this.toolStripSeparator2, this.syncTimeMenuItem, this.testCommunicationQualityMenuItem, this.shutdownHostMenuItem, this.toolStripSeparator4
 			});
 			this.contextMenuStrip2.Name = "contextMenuStrip1";
 			resources.ApplyResources(this.contextMenuStrip2, "contextMenuStrip2");
-			this.addUsbHostMenuItem.Name = "addUsbHostMenuItem";
-			resources.ApplyResources(this.addUsbHostMenuItem, "addUsbHostMenuItem");
-			this.addUsbHostMenuItem.Click += new System.EventHandler(AddUsbHostMenuItem_Click);
-			this.toolStripSeparator3.Name = "toolStripSeparator3";
-			resources.ApplyResources(this.toolStripSeparator3, "toolStripSeparator3");
 			this.startRealtimeCollectionMenuItem.Name = "startRealtimeCollectionMenuItem";
 			resources.ApplyResources(this.startRealtimeCollectionMenuItem, "startRealtimeCollectionMenuItem");
 			this.startRealtimeCollectionMenuItem.Click += new System.EventHandler(StartRealtimeCollectionMenuItem_Click);

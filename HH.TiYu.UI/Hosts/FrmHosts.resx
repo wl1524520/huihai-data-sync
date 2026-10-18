@@ -1372,12 +1372,6 @@
   <data name="colSer.Width" type="System.Int32, mscorlib">
     <value>23</value>
   </data>
-  <data name="&gt;&gt;toolStripSeparator3.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ToolStripSeparator, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="&gt;&gt;toolStripSeparator3.Name" xml:space="preserve">
-    <value>toolStripSeparator3</value>
-  </data>
   <data name="&gt;&gt;colCheck.Name" xml:space="preserve">
     <value>colCheck</value>
   </data>
@@ -1425,12 +1419,6 @@
   </data>
   <data name="&gt;&gt;panel1.Parent" xml:space="preserve">
     <value>$this</value>
-  </data>
-  <data name="&gt;&gt;addUsbHostMenuItem.Name" xml:space="preserve">
-    <value>addUsbHostMenuItem</value>
-  </data>
-  <data name="&gt;&gt;addUsbHostMenuItem.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="collectDataByStudentIdMenuItem.Text" xml:space="preserve">
     <value>指定学号的数据...</value>
@@ -1588,12 +1576,6 @@
   <data name="downloadStudentsMenuItem.Text" xml:space="preserve">
     <value>下载学生名单</value>
   </data>
-  <data name="addUsbHostMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>172, 22</value>
-  </data>
-  <data name="addUsbHostMenuItem.Text" xml:space="preserve">
-    <value>增加主机_USB</value>
-  </data>
   <data name="btnRevert.TabIndex" type="System.Int32, mscorlib">
     <value>153</value>
   </data>
@@ -1665,9 +1647,6 @@
   </data>
   <data name="&gt;&gt;$this.Type" xml:space="preserve">
     <value>System.Windows.Forms.Form, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="toolStripSeparator3.Size" type="System.Drawing.Size, System.Drawing">
-    <value>169, 6</value>
   </data>
   <data name="&gt;&gt;btnSearch.Type" xml:space="preserve">
     <value>System.Windows.Forms.Button, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

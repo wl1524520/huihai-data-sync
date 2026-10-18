@@ -19,7 +19,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Conversion\BCDConverter.cs" />
-    <Compile Include="Communication\Serial\CommPort.cs" />
     <Compile Include="DataAccess\CommandResult.cs" />
     <Compile Include="DataAccess\DALConfig.cs" />
     <Compile Include="DataAccess\IEntity.cs" />
@@ -45,7 +44,6 @@
     <Compile Include="Communication\Network\NetTool.cs" />
     <Compile Include="Conversion\SEBinaryConverter.cs" />
     <Compile Include="Conversion\StringHelper.cs" />
-    <Compile Include="UI\Controls\ComPortComboBox.cs" />
     <Compile Include="UI\Controls\DBCTextBox.cs" />
     <Compile Include="UI\Controls\IntergerTextBox.cs" />
     <Compile Include="UI\Controls\PercentageProgressBar.cs" />

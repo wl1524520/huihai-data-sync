@@ -6,20 +6,20 @@
 
 | 目录 | 职责与修改入口 |
 | --- | --- |
-| `Hosts/` | 主机发现与管理入口 `FrmHosts`、原 Wifi 协议的串口接入窗口 `FrmAddHost_USB` |
+| `Hosts/` | 主机发现与管理入口 `FrmHosts` |
 | `Collection/` | 成绩展示、入队、转换与导出 `FrmScoreCollect_Wifi`，统计窗口及日期、序列号、学号范围对话框 |
 | `StudentDownload/` | 学生筛选和名单下发参数窗口 `FrmStudentDownloadPara` |
 | `Selection/` | 学校、年级、班级选择控件 |
 | `Shared/` | 多个主机操作流程共用的进度对话框 `FrmProcessing` |
 | `Properties/` | 程序集元数据 |
 
-保留 12 个业务类型：9 个窗口、3 个控件。按界面功能组织代码，窗体及其资源就近维护；共享选择组件集中在 `Selection`，跨流程的通用对话框放入 `Shared`。新增源码优先归入对应功能目录，不预建空目录，也不再区分内容重叠的 `Controls` 与 `UserControl` 物理目录。
+保留 11 个业务类型：8 个窗口、3 个控件。按界面功能组织代码，窗体及其资源就近维护；共享选择组件集中在 `Selection`，跨流程的通用对话框放入 `Shared`。新增源码优先归入对应功能目录，不预建空目录，也不再区分内容重叠的 `Controls` 与 `UserControl` 物理目录。
 
-`FrmHosts` 仍协调集中/实时采集、名单下发、时间同步、通信检测和主机关闭；目录分组不拆分其业务实现。`FrmAddHost_USB` 是原 Wifi 协议的串口接入入口，不是 TSN USB 协议。
+`FrmHosts` 仍协调集中/实时采集、名单下发、时间同步、通信检测和主机关闭；目录分组不拆分其业务实现。USB／COM 串口接入窗口、右键菜单及底层通信分支已移除，仅支持 Wifi 网络主机。
 
 文件移动不改变命名空间：窗体仍为 `HH.TiYu.UI`；`ClassNameCombox` 仍为 `HH.TiYu.UI.UserControl`；`FacilityComboBox`、`GradeComboBox` 仍为 `HH.TiYu.UI.Controls`。保留现有类名（包括 `FrmScoreCollectStatitics`、`ClassNameCombox`）和程序集身份，调用方仍可使用 `new FrmHosts()`。新增源码须显式加入 `HH.TiYu.UI.csproj` 的 `Compile Include`。
 
-三份资源与所属窗体同目录，分别为 `Hosts/FrmHosts.resx`、`Collection/FrmScoreCollect_Wifi.resx`、`Shared/FrmProcessing.resx`，并通过项目中的 `DependentUpon` 关联对应 `.cs`。嵌入资源逻辑名称仍分别为 `HH.TiYu.UI.FrmHosts.resources`、`HH.TiYu.UI.FrmScoreCollect_Wifi.resources`、`HH.TiYu.UI.FrmProcessing.resources`，与现有 `ComponentResourceManager` 的类型保持匹配；资源文件内容不变。
+三份资源与所属窗体同目录，分别为 `Hosts/FrmHosts.resx`、`Collection/FrmScoreCollect_Wifi.resx`、`Shared/FrmProcessing.resx`，并通过项目中的 `DependentUpon` 关联对应 `.cs`。嵌入资源逻辑名称仍分别为 `HH.TiYu.UI.FrmHosts.resources`、`HH.TiYu.UI.FrmScoreCollect_Wifi.resources`、`HH.TiYu.UI.FrmProcessing.resources`，与现有 `ComponentResourceManager` 的类型保持匹配；主机窗口资源已清除 USB 菜单及其分隔线。
 
 当前窗体的布局和事件关联已在各自 `.cs` 的 `InitializeComponent` 中恢复，没有独立 `.Designer.cs`；本次目录整理不拆分设计器代码。其他窗口不需要嵌入未被读取的旧资源，也未恢复程序集的全局图片、报表或旧平台资源。
 
@@ -51,9 +51,9 @@
 .\tools\VerifyUI.ps1 -Configuration Release
 ```
 
-验证工具在独立目录创建、释放全部 9 个窗口和 3 个控件，按名称清单验证保留类型齐全、旧分组窗体和区域控件不存在、只保留 3 份嵌入资源、主机窗口中文标题与 MDI 布局、右键菜单条目数、成绩表列，以及照片入口和旧学生测试菜单入口已删除。测试不调用 Show/ShowDialog，不进行设备或网络通信；数据库查询只能访问测试目录，不使用生产数据。
+验证工具在独立目录创建、释放全部 8 个窗口和 3 个控件，按名称清单验证保留类型齐全、USB 窗口和旧分组窗体及区域控件不存在、只保留 3 份嵌入资源、主机窗口中文标题与 MDI 布局、右键菜单条目数、成绩表列，以及 USB、照片和旧学生测试菜单入口已删除。测试不调用 Show/ShowDialog，不进行设备或网络通信；数据库查询只能访问测试目录，不使用生产数据。
 
-这验证了构造、资源加载与依赖兼容；尚未验证实际显示外观、多窗口交互、Wifi/串口通信、参数读写、真实设备成绩及名单下发。
+这验证了构造、资源加载与依赖兼容；尚未验证实际显示外观、多窗口交互、Wifi 通信、参数读写、真实设备成绩及名单下发。
 
 ## 来源与证据
 

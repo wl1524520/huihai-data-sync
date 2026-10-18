@@ -7,7 +7,7 @@
 
 23 个顶层类型：17 个 Wifi 协议/通信类型，加上 HostStudent、IDSource、
 PhysicalRecord、PhysicalRecordBuffer、PhysicalRecordReceivedArgs、PhysicalRecordReceivedHandler。
-保留 Wifi 搜索、参数、成绩报文解析、实时/批量读取、名单下发和必要串口入口。
+保留 Wifi 搜索、参数、成绩报文解析、实时/批量读取、名单下发，仅使用网络通信。USB／COM 串口构造、端口操作和发送分支已移除；CreateInstance 不再将数字字符串解释为串口号。
 保留原始命名空间 HH.Zhongkao.Device，便于其他恢复程序集兼容调用。
 
 不恢复 TSN USB、同方、澳亚特、旧主机与独立读卡器模块。

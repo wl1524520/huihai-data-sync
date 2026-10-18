@@ -37,8 +37,6 @@ namespace HH.Zhongkao.Device.Wifi
 
         private HHSocket _Socket = null;
 
-        private CommPort _Commport = null;
-
         private object _DataLocker = new object();
 
         private List<byte> _RecievedData = new List<byte>();
@@ -106,11 +104,6 @@ namespace HH.Zhongkao.Device.Wifi
 
         public static HostWifiReader CreateInstance(byte hostID, string com, string localIP, string hostSN)
         {
-            byte result = 0;
-            if (byte.TryParse(com, out result))
-            {
-                return new HostWifiReader(hostID, hostSN, result);
-            }
             return new HostWifiReader(hostID, hostSN, com, 10000, localIP);
         }
 
@@ -123,16 +116,8 @@ namespace HH.Zhongkao.Device.Wifi
             LocalIP = localIP;
         }
 
-        private HostWifiReader(byte hostID, string hostsn, byte commport, int baud = 460800)
-        {
-            HostID = hostID;
-            HostSN = hostsn;
-            IP = commport.ToString();
-            _Commport = new CommPort(commport, baud);
-            _Commport.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
-        }
 
-        private void Commport_OnDataArrivedEvent(object sender, byte[] data)
+        private void Socket_OnDataArrivedEvent(object sender, byte[] data)
         {
             int lastSN = 0;
             _LastActiveTime = DateTime.Now;
@@ -276,29 +261,17 @@ namespace HH.Zhongkao.Device.Wifi
 
         private void OpenDevice()
         {
-            if (_Commport != null)
-            {
-                if (!_Commport.PortOpened)
-                {
-                    _Commport.Open();
-                }
-                if (_Commport.PortOpened)
-                {
-                    _Commport.DtrEnable = false;
-                }
-                return;
-            }
             if (_Socket == null)
             {
                 _Socket = new HHSocket(IP, Port, ProtocolType.Udp);
-                _Socket.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
+                _Socket.OnDataArrivedEvent += Socket_OnDataArrivedEvent;
             }
             if (!_Socket.IsConnected || _State == 1)
             {
-                _Socket.OnDataArrivedEvent -= Commport_OnDataArrivedEvent;
+                _Socket.OnDataArrivedEvent -= Socket_OnDataArrivedEvent;
                 _Socket.Close();
                 _Socket = new HHSocket(IP, Port, ProtocolType.Udp);
-                _Socket.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
+                _Socket.OnDataArrivedEvent += Socket_OnDataArrivedEvent;
                 _Socket.Open();
             }
         }
@@ -333,10 +306,6 @@ namespace HH.Zhongkao.Device.Wifi
             if (_Socket != null)
             {
                 _Socket.SendData(list.ToArray());
-            }
-            if (_Commport != null)
-            {
-                _Commport.SendData(list.ToArray());
             }
         }
 
@@ -508,11 +477,6 @@ namespace HH.Zhongkao.Device.Wifi
             {
                 _Socket.Close();
                 _Socket = null;
-            }
-            if (_Commport != null)
-            {
-                _Commport.Close();
-                _Commport = null;
             }
             _IsCompleted = false;
             _LastSN = 0;

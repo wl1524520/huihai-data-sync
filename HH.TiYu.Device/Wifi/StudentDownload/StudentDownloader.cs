@@ -33,8 +33,6 @@ namespace HH.Zhongkao.Device.Wifi
 
         private HHSocket _Socket = null;
 
-        private CommPort _Commport = null;
-
         private object _CommandLocker = new object();
 
         private StudentDownloadCommand _WaitingCmd = null;
@@ -61,11 +59,6 @@ namespace HH.Zhongkao.Device.Wifi
 
         public static StudentDownloader CreateInstance(byte hostID, string com, string localIP)
         {
-            byte result = 0;
-            if (byte.TryParse(com, out result))
-            {
-                return new StudentDownloader(hostID, result);
-            }
             return new StudentDownloader(hostID, com, 10000, localIP);
         }
 
@@ -77,15 +70,8 @@ namespace HH.Zhongkao.Device.Wifi
             LocalIP = localIP;
         }
 
-        private StudentDownloader(byte hostID, byte commport, int baud = 460800)
-        {
-            HostID = hostID;
-            IP = commport.ToString();
-            _Commport = new CommPort(commport, baud);
-            _Commport.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
-        }
 
-        private void Commport_OnDataArrivedEvent(object sender, byte[] data)
+        private void Socket_OnDataArrivedEvent(object sender, byte[] data)
         {
             lock (_DataLocker)
             {
@@ -348,10 +334,6 @@ namespace HH.Zhongkao.Device.Wifi
                     {
                         _Socket.SendData(array);
                     }
-                    if (_Commport != null)
-                    {
-                        _Commport.SendData(array);
-                    }
                     if (Log)
                     {
                         FileLog.Log("下载学生" + HostID, string.Format("{0} {1}", "发送数据", HexStringConverter.HexToString(array, " ")));
@@ -363,29 +345,17 @@ namespace HH.Zhongkao.Device.Wifi
 
         private void OpenDevice()
         {
-            if (_Commport != null)
-            {
-                if (!_Commport.PortOpened)
-                {
-                    _Commport.Open();
-                }
-                if (_Commport.PortOpened)
-                {
-                    _Commport.DtrEnable = false;
-                }
-                return;
-            }
             if (_Socket == null)
             {
                 _Socket = new HHSocket(IP, Port, ProtocolType.Udp);
-                _Socket.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
+                _Socket.OnDataArrivedEvent += Socket_OnDataArrivedEvent;
             }
             if (!_Socket.IsConnected)
             {
-                _Socket.OnDataArrivedEvent -= Commport_OnDataArrivedEvent;
+                _Socket.OnDataArrivedEvent -= Socket_OnDataArrivedEvent;
                 _Socket.Close();
                 _Socket = new HHSocket(IP, Port, ProtocolType.Udp);
-                _Socket.OnDataArrivedEvent += Commport_OnDataArrivedEvent;
+                _Socket.OnDataArrivedEvent += Socket_OnDataArrivedEvent;
                 _Socket.Open();
             }
         }
@@ -460,11 +430,6 @@ namespace HH.Zhongkao.Device.Wifi
             {
                 _Socket.Close();
                 _Socket = null;
-            }
-            if (_Commport != null)
-            {
-                _Commport.Close();
-                _Commport = null;
             }
             _IsWorking = false;
             lock (_ReadersLocker)
