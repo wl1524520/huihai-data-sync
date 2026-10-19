@@ -77,24 +77,26 @@ namespace HH.DataCollection.Wifi.Sync
         /// <summary>上传一轮:取当前项目全部未标记成绩,分批上传。返回 (成功条数, 失败条数)。</summary>
         public Tuple<int, int> RunOnce(Action<string> report, Func<bool> stopRequested)
         {
-            var info = _api.GetSyncInfo(true);
+            return RunOnce(report, stopRequested, null);
+        }
+
+        /// <summary>进度为本轮固定数据的(成功数,失败数,总数),只在本地标记提交后计入成功。</summary>
+        public Tuple<int, int> RunOnce(Action<string> report, Func<bool> stopRequested, Action<int, int, int> progress)
+        {
+            var info = ReadRemoteInfo();
             report(info.ToString());
-            // 平台项目变更检测(文档 §2/§8:年度切换应暂停同步核对):
-            // 保存设置时记录的远端项目与当前 info 不一致 → 停止本轮,避免成绩发进新项目而本地底账在旧项目
             var conf = SyncConfig.Load();
-            if (!string.IsNullOrWhiteSpace(conf.RemoteProjectId) && conf.RemoteProjectId != info.ProjectId)
-                throw new SyncFatalException(string.Format(
-                    "平台当前项目已切换(原:{0}/ID:{1} → 现:{2}/ID:{3}),停止本轮;请核对后重新保存同步设置",
-                    conf.RemoteProjectName, conf.RemoteProjectId, info.ProjectName, info.ProjectId));
             if (string.IsNullOrWhiteSpace(conf.RemoteProjectId))
                 report("提示:尚未记录远端项目基线(旧版设置),重新保存一次同步设置即可启用项目变更检测");
             report("本地项目:" + _projectID);
 
+            // 固定本轮数据快照。预校验隔离后确定分母，新采集的成绩留到下一轮。
             var pending = GetPendingScores();
             report("待上传成绩 " + pending.Count + " 条");
             IsolateInvalidRows(pending, report);
             ReportUnknownIdentifiers(pending, report);
             int sent = 0, failed = 0;
+            if (progress != null) progress(sent, failed, pending.Count);
             for (int offset = 0; offset < pending.Count && !stopRequested(); offset += BatchSize)
             {
                 var batch = pending.GetRange(offset, Math.Min(BatchSize, pending.Count - offset));
@@ -106,23 +108,22 @@ namespace HH.DataCollection.Wifi.Sync
                 }
                 catch (SyncAuthException)
                 {
+                    failed += batch.Count;
                     throw; // 令牌失效:停止本轮
                 }
                 catch (SyncFatalException)
                 {
+                    failed += batch.Count;
                     throw; // 学校/项目不存在:停止本轮
                 }
                 catch (SyncBatchRejectedException ex)
                 {
-                    // 部分明细保存失败(success=false)或字段验证失败(422):
-                    // 本批不标记,停止本轮;重启后从未标记数据原样补传(文档 §4/§7)
                     failed += batch.Count;
                     report("服务端拒收,停止本轮:" + ex.Message);
                     break;
                 }
                 catch (SyncRateLimitedException ex)
                 {
-                    // 429 退避后仍未缓解:停止本轮,避免继续打后续批次加剧限流(文档 §7)
                     failed += batch.Count;
                     report(ex.Message);
                     break;
@@ -133,10 +134,34 @@ namespace HH.DataCollection.Wifi.Sync
                     failed += batch.Count;
                     report("批次上传失败(跳过,下轮重传):" + ex.Message);
                 }
-                report(string.Format("[{0:0.00}%] {1} of {2}", (sent + failed) * 100.0 / pending.Count, sent + failed, pending.Count));
+                catch
+                {
+                    // 包含本地标记失败：不能把尚未提交成功的批次计作已上传。
+                    failed += batch.Count;
+                    throw;
+                }
+                finally
+                {
+                    if (progress != null) progress(sent, failed, pending.Count);
+                }
+                report(string.Format("[{0:0.00}%] 成功 {1} / {2}", sent * 100.0 / pending.Count, sent, pending.Count));
             }
-            report(string.Format("本轮上传完成:成功 {0} 条,失败 {1} 条", sent, failed));
+            report(string.Format("本轮上传结束:成功 {0} 条,失败 {1} 条,未处理 {2} 条", sent, failed, pending.Count - sent - failed));
             return Tuple.Create(sent, failed);
+        }
+
+        /// <summary>只读取和校验远端目标，不改写保存设置时记录的项目基线。</summary>
+        internal SyncInfo ReadRemoteInfo()
+        {
+            var info = _api.GetSyncInfo(true);
+            // 平台项目变更检测(文档 §2/§8:年度切换应暂停同步核对):
+            // 保存设置时记录的远端项目与当前 info 不一致 → 停止本轮,避免成绩发进新项目而本地底账在旧项目
+            var conf = SyncConfig.Load();
+            if (!string.IsNullOrWhiteSpace(conf.RemoteProjectId) && conf.RemoteProjectId != info.ProjectId)
+                throw new SyncFatalException(string.Format(
+                    "平台当前项目已切换(原:{0}/ID:{1} → 现:{2}/ID:{3}),停止本轮;请核对后重新保存同步设置",
+                    conf.RemoteProjectName, conf.RemoteProjectId, info.ProjectName, info.ProjectId));
+            return info;
         }
 
         /// <summary>

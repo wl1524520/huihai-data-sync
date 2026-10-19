@@ -16,10 +16,10 @@ namespace HH.DataCollection.Wifi
 {
     /// <summary>
     /// 主界面,布局参考汇海体测软件 FrmMain:
-    ///   顶部工具栏:开始采集 / 下载名单 / 同步任务 / 同步设置(图标提取自原软件资源);
+    ///   顶部工具栏:开始采集 / 下载名单 / 上传成绩 / 同步设置(图标提取自原软件资源);
     ///   工具栏下方为全宽学生筛选区,再下方左右分栏显示学生与原始成绩(测试时间倒序);
     ///   底部状态栏:操作员 + "切换项目"链接 + 当前项目名 + 待上传/已上传计数。
-    /// 采集、名单下载和同步任务均为非模态,可同时使用。
+    /// 采集、名单下载和成绩上传均为非模态,可同时使用。
     /// </summary>
     public class FrmMain : Form
     {
@@ -74,7 +74,7 @@ namespace HH.DataCollection.Wifi
             };
             _btnDownload.Click += BtnDownload_Click;
             toolStrip.Items.Add(_btnDownload);
-            _btnTasks = new ToolStripButton("同步任务", LoadIcon("upload"))
+            _btnTasks = new ToolStripButton("上传成绩", LoadIcon("upload"))
             {
                 TextImageRelation = TextImageRelation.ImageAboveText,
                 TextAlign = ContentAlignment.BottomCenter,
@@ -253,6 +253,13 @@ namespace HH.DataCollection.Wifi
         private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (e.CloseReason != CloseReason.UserClosing) return;
+            if (FrmSyncTasks.IsBusy)
+            {
+                e.Cancel = true;
+                MessageBox.Show(this, "上传成绩窗口正在准备或上传，请等待完成或停止自动上传后再退出。",
+                    "任务进行中", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             // 采集窗不挂主界面为所有者,主窗关闭时它可能还在收成绩;退出前必须确认,
             // 否则未落盘的成绩只剩程序退出时的短暂 flush 窗口
             if (_collectForm != null && !_collectForm.IsDisposed)
@@ -274,7 +281,7 @@ namespace HH.DataCollection.Wifi
 
         private void BtnCollect_Click(object sender, EventArgs e)
         {
-            // 非模态:采集期间主界面仍可操作(浏览学生/成绩、跑同步任务),
+            // 非模态:采集期间主界面仍可操作(浏览学生/成绩、上传成绩),
             // 但采集窗口打开期间禁用"切换项目"与"同步设置"(采集落库按当前项目,换配置会影响下一轮同步)
             if (_collectForm != null && !_collectForm.IsDisposed)
             {
@@ -305,7 +312,7 @@ namespace HH.DataCollection.Wifi
         }
 
         /// <summary>
-        /// 采集窗或同步任务窗任一打开时,禁用"切换项目"与"同步设置"
+        /// 采集窗或上传成绩窗任一打开时,禁用"切换项目"与"同步设置"
         /// (采集落库按当前项目;设置保存影响下一轮同步)。
         /// </summary>
         private void UpdateLockState()
@@ -375,10 +382,16 @@ namespace HH.DataCollection.Wifi
             // 单例:已打开则激活
             if (_tasksForm != null && !_tasksForm.IsDisposed)
             {
+                if (_tasksForm.WindowState == FormWindowState.Minimized) _tasksForm.WindowState = FormWindowState.Normal;
                 _tasksForm.Activate();
                 return;
             }
             _tasksForm = new FrmSyncTasks();
+            _tasksForm.ScoresUploaded += (s, args) =>
+            {
+                RefreshPendingCount();
+                LoadScores();
+            };
             _tasksForm.BusyStateChanged += (s, args) =>
             {
                 RefreshResetState();
@@ -395,7 +408,7 @@ namespace HH.DataCollection.Wifi
                 UpdateLockState();
                 RefreshResetState();
             };
-            _tasksForm.Show(this);
+            _tasksForm.Show();
             UpdateLockState();
         }
 
@@ -416,7 +429,7 @@ namespace HH.DataCollection.Wifi
             // 确认框会处理窗口消息，执行前再次检查任务及项目状态。
             if (FrmSyncTasks.IsBusy || PhysicalProject.Current == null || PhysicalProject.Current.ID != projectID)
             {
-                MessageBox.Show(this, "同步任务或当前项目状态已变化，请稍后重试。", "无法重置上传标记",
+                MessageBox.Show(this, "上传任务或当前项目状态已变化，请稍后重试。", "无法重置上传标记",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -435,7 +448,7 @@ namespace HH.DataCollection.Wifi
 
         private int ResetUploadedScores()
         {
-            if (FrmSyncTasks.IsBusy) throw new InvalidOperationException("同步任务正在执行，请先停止后再重置。");
+            if (FrmSyncTasks.IsBusy) throw new InvalidOperationException("上传任务正在执行，请先停止后再重置。");
             int count = ScoreUpload.ResetUploaded(PhysicalProject.Current.ID);
             RefreshPendingCount();
             LoadScores();
@@ -449,7 +462,7 @@ namespace HH.DataCollection.Wifi
         {
             if (FrmSyncTasks.IsBusy)
             {
-                MessageBox.Show("同步任务正在执行,请先停止后再切换项目。", "任务进行中",
+                MessageBox.Show("上传任务正在执行,请先停止后再切换项目。", "任务进行中",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -490,7 +503,7 @@ namespace HH.DataCollection.Wifi
         // ===== 数据加载 =====
 
         /// <summary>
-        /// 门禁:同步设置完整(保存时已通过 /sync/info 拿到学校绑定)才允许开始采集/打开同步任务;
+        /// 门禁:同步设置完整(保存时已通过 /sync/info 拿到学校绑定)才允许开始采集/打开上传成绩;
         /// 不做联网验证,只看本地配置是否通过完整校验(断网也应能采集)。
         /// </summary>
         private void RefreshGate()
