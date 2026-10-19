@@ -16,10 +16,10 @@ namespace HH.DataCollection.Wifi
 {
     /// <summary>
     /// 主界面,布局参考汇海体测软件 FrmMain:
-    ///   顶部工具栏:开始采集 / 同步任务 / 同步设置(图标提取自原软件资源);
+    ///   顶部工具栏:开始采集 / 下载名单 / 同步任务 / 同步设置(图标提取自原软件资源);
     ///   工具栏下方为全宽学生筛选区,再下方左右分栏显示学生与原始成绩(测试时间倒序);
     ///   底部状态栏:操作员 + "切换项目"链接 + 当前项目名 + 待上传/已上传计数。
-    /// 采集(FrmHosts)为模态,打开期间本窗体不可操作;同步任务窗非模态,任务运行中禁止切换项目。
+    /// 采集、名单下载和同步任务均为非模态,可同时使用。
     /// </summary>
     public class FrmMain : Form
     {
@@ -29,10 +29,12 @@ namespace HH.DataCollection.Wifi
         private readonly ToolStripStatusLabel _lblPending;
         private readonly ToolStripStatusLabel _lblGate;
         private readonly ToolStripButton _btnCollect;
+        private readonly ToolStripButton _btnDownload;
         private readonly ToolStripButton _btnTasks;
         private readonly ToolStripButton _btnSettings;
         private readonly ToolStripStatusLabel _lnkSwitch;
         private Form _collectForm;
+        private FrmStudentDownload _downloadForm;
         private readonly ComboBox _cboGrade;
         private readonly ComboBox _cboClass;
         private readonly ComboBox _cboSex;
@@ -63,6 +65,14 @@ namespace HH.DataCollection.Wifi
             };
             _btnCollect.Click += BtnCollect_Click;
             toolStrip.Items.Add(_btnCollect);
+            _btnDownload = new ToolStripButton("下载名单", LoadIcon("download"))
+            {
+                TextImageRelation = TextImageRelation.ImageAboveText,
+                TextAlign = ContentAlignment.BottomCenter,
+                ImageAlign = ContentAlignment.TopCenter,
+            };
+            _btnDownload.Click += BtnDownload_Click;
+            toolStrip.Items.Add(_btnDownload);
             _btnTasks = new ToolStripButton("同步任务", LoadIcon("upload"))
             {
                 TextImageRelation = TextImageRelation.ImageAboveText,
@@ -254,13 +264,6 @@ namespace HH.DataCollection.Wifi
                 _collectForm.Activate();
                 return;
             }
-            // 同步任务(尤其下发名单)会改写内存学生名单,与采集下发主机读同一份数据,错峰进行
-            if (FrmSyncTasks.IsBusy)
-            {
-                MessageBox.Show("同步任务正在执行,请等待任务结束后再开始采集。", "任务进行中",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
             _collectForm = new FrmHosts { StartPosition = FormStartPosition.CenterScreen };
             _collectForm.FormClosed += (s, args) =>
             {
@@ -297,6 +300,59 @@ namespace HH.DataCollection.Wifi
         }
 
         private FrmSyncTasks _tasksForm;
+
+        private void BtnDownload_Click(object sender, EventArgs e)
+        {
+            if (_downloadForm != null && !_downloadForm.IsDisposed)
+            {
+                _downloadForm.Activate();
+                return;
+            }
+            try
+            {
+                var config = SyncConfig.Load();
+                config.Validate();
+                OpenStudentDownload(new FrmStudentDownload(config));
+            }
+            catch (Exception ex)
+            {
+                RefreshGate();
+                MessageBox.Show(ex.Message, "无法下载名单", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void OpenStudentDownload(FrmStudentDownload dialog)
+        {
+            string projectID = PhysicalProject.Current.ID;
+            _downloadForm = dialog;
+            dialog.FormClosed += (s, e) =>
+            {
+                _downloadForm = null;
+                try
+                {
+                    // 在 UI 线程更新采集使用的内存名单。切到其它项目时不覆盖当前项目。
+                    if (PhysicalProject.Current.ID == projectID)
+                        new PhysicalProjectBLL(AppSettings.Current.ConnStr).GetFullInfo(
+                            PhysicalProject.Current, ProjectLoadOptions.Students);
+                }
+                catch (Exception ex)
+                {
+                    Program.WriteLog("ERROR", "下载后刷新内存名单失败:" + ex);
+                    MessageBox.Show("名单已保存，但刷新采集名单失败：" + ex.Message,
+                        "名单刷新失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                finally { if (!IsDisposed && !Disposing) ReloadAll(); }
+            };
+            try { dialog.Show(this); }
+            catch
+            {
+                _downloadForm = null;
+                dialog.Dispose();
+                throw;
+            }
+            RefreshGate();
+        }
+
         private void BtnTasks_Click(object sender, EventArgs e)
         {
             // 单例:已打开则激活
@@ -306,7 +362,6 @@ namespace HH.DataCollection.Wifi
                 return;
             }
             _tasksForm = new FrmSyncTasks();
-            _tasksForm.StudentsSynchronized += (s, args) => ReloadAll();
             _tasksForm.FormClosed += (s, args) => UpdateLockState();
             _tasksForm.Show(this);
             UpdateLockState();
@@ -379,6 +434,7 @@ namespace HH.DataCollection.Wifi
             }
             _btnCollect.Enabled = ok;
             _btnTasks.Enabled = ok;
+            _btnDownload.Enabled = ok && (_downloadForm == null || _downloadForm.IsDisposed);
             _lblGate.Visible = !ok;
             _lblSchool.Text = "学校:" + (conf != null && !string.IsNullOrEmpty(conf.SchoolName)
                 ? conf.SchoolName : "未设置");

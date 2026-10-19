@@ -64,12 +64,14 @@
     <Compile Include="Sync\ScoreUpload.cs" />
     <Compile Include="Sync\Views\FrmSyncSettings.cs" />
     <Compile Include="Sync\Views\FrmSyncTasks.cs" />
+    <Compile Include="Sync\Views\FrmStudentDownload.cs" />
   </ItemGroup>
   <ItemGroup>
     <!-- 工具栏图标,由 tools\ExtractIcons.ps1 从原软件 GuojiaTiZhi.exe 资源提取 -->
     <EmbeddedResource Include="Resources\wireless.png" />
     <EmbeddedResource Include="Resources\upload.png" />
     <EmbeddedResource Include="Resources\network.png" />
+    <EmbeddedResource Include="Resources\download.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

@@ -41,7 +41,14 @@ namespace HH.DataCollection.Wifi.Sync
 
         public void Run(Action<string> report, Func<bool> stopRequested)
         {
+            Run(report, stopRequested, null);
+        }
+
+        /// <summary>进度在整页提交后报告,参数为已保存人数、远端总人数。</summary>
+        public void Run(Action<string> report, Func<bool> stopRequested, Action<int, int> progress)
+        {
             report("开始同步学生信息");
+            if (stopRequested()) return;
             var info = _api.GetSyncInfo(true); // 与成绩上传一致允许重试,一次网络抖动不至于整轮失败
             report(info.ToString());
 
@@ -76,10 +83,12 @@ namespace HH.DataCollection.Wifi.Sync
                     throw new SyncException("同步过程中学生分页总数或页码范围已变更,请重新同步");
                 }
 
+                if (stopRequested()) break;
                 var summary = UpsertPage(studentPage.Items, facility, gradeIssues);
                 synced += studentPage.Items.Count;
                 inserted += summary.Item1;
                 updated += summary.Item2;
+                if (progress != null) progress(synced, studentPage.Total);
                 if (studentPage.Total > 0)
                     report(string.Format("[{0:0.00}%] {1} of {2}", synced * 100.0 / studentPage.Total, synced, studentPage.Total));
 

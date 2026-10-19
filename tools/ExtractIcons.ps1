@@ -1,26 +1,32 @@
-# One-shot tool (historical record; icons already extracted and checked in under
-# HH.DataCollection.Wifi/Resources, so normally never needs to run again):
-# extract toolbar icons (wireless/upload/network) from the original GuojiaTiZhi.exe
-# embedded resources into this project's Resources folder as PNG.
-# NOTE: keep this file pure ASCII (Windows PowerShell 5.1 reads .ps1 as GBK without BOM).
+# Extract only the collector toolbar icons from the original application's resources.
+# Keep this script ASCII for Windows PowerShell 5.1.
 param(
-    [string]$Source = "D:\Huihai\Guojiatizhi\GuojiaTiZhi.exe",
-    [string]$OutDir = "D:\Huihai\HH.DataCollection.Wifi\HH.DataCollection.Wifi\Resources"
+    [string]$Source = (Join-Path (Split-Path $PSScriptRoot -Parent) '..\Guojiatizhi\GuojiaTiZhi.exe'),
+    [string]$OutDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'HH.DataCollection.Wifi\Resources')
 )
-
-$asm = [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes($Source))
-$stream = $asm.GetManifestResourceStream("HH.TiYu.GuojiaTiZhi.Properties.Resources.resources")
-if ($null -eq $stream) { throw "resource HH.TiYu.GuojiaTiZhi.Properties.Resources not found" }
-$reader = New-Object System.Resources.ResourceReader($stream)
-$all = @{}
-$reader.GetEnumerator() | ForEach-Object { $all[$_.Key] = $_.Value }
-$reader.Close()
-
+$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Drawing
+$asm = [Reflection.Assembly]::Load([IO.File]::ReadAllBytes($Source))
+$stream = $asm.GetManifestResourceStream('HH.TiYu.GuojiaTiZhi.Properties.Resources.resources')
+if ($null -eq $stream) { throw 'Toolbar resource stream not found' }
+$reader = New-Object Resources.ResourceReader($stream)
+# Original import-students icon -> download; original one-click-report icon -> upload.
+$icons = @{ wireless = 'wireless.png'; import = 'download.png'; upload = 'upload.png'; network = 'network.png' }
+$saved = @{}
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-foreach ($name in @("wireless", "upload", "network")) {
-    $bmp = $all[$name]
-    if ($null -eq $bmp) { throw "resource entry $name not found" }
-    $out = Join-Path $OutDir "$name.png"
-    $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Png)
-    Write-Output ("saved: " + $out + " (" + $bmp.Width + "x" + $bmp.Height + ")")
-}
+try {
+    $entries = $reader.GetEnumerator()
+    while ($entries.MoveNext()) {
+        $name = [string]$entries.Key
+        if (!$icons.ContainsKey($name)) { continue }
+        $image = $entries.Value
+        try {
+            $image.Save((Join-Path $OutDir $icons[$name]), [Drawing.Imaging.ImageFormat]::Png)
+            $saved[$name] = $true
+            Write-Output ('Saved: ' + $icons[$name] + ' (source: ' + $name + ')')
+        } finally { $image.Dispose() }
+    }
+    foreach ($name in $icons.Keys) {
+        if (!$saved.ContainsKey($name)) { throw ('Missing toolbar icon: ' + $name) }
+    }
+} finally { $reader.Close(); $stream.Dispose() }
