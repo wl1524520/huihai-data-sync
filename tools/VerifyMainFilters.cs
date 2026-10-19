@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Data.SQLite;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 using HH.DataCollection.Wifi;
@@ -11,6 +12,22 @@ using HH.TiYu.Model;
 
 internal static class VerifyMainFilters
 {
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam);
+
+    private static void ClickStudent(DataGridView grid, int row)
+    {
+        var bounds = grid.GetCellDisplayRectangle(0, row, false);
+        Check(bounds.Width > 0 && bounds.Height > 0, "Clicked student cell must be visible in the grid");
+        var point = new IntPtr(((bounds.Top + bounds.Height / 2) << 16) | (bounds.Left + 10));
+        SendMessage(grid.Handle, 0x201, new IntPtr(1), point);
+        SendMessage(grid.Handle, 0x202, IntPtr.Zero, point);
+    }
+
+    private static DataTable Scores(FrmMain form)
+    {
+        return (DataTable)Field<DataGridView>(form, "_gridScores").DataSource;
+    }
     private static int checks;
     private static void Check(bool ok, string message)
     {
@@ -45,18 +62,60 @@ internal static class VerifyMainFilters
     private static void VerifyScores(FrmMain form)
     {
         var grid = Field<DataGridView>(form, "_gridStudents");
-        grid.BindingContext = new BindingContext();
-        grid.Rows[0].Selected = true;
         string studentID = Convert.ToString(((DataRowView)grid.Rows[0].DataBoundItem)["标识"]);
         int item = ((int[])typeof(ScoreUpload).GetField("UploadableItems", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null))[0];
         string insert = "INSERT INTO StudentScore([Key],ID,ProjectID,StudentID,TestID,ScoreFrom,Score,CreateTime,SpecialType) VALUES('fixture',";
         Sql(insert + "'" + Guid.NewGuid() + "','filters','" + studentID + "'," + item + ",0,12.3456,'2026-10-18 12:00:00',NULL)");
         Sql(insert + "'" + Guid.NewGuid() + "','other','" + studentID + "'," + item + ",0,99,'2026-10-18 12:00:00',NULL)");
         Sql(insert + "'" + Guid.NewGuid() + "','filters','" + studentID + "'," + item + ",0,0,'2026-10-18 12:00:00',1)");
-        typeof(FrmMain).GetMethod("GridStudents_SelectionChanged", BindingFlags.Instance | BindingFlags.NonPublic)
-            .Invoke(form, new object[] { grid, EventArgs.Empty });
+        Sql("INSERT INTO StudentScore([Key],ID,ProjectID,StudentID,StudentName,TestID,ScoreFrom,Score,CreateTime) " +
+            "VALUES('fixture','" + Guid.NewGuid() + "','filters','B001','张丽',99999,0,25,'2026-10-19 12:00:00')");
+        Call(form, "LoadStudents");
+        Check(grid.SelectedRows.Count == 0 && grid.CurrentCell == null && Scores(form).Rows.Count == 3,
+            "Initial load must show all current-project scores without selecting a student");
+        Check(Scores(form).Columns.Contains("学籍号") && Scores(form).Columns.Contains("姓名") &&
+            Convert.ToString(Scores(form).Rows[0]["姓名"]) == "张丽",
+            "All-score view must identify students and retain descending collection time");
+        ClickStudent(grid, 0);
         Check(((DataTable)Field<DataGridView>(form, "_gridScores").DataSource).Rows.Count == 2,
-            "Main score display must read StudentScore for the selected student and project");
+            "Main score display must read StudentScore for the selected student and project; selected=" + grid.SelectedRows.Count + ", scores=" + Scores(form).Rows.Count);
+        Call(form, "ReloadStudentsAndClasses");
+        Check(grid.SelectedRows.Count == 1 && Scores(form).Rows.Count == 2,
+            "Refresh must preserve selected student");
+        ClickStudent(grid, 0);
+        Check(grid.SelectedRows.Count == 0 && grid.CurrentCell == null && Scores(form).Rows.Count == 3,
+            "Clicking the selected student again must clear selection and show all scores");
+        ClickStudent(grid, 0);
+        int otherRow = -1;
+        foreach (DataGridViewRow row in grid.Rows)
+            if (Convert.ToString(row.Cells["标识"].Value) == "B001") otherRow = row.Index;
+        ClickStudent(grid, otherRow);
+        Check(grid.SelectedRows.Count == 1 && Scores(form).Rows.Count == 1 &&
+            Convert.ToString(Scores(form).Rows[0]["学籍号"]) == "B001",
+            "Clicking a different student must show that student's scores");
+        var search = Field<TextBox>(form, "_txtSearch");
+        search.Text = "missing";
+        Call(form, "LoadStudents");
+        Check(grid.Rows.Count == 0 && grid.SelectedRows.Count == 0 && Scores(form).Rows.Count == 3,
+            "Filtering out selected student must restore all scores even with no visible students");
+        search.Clear();
+        Call(form, "LoadStudents");
+        ClickStudent(grid, 0);
+        Student(studentID, "其他项目", "11", "1班", 1, "other");
+        PhysicalProject.Current = new PhysicalProject { ID = "other" };
+        Call(form, "ReloadStudentsAndClasses");
+        Check(grid.SelectedRows.Count == 0 && Scores(form).Rows.Count == 1,
+            "Switching project must clear selection even when student identifier exists in both projects");
+        PhysicalProject.Current = new PhysicalProject { ID = "filters" };
+        Call(form, "ReloadStudentsAndClasses");
+        using (var reopened = new FrmMain())
+        {
+            reopened.BindingContext = new BindingContext();
+            IntPtr handle = Field<DataGridView>(reopened, "_gridStudents").Handle;
+            Call(reopened, "ReloadStudentsAndClasses");
+            Check(Field<DataGridView>(reopened, "_gridStudents").SelectedRows.Count == 0 && Scores(reopened).Rows.Count == 3,
+                "Reopening main form must start with all scores and no student selection");
+        }
         var uploader = new ScoreUpload(null, "filters");
         var pending = typeof(ScoreUpload).GetMethod("GetPendingScores", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(uploader, null);
         Check(((System.Collections.IList)pending).Count == 1, "Pending query must exclude other projects and special scores");
@@ -84,6 +143,13 @@ internal static class VerifyMainFilters
             Student("OTHER", "张三", "13", "其他班", 1, "other");
             using (var form = new FrmMain())
             {
+                form.BindingContext = new BindingContext();
+                IntPtr gridHandle = Field<DataGridView>(form, "_gridStudents").Handle;
+                form.StartPosition = FormStartPosition.Manual;
+                form.Location = new System.Drawing.Point(-2000, -2000);
+                form.ShowInTaskbar = false;
+                form.Show();
+                Application.DoEvents();
                 var grade = Field<ComboBox>(form, "_cboGrade");
                 var cls = Field<ComboBox>(form, "_cboClass");
                 var sex = Field<ComboBox>(form, "_cboSex");
@@ -93,6 +159,8 @@ internal static class VerifyMainFilters
                     "Initial filters must contain only the current project's data");
                 var studentCount = Field<ToolStripStatusLabel>(form, "_lblStudents");
                 Check(studentCount.Text == "学生总数 4 人 / 当前显示 4 人", "Student total must exclude other projects");
+                Check(Field<DataGridView>(form, "_gridStudents").SelectedRows.Count == 0,
+                    "Showing main form must not select the first student");
                 VerifyScores(form);
                 cls.SelectedItem = "1班";
                 Check(Count(form) == 2, "Same class name must match across all grades");
@@ -136,11 +204,12 @@ internal static class VerifyMainFilters
                 Check(studentCount.Text == "学生总数 3 人 / 当前显示 0 人", "Refresh and empty results must update student counts");
 
                 var filters = (FlowLayoutPanel)grade.Parent.Parent;
-                var split = (SplitContainer)filters.Parent.Parent;
+                var students = Field<DataGridView>(form, "_gridStudents");
+                var scores = Field<DataGridView>(form, "_gridScores");
+                var split = (SplitContainer)students.Parent.Parent;
                 foreach (int width in new int[] { 1340, 1024 })
                 {
                     form.Width = width;
-                    split.SplitterDistance = split.Width * 3 / 5;
                     form.PerformLayout();
                     filters.PerformLayout();
                     int lastTop = -1;
@@ -151,8 +220,19 @@ internal static class VerifyMainFilters
                         Check(group.Top >= lastTop, "Filter groups must retain their order");
                         lastTop = group.Top;
                     }
-                    Check(filters.Bottom <= Field<DataGridView>(form, "_gridStudents").Top,
-                        "Student grid must not cover filters");
+                    Check(filters.Width == filters.Parent.ClientSize.Width && filters.Parent == split.Parent,
+                        "Filters must span the full content width above both grids");
+                    Check(filters.Bottom <= split.Top,
+                        "Both grids must be below the filters");
+                    Check(Math.Abs(split.Panel1.Width - split.Panel2.Width) <= 2,
+                        "Student and score panels must each occupy half the available width");
+                    Check(students.Bounds == split.Panel1.ClientRectangle && scores.Bounds == split.Panel2.ClientRectangle,
+                        "Both grids must fill their panels without a score title area");
+                    Check(scores.Columns["学籍号"].Width >= TextRenderer.MeasureText("1234567890123456789X", scores.Font).Width + 12,
+                        "Student identifier column must fit 20 characters at window width " + width);
+                    Check(scores.Columns["测试时间"].HeaderText == "测试时间" &&
+                        scores.Columns["测试时间"].Width >= TextRenderer.MeasureText("2026-10-19 10:00:00", scores.Font).Width + 12,
+                        "Test time column must show the complete timestamp at window width " + width);
                 }
 
                 // Exercise the real worker completion callback without any network request.

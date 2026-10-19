@@ -17,7 +17,7 @@ namespace HH.DataCollection.Wifi
     /// <summary>
     /// 主界面,布局参考汇海体测软件 FrmMain:
     ///   顶部工具栏:开始采集 / 同步任务 / 同步设置(图标提取自原软件资源);
-    ///   中部左右分栏:左=当前项目学生列表(年级/班级/性别筛选+搜索),右=选中学生的原始成绩(采集时间倒序);
+    ///   工具栏下方为全宽学生筛选区,再下方左右分栏显示学生与原始成绩(测试时间倒序);
     ///   底部状态栏:操作员 + "切换项目"链接 + 当前项目名 + 待上传/已上传计数。
     /// 采集(FrmHosts)为模态,打开期间本窗体不可操作;同步任务窗非模态,任务运行中禁止切换项目。
     /// </summary>
@@ -40,7 +40,8 @@ namespace HH.DataCollection.Wifi
         private readonly TextBox _txtSearch;
         private readonly DataGridView _gridStudents;
         private readonly DataGridView _gridScores;
-        private readonly Label _lblScoreTitle;
+        private bool _loadingStudents;
+        private string _studentsProjectID;
 
         public FrmMain()
         {
@@ -104,7 +105,8 @@ namespace HH.DataCollection.Wifi
             statusStrip.Items.Add(_lblPending);
             Controls.Add(statusStrip);
 
-            // ===== 中部左右分栏 =====
+            // ===== 中部全宽筛选区 + 下方左右分栏 =====
+            var content = new Panel { Dock = DockStyle.Fill };
             var split = new SplitContainer
             {
                 Dock = DockStyle.Fill,
@@ -112,7 +114,7 @@ namespace HH.DataCollection.Wifi
                 FixedPanel = FixedPanel.None, // 左右按比例随窗口缩放
             };
 
-            // 左:学生列表 + 筛选行
+            // 筛选区独占一行,横跨学生与成绩两栏。
             var filterPanel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
@@ -144,9 +146,9 @@ namespace HH.DataCollection.Wifi
             btnRefresh.Click += (s, e) => ReloadStudentsAndClasses();
             searchGroup.Controls.Add(btnRefresh);
             filterPanel.Controls.Add(searchGroup);
-            split.Panel1.Controls.Add(filterPanel);
+            content.Controls.Add(filterPanel);
 
-            _gridStudents = new DataGridView
+            _gridStudents = new StudentGrid
             {
                 Dock = DockStyle.Fill,
                 ReadOnly = true,
@@ -172,12 +174,7 @@ namespace HH.DataCollection.Wifi
             split.Panel1.Controls.Add(_gridStudents);
             _gridStudents.BringToFront();
 
-            // 右:选中学生的原始成绩(倒序)
-            var scoreTop = new Panel { Dock = DockStyle.Top, Height = 34 };
-            _lblScoreTitle = new Label { Text = "原始成绩(未选择学生)", AutoSize = true, Location = new Point(6, 9) };
-            scoreTop.Controls.Add(_lblScoreTitle);
-            split.Panel2.Controls.Add(scoreTop);
-
+            // 右:当前项目全部或选中学生的原始成绩(倒序)
             _gridScores = new DataGridView
             {
                 Dock = DockStyle.Fill,
@@ -188,21 +185,38 @@ namespace HH.DataCollection.Wifi
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                AutoGenerateColumns = false,
                 AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None,
                 RowHeadersVisible = false,
                 BackgroundColor = SystemColors.Window,
             };
             _gridScores.RowTemplate.Height = 23;
+            // 按实际字体预留完整学籍号及时间的宽度,窄窗口时通过横向滚动查看。
+            int studentIDWidth = TextRenderer.MeasureText("88888888888888888888", _gridScores.Font).Width + 24;
+            int testTimeWidth = TextRenderer.MeasureText("2026-10-19 10:00:00", _gridScores.Font).Width + 24;
+            _gridScores.Columns.AddRange(
+                new DataGridViewTextBoxColumn { Name = "学籍号", HeaderText = "学籍号", DataPropertyName = "学籍号",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None, MinimumWidth = studentIDWidth, Width = studentIDWidth },
+                new DataGridViewTextBoxColumn { Name = "姓名", HeaderText = "姓名", DataPropertyName = "姓名", MinimumWidth = 70 },
+                new DataGridViewTextBoxColumn { Name = "科目", HeaderText = "科目", DataPropertyName = "科目", MinimumWidth = 80 },
+                new DataGridViewTextBoxColumn { Name = "成绩", HeaderText = "成绩", DataPropertyName = "成绩", MinimumWidth = 70 },
+                new DataGridViewTextBoxColumn { Name = "测试时间", HeaderText = "测试时间", DataPropertyName = "测试时间",
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None, MinimumWidth = testTimeWidth, Width = testTimeWidth,
+                    DefaultCellStyle = new DataGridViewCellStyle { Format = "yyyy-MM-dd HH:mm:ss" } },
+                new DataGridViewTextBoxColumn { Name = "设备号", HeaderText = "设备号", DataPropertyName = "设备号", MinimumWidth = 70 },
+                new DataGridViewTextBoxColumn { Name = "状态", HeaderText = "状态", DataPropertyName = "状态", MinimumWidth = 60 });
             split.Panel2.Controls.Add(_gridScores);
             _gridScores.BringToFront();
 
-            Controls.Add(split);
-            split.BringToFront(); // 置于工具栏与状态栏之间
+            content.Controls.Add(split);
+            split.BringToFront();
+            Controls.Add(content);
+            content.BringToFront(); // 置于工具栏与状态栏之间
 
             Load += (s, e) =>
             {
-                // 左学生列表 60% / 右成绩 40%(构造时设计器尺寸不可靠,在 Load 里按比例设)
-                split.SplitterDistance = split.Width * 3 / 5;
+                // 左学生列表与右成绩各占 50%,扣除分隔条宽度后均分。
+                split.SplitterDistance = (split.ClientSize.Width - split.SplitterWidth) / 2;
                 ReloadAll();
             };
             FormClosing += FrmMain_FormClosing;
@@ -501,6 +515,7 @@ namespace HH.DataCollection.Wifi
 
         private void LoadStudents()
         {
+            string keepStudentID = _studentsProjectID == PhysicalProject.Current.ID ? SelectedStudentID : null;
             var table = new DataTable();
             long totalStudents;
             using (var conn = new SQLiteConnection(LocalDb.ConnStr))
@@ -551,23 +566,69 @@ namespace HH.DataCollection.Wifi
                     ? GradeHelper.Instance.GetName(grade) ?? string.Empty : string.Empty;
             }
             table.Columns.Remove("Grade");
-            _gridStudents.DataSource = table;
+            _loadingStudents = true;
+            try
+            {
+                _gridStudents.DataSource = table;
+                _gridStudents.CurrentCell = null;
+                _gridStudents.ClearSelection();
+                foreach (DataGridViewRow row in _gridStudents.Rows)
+                    if (keepStudentID != null && Convert.ToString(row.Cells["标识"].Value) == keepStudentID)
+                    {
+                        _gridStudents.CurrentCell = row.Cells[0];
+                        row.Selected = true;
+                        break;
+                    }
+                _studentsProjectID = PhysicalProject.Current.ID;
+            }
+            finally { _loadingStudents = false; }
             _lblStudents.Text = string.Format("学生总数 {0} 人 / 当前显示 {1} 人", totalStudents, table.Rows.Count);
+            LoadScores();
+        }
+
+        private string SelectedStudentID
+        {
+            get
+            {
+                if (_gridStudents.SelectedRows.Count == 0) return null;
+                var row = _gridStudents.SelectedRows[0].DataBoundItem as DataRowView;
+                return row != null ? Convert.ToString(row["标识"]) : null;
+            }
+        }
+
+        private sealed class StudentGrid : DataGridView
+        {
+            private DataGridViewRow _selectedBeforeMouseDown;
+
+            protected override void OnMouseDown(MouseEventArgs e)
+            {
+                // 必须在 base 处理默认选择之前记录;普通 MouseDown 事件触发时选择已改变。
+                _selectedBeforeMouseDown = e.Button == MouseButtons.Left && SelectedRows.Count > 0
+                    ? SelectedRows[0] : null;
+                base.OnMouseDown(e);
+            }
+
+            protected override void OnCellMouseClick(DataGridViewCellMouseEventArgs e)
+            {
+                base.OnCellMouseClick(e);
+                if (e.Button == MouseButtons.Left && e.RowIndex >= 0 && e.ColumnIndex >= 0 &&
+                    Rows[e.RowIndex] == _selectedBeforeMouseDown)
+                {
+                    CurrentCell = null;
+                    ClearSelection();
+                }
+                _selectedBeforeMouseDown = null;
+            }
         }
 
         private void GridStudents_SelectionChanged(object sender, EventArgs e)
         {
-            if (_gridStudents.SelectedRows.Count == 0)
-            {
-                _gridScores.DataSource = null;
-                _lblScoreTitle.Text = "原始成绩(未选择学生)";
-                return;
-            }
-            var row = _gridStudents.SelectedRows[0].DataBoundItem as DataRowView;
-            if (row == null) return;
-            string studentID = Convert.ToString(row["标识"]);
-            _lblScoreTitle.Text = string.Format("原始成绩:{0}({1})", Convert.ToString(row["姓名"]), studentID);
+            if (!_loadingStudents) LoadScores();
+        }
 
+        private void LoadScores()
+        {
+            string studentID = SelectedStudentID;
             var table = new DataTable();
             using (var conn = new SQLiteConnection(LocalDb.ConnStr))
             {
@@ -576,14 +637,19 @@ namespace HH.DataCollection.Wifi
                 {
                     // 成绩倒序;科目名 join PhysicalItem,字典缺失时显示编号;单位拼进成绩列
                     cmd.CommandText =
-                        "SELECT COALESCE(i.Name, '科目' || r.TestID) AS 科目, " +
+                        "SELECT r.StudentID AS 学籍号, r.StudentName AS 姓名, COALESCE(i.Name, '科目' || r.TestID) AS 科目, " +
                         "r.Score || COALESCE(' ' || NULLIF(i.Unit, ''), '') AS 成绩, " +
-                        "r.CreateTime AS 采集时间, r.HostSn AS 设备号, " +
+                        "r.CreateTime AS 测试时间, r.HostSn AS 设备号, " +
                         "CASE r.Uploaded WHEN 1 THEN '已上传' ELSE '待上传' END AS 状态 " +
                         "FROM StudentScore r LEFT JOIN PhysicalItem i ON i.ID = r.TestID " +
-                        "WHERE r.ProjectID = @p AND r.StudentID = @s ORDER BY r.CreateTime DESC";
+                        "WHERE r.ProjectID = @p";
                     cmd.Parameters.AddWithValue("@p", PhysicalProject.Current.ID);
-                    cmd.Parameters.AddWithValue("@s", studentID);
+                    if (studentID != null)
+                    {
+                        cmd.CommandText += " AND r.StudentID = @s";
+                        cmd.Parameters.AddWithValue("@s", studentID);
+                    }
+                    cmd.CommandText += " ORDER BY r.CreateTime DESC";
                     using (var adapter = new SQLiteDataAdapter(cmd))
                         adapter.Fill(table);
                 }
