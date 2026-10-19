@@ -23,6 +23,11 @@ namespace HH.DataCollection.Wifi
     /// </summary>
     public class FrmMain : Form
     {
+        private static readonly Color AccentColor = Color.FromArgb(38, 102, 197);
+        private static readonly Color TextColor = Color.FromArgb(35, 45, 60);
+        private static readonly Color MutedColor = Color.FromArgb(105, 116, 132);
+        private static readonly Color SurfaceColor = Color.FromArgb(244, 246, 249);
+        private static readonly Color BorderColor = Color.FromArgb(226, 232, 240);
         private readonly ToolStripStatusLabel _lblSchool;
         private readonly ToolStripStatusLabel _lblProject;
         private readonly ToolStripStatusLabel _lblStudents;
@@ -51,12 +56,17 @@ namespace HH.DataCollection.Wifi
             Text = "汇海主机数据采集器";
             Icon = Icon.ExtractAssociatedIcon(typeof(FrmMain).Assembly.Location);
             StartPosition = FormStartPosition.CenterScreen;
+            Font = new Font("Microsoft YaHei UI", 9F);
+            ForeColor = TextColor;
+            BackColor = SurfaceColor;
             // 默认尺寸不小于采集窗口(FrmHosts 实测 1315x767)
             ClientSize = new Size(1340, 800);
             MinimumSize = new Size(1024, 640);
 
             // ===== 顶部工具栏 =====
-            var toolStrip = new ToolStrip { ImageScalingSize = new Size(32, 32), GripStyle = ToolStripGripStyle.Hidden };
+            var toolStrip = new ToolStrip { ImageScalingSize = new Size(32, 32), GripStyle = ToolStripGripStyle.Hidden,
+                BackColor = Color.White, ForeColor = TextColor, Font = Font,
+                Padding = new Padding(8, 5, 8, 5), Renderer = new MainStripRenderer() };
             // 图标在上、文本在下并居中(参考原软件快捷入口风格;ToolStrip 无整体属性,逐按钮设置)
             _btnCollect = new ToolStripButton("数据采集", LoadIcon("wireless"))
             {
@@ -94,14 +104,23 @@ namespace HH.DataCollection.Wifi
                     if (frm.ShowDialog(this) == DialogResult.OK) RefreshGate();
             };
             toolStrip.Items.Add(_btnSettings);
+            foreach (ToolStripItem item in toolStrip.Items)
+            {
+                item.Padding = new Padding(12, 5, 12, 5);
+                item.Margin = new Padding(2, 0, 2, 0);
+            }
             Controls.Add(toolStrip);
 
             // ===== 底部状态栏(最左:绑定学校;参考原软件:切换项目链接 + 当前项目) =====
-            var statusStrip = new StatusStrip();
+            var statusStrip = new StatusStrip { BackColor = Color.White, ForeColor = TextColor,
+                Font = Font, Padding = new Padding(8, 4, 16, 4), Renderer = new MainStripRenderer() };
             _lblSchool = new ToolStripStatusLabel();
             statusStrip.Items.Add(_lblSchool);
             statusStrip.Items.Add(new ToolStripSeparator());
             _lnkSwitch = new ToolStripStatusLabel("切换项目") { IsLink = true };
+            _lnkSwitch.LinkColor = AccentColor;
+            _lnkSwitch.ActiveLinkColor = AccentColor;
+            _lnkSwitch.VisitedLinkColor = AccentColor;
             _lnkSwitch.Click += LnkSwitchProject_Click;
             statusStrip.Items.Add(_lnkSwitch);
             _lblProject = new ToolStripStatusLabel();
@@ -110,7 +129,7 @@ namespace HH.DataCollection.Wifi
             _lblStudents = new ToolStripStatusLabel("学生总数 0 人 / 当前显示 0 人");
             statusStrip.Items.Add(_lblStudents);
             statusStrip.Items.Add(new ToolStripStatusLabel { Spring = true });
-            _lblGate = new ToolStripStatusLabel("请先在 同步设置 中保存接口地址与令牌") { ForeColor = Color.DarkRed };
+            _lblGate = new ToolStripStatusLabel("请先在 同步设置 中保存接口地址与令牌") { ForeColor = Color.FromArgb(184, 54, 54) };
             statusStrip.Items.Add(_lblGate);
             _lblPending = new ToolStripStatusLabel();
             statusStrip.Items.Add(_lblPending);
@@ -129,7 +148,7 @@ namespace HH.DataCollection.Wifi
             var filterPanel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Padding = new Padding(3), WrapContents = true
+                Padding = new Padding(6), WrapContents = true, BackColor = Color.White
             };
             _cboGrade = new ComboBox { Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
             _cboGrade.SelectedIndexChanged += CboGrade_SelectedIndexChanged;
@@ -154,13 +173,15 @@ namespace HH.DataCollection.Wifi
             btnSearch.Click += (s, e) => LoadStudents();
             searchGroup.Controls.Add(btnSearch);
             var btnRefresh = new Button { Text = "刷新", Width = 55 };
+            StyleButton(btnSearch, AccentColor, true);
+            StyleButton(btnRefresh, TextColor, false);
             btnRefresh.Click += (s, e) => ReloadStudentsAndClasses();
             searchGroup.Controls.Add(btnRefresh);
             filterPanel.Controls.Add(searchGroup);
             var filterArea = new TableLayoutPanel
             {
                 Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                ColumnCount = 2, RowCount = 1, Margin = Padding.Empty
+                ColumnCount = 2, RowCount = 1, Margin = Padding.Empty, BackColor = Color.White
             };
             filterArea.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             filterArea.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -168,9 +189,11 @@ namespace HH.DataCollection.Wifi
             filterArea.Controls.Add(filterPanel, 0, 0);
             _btnReset = new Button
             {
-                Text = "重置上传标记", AutoSize = true, Anchor = AnchorStyles.Top | AnchorStyles.Right,
-                Margin = new Padding(6, 6, 6, 3)
+                Text = "重置上传标记", Width = TextRenderer.MeasureText("重置上传标记", Font).Width + 20,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Margin = new Padding(6, 12, 9, 6)
             };
+            StyleButton(_btnReset, Color.FromArgb(161, 91, 24), false);
             _btnReset.Click += BtnReset_Click;
             filterArea.Controls.Add(_btnReset, 1, 0);
             content.Controls.Add(filterArea);
@@ -190,7 +213,7 @@ namespace HH.DataCollection.Wifi
                 RowHeadersVisible = false,
                 BackgroundColor = SystemColors.Window,
             };
-            _gridStudents.RowTemplate.Height = 23;
+            StyleGrid(_gridStudents);
             _gridStudents.Columns.AddRange(
                 new DataGridViewTextBoxColumn { Name = "标识", HeaderText = "学籍号", DataPropertyName = "标识", Width = 180 },
                 new DataGridViewTextBoxColumn { Name = "姓名", HeaderText = "姓名", DataPropertyName = "姓名", Width = 100 },
@@ -217,7 +240,7 @@ namespace HH.DataCollection.Wifi
                 RowHeadersVisible = false,
                 BackgroundColor = SystemColors.Window,
             };
-            _gridScores.RowTemplate.Height = 23;
+            StyleGrid(_gridScores);
             // 按实际字体预留完整学籍号及时间的宽度,窄窗口时通过横向滚动查看。
             int studentIDWidth = TextRenderer.MeasureText("88888888888888888888", _gridScores.Font).Width + 24;
             int testTimeWidth = TextRenderer.MeasureText("2026-10-19 10:00:00", _gridScores.Font).Width + 24;
@@ -247,6 +270,75 @@ namespace HH.DataCollection.Wifi
                 ReloadAll();
             };
             FormClosing += FrmMain_FormClosing;
+        }
+
+        private void StyleGrid(DataGridView grid)
+        {
+            // 显式设置字体后再测量固定列宽，避免控件加入父容器时字体改变。
+            grid.Font = Font;
+            grid.BorderStyle = BorderStyle.None;
+            grid.BackgroundColor = Color.White;
+            grid.GridColor = BorderColor;
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+            grid.EnableHeadersVisualStyles = false;
+            grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            grid.ColumnHeadersHeight = 36;
+            grid.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = SurfaceColor, ForeColor = MutedColor, Font = new Font(Font, FontStyle.Bold),
+                SelectionBackColor = SurfaceColor, SelectionForeColor = MutedColor,
+                Alignment = DataGridViewContentAlignment.MiddleLeft, Padding = new Padding(6, 0, 6, 0)
+            };
+            grid.DefaultCellStyle = new DataGridViewCellStyle
+            {
+                BackColor = Color.White, ForeColor = TextColor,
+                SelectionBackColor = Color.FromArgb(226, 238, 255), SelectionForeColor = Color.FromArgb(25, 70, 130),
+                Padding = new Padding(6, 0, 6, 0)
+            };
+            grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(249, 251, 253);
+            grid.RowTemplate.Height = 32;
+        }
+
+        private int FilterControlHeight { get { return Math.Max(25, Font.Height + 8); } }
+
+        private void StyleButton(Button button, Color color, bool primary)
+        {
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = primary ? 0 : 1;
+            button.FlatAppearance.BorderColor = BorderColor;
+            button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(31, 86, 170) : SurfaceColor;
+            button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(25, 70, 140) : BorderColor;
+            button.Height = FilterControlHeight;
+            button.UseVisualStyleBackColor = false;
+            Action update = () =>
+            {
+                button.BackColor = button.Enabled ? (primary ? AccentColor : Color.White) : SurfaceColor;
+                button.ForeColor = button.Enabled ? (primary ? Color.White : color) : MutedColor;
+            };
+            button.EnabledChanged += (s, e) => update();
+            update();
+        }
+
+        private sealed class MainStripRenderer : ToolStripProfessionalRenderer
+        {
+            public MainStripRenderer() { RoundedEdges = false; }
+
+            protected override void OnRenderButtonBackground(ToolStripItemRenderEventArgs e)
+            {
+                if (e.Item.Enabled && (e.Item.Selected || e.Item.Pressed))
+                    using (var brush = new SolidBrush(e.Item.Pressed ? BorderColor : Color.FromArgb(235, 242, 253)))
+                        e.Graphics.FillRectangle(brush, new Rectangle(Point.Empty, e.Item.Size));
+            }
+
+            protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+            {
+                using (var pen = new Pen(BorderColor))
+                {
+                    int y = e.ToolStrip is StatusStrip ? 0 : e.ToolStrip.Height - 1;
+                    e.Graphics.DrawLine(pen, 0, y, e.ToolStrip.Width, y);
+                }
+            }
         }
 
         /// <summary>关闭二次确认;系统关机/任务管理器结束等系统原因直接放行。</summary>
@@ -605,14 +697,22 @@ namespace HH.DataCollection.Wifi
         }
 
         // 标签与输入框作为一组换行,窄窗口下仍能完整显示所有过滤组件。
-        private static FlowLayoutPanel CreateFilterGroup(string caption, Control input)
+        private FlowLayoutPanel CreateFilterGroup(string caption, Control input)
         {
             var group = new FlowLayoutPanel
             {
                 AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                WrapContents = false, Margin = Padding.Empty
+                WrapContents = false, Margin = Padding.Empty, Font = Font
             };
-            group.Controls.Add(new Label { Text = caption, AutoSize = true, Margin = new Padding(3, 7, 0, 0) });
+            input.Font = Font;
+            var textBox = input as TextBox;
+            if (textBox != null) textBox.AutoSize = false;
+            input.Height = FilterControlHeight;
+            // 标签、输入框、按钮采用相同高度及上下边距，整组换行时仍保持水平对齐。
+            group.MinimumSize = new Size(0, FilterControlHeight + 6);
+            group.Controls.Add(new Label { Text = caption,
+                Width = TextRenderer.MeasureText(caption, Font).Width, Height = FilterControlHeight,
+                TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(3, 3, 0, 3) });
             input.Margin = new Padding(3, 3, 8, 3);
             group.Controls.Add(input);
             return group;

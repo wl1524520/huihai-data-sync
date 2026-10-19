@@ -86,6 +86,49 @@ internal static class VerifyMainFilters
         return dialog;
     }
 
+    private static void VerifySyncSettings(FrmMain owner)
+    {
+        var before = SyncConfig.Load();
+        using (var dialog = new FrmSyncSettings())
+        {
+            Exception failure = null;
+            dialog.Shown += (s, e) => dialog.BeginInvoke((MethodInvoker)delegate
+            {
+                try
+                {
+                    var url = Field<TextBox>(dialog, "_txtApiUrl");
+                    var token = Field<TextBox>(dialog, "_txtToken");
+                    var save = (Button)dialog.AcceptButton;
+                    var cancel = (Button)dialog.CancelButton;
+                    Check(dialog.Modal && dialog.Owner == owner, "Settings must remain an owned modal dialog");
+                    // 验证主窗放在屏幕外；系统会将模态窗约束到工作区，故在此检查居中策略。
+                    Check(dialog.StartPosition == FormStartPosition.CenterParent,
+                        "Settings dialog must retain parent-centered positioning");
+                    Check(url.Text == before.ApiUrl && token.Text == before.ApiToken,
+                        "Settings must load existing URL and token");
+                    Check(url.Height == token.Height && url.Left == token.Left && url.Width == token.Width && url.Width >= 400,
+                        "Settings fields must have consistent heights, alignment and adequate width");
+                    Check(url.TabIndex < token.TabIndex && save.TabIndex < cancel.TabIndex,
+                        "Settings must retain URL, token, save and cancel keyboard order");
+                    Check(save.Parent == cancel.Parent && save.Left < cancel.Left && save.Top == cancel.Top,
+                        "Save and cancel actions must be aligned at the bottom right");
+                    CheckVisibleBounds(dialog);
+                    SaveWindowPreview(dialog, "SyncSettings");
+                    url.Text = "http://127.0.0.1/unsaved";
+                    token.Text = "unsaved-verification-token";
+                    cancel.PerformClick();
+                }
+                catch (Exception ex) { failure = ex; dialog.Close(); }
+            });
+            Check(dialog.ShowDialog(owner) == DialogResult.Cancel, "Cancel must dismiss settings without saving");
+            if (failure != null) throw failure;
+        }
+        var after = SyncConfig.Load();
+        Check(owner.Enabled && after.ApiUrl == before.ApiUrl && after.ApiToken == before.ApiToken &&
+            after.SourceFacilityId == before.SourceFacilityId && after.RemoteProjectId == before.RemoteProjectId,
+            "Cancelling settings must preserve configuration and restore the main window");
+    }
+
     private static void VerifyDownload(FrmMain form)
     {
         var button = Field<ToolStripButton>(form, "_btnDownload");
@@ -990,6 +1033,7 @@ internal static class VerifyMainFilters
                 Check(studentCount.Text == "学生总数 4 人 / 当前显示 4 人", "Student total must exclude other projects");
                 Check(Field<DataGridView>(form, "_gridStudents").SelectedRows.Count == 0,
                     "Showing main form must not select the first student");
+                SaveWindowPreview(form, "MainReady");
                 VerifyScores(form);
                 VerifyReset(form);
                 cls.SelectedItem = "1班";
@@ -1068,9 +1112,23 @@ internal static class VerifyMainFilters
                     Check(scores.Columns["测试时间"].HeaderText == "测试时间" &&
                         scores.Columns["测试时间"].Width >= TextRenderer.MeasureText("2026-10-19 10:00:00", scores.Font).Width + 12,
                         "Test time column must show the complete timestamp at window width " + width);
+                    foreach (Control group in filters.Controls)
+                        foreach (Control control in group.Controls)
+                        {
+                            Check(control.Right <= group.ClientSize.Width && control.Bottom <= group.ClientSize.Height,
+                                "Filter control " + control.GetType().Name + " " + control.Text + " " + control.Bounds +
+                                " must fit group " + group.ClientSize + " at width " + width);
+                            Check(control.Height == grade.Height && control.Top == grade.Top,
+                                "Filter labels, fields and action buttons must share height and vertical alignment");
+                        }
+                    Check(reset.Height == grade.Height && reset.Top == filters.Top + grade.Parent.Top + grade.Top,
+                        "Right-hand reset " + reset.Bounds + " must align with filter height " + grade.Height +
+                        " top " + (filters.Top + grade.Parent.Top + grade.Top));
+                    SaveWindowPreview(form, "MainWidth" + width);
                 }
 
                 search.Clear();
+                VerifySyncSettings(form);
                 VerifyDownload(form);
                 VerifyDownloadService();
                 VerifyUploadService();

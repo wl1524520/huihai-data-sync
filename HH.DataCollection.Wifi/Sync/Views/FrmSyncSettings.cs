@@ -22,20 +22,42 @@ namespace HH.DataCollection.Wifi.Sync
             MaximizeBox = false;
             MinimizeBox = false;
             StartPosition = FormStartPosition.CenterParent;
-            ClientSize = new Size(520, 130);
+            Font = new Font("Microsoft YaHei UI", 9F);
+            BackColor = Color.FromArgb(244, 246, 249);
+            ForeColor = Color.FromArgb(35, 45, 60);
+            ClientSize = new Size(600, 194);
 
-            Controls.Add(new Label { Text = "接口地址:", AutoSize = true, Location = new Point(15, 20) });
-            _txtApiUrl = new TextBox { Location = new Point(100, 17), Width = 400 };
-            Controls.Add(_txtApiUrl);
-            Controls.Add(new Label { Text = "身份令牌:", AutoSize = true, Location = new Point(15, 52) });
-            _txtToken = new TextBox { Location = new Point(100, 49), Width = 400 };
-            Controls.Add(_txtToken);
+            var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(16),
+                ColumnCount = 1, RowCount = 2 };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var fields = new TableLayoutPanel { Dock = DockStyle.Fill, BackColor = Color.White,
+                Padding = new Padding(16), Margin = new Padding(0, 0, 0, 12), ColumnCount = 2, RowCount = 2 };
+            fields.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            fields.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            fields.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            _txtApiUrl = CreateInput(0);
+            _txtToken = CreateInput(1);
+            fields.Controls.Add(CreateLabel("接口地址"), 0, 0);
+            fields.Controls.Add(_txtApiUrl, 1, 0);
+            fields.Controls.Add(CreateLabel("身份令牌"), 0, 1);
+            fields.Controls.Add(_txtToken, 1, 1);
+            layout.Controls.Add(fields, 0, 0);
 
-            var btnSave = new Button { Text = "保存", Location = new Point(330, 85), Width = 80 };
+            var actions = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true,
+                FlowDirection = FlowDirection.RightToLeft, WrapContents = false, Margin = Padding.Empty };
+            var btnSave = CreateButton("保存", true);
+            btnSave.TabIndex = 2;
             btnSave.Click += BtnSave_Click;
-            Controls.Add(btnSave);
-            var btnCancel = new Button { Text = "取消", DialogResult = DialogResult.Cancel, Location = new Point(420, 85), Width = 80 };
-            Controls.Add(btnCancel);
+            var btnCancel = CreateButton("取消", false);
+            btnCancel.TabIndex = 3;
+            btnCancel.DialogResult = DialogResult.Cancel;
+            actions.Controls.Add(btnCancel);
+            actions.Controls.Add(btnSave);
+            layout.Controls.Add(actions, 0, 1);
+            Controls.Add(layout);
             AcceptButton = btnSave;
             CancelButton = btnCancel;
 
@@ -45,6 +67,32 @@ namespace HH.DataCollection.Wifi.Sync
                 _txtApiUrl.Text = conf.ApiUrl;
                 _txtToken.Text = conf.ApiToken;
             };
+        }
+
+        private static TextBox CreateInput(int tabIndex)
+        {
+            return new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right, AutoSize = false,
+                Height = 28, BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 4, 0, 4), TabIndex = tabIndex };
+        }
+
+        private static Label CreateLabel(string text)
+        {
+            return new Label { Text = text, AutoSize = true, Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft, Margin = new Padding(0, 4, 16, 4) };
+        }
+
+        private static Button CreateButton(string text, bool primary)
+        {
+            var button = new Button { Text = text, Size = new Size(88, 32), FlatStyle = FlatStyle.Flat,
+                UseVisualStyleBackColor = false, Margin = new Padding(8, 0, 0, 0),
+                BackColor = primary ? Color.FromArgb(38, 102, 197) : Color.White,
+                ForeColor = primary ? Color.White : Color.FromArgb(35, 45, 60) };
+            button.FlatAppearance.BorderSize = primary ? 0 : 1;
+            button.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
+            button.FlatAppearance.MouseOverBackColor = primary ? Color.FromArgb(31, 86, 170) : Color.FromArgb(244, 246, 249);
+            button.FlatAppearance.MouseDownBackColor = primary ? Color.FromArgb(25, 70, 140) : Color.FromArgb(226, 232, 240);
+            return button;
         }
 
         private void BtnSave_Click(object sender, EventArgs e)
