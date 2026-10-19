@@ -81,6 +81,7 @@
       <Column Name="HostSn" Member="HostSn"  DbType="nvarchar(50)" UpdateCheck="Never"/>
       <Column Name="HostID" Member="HostID"  DbType="INT" UpdateCheck="Never"/>
       <Column Name="ScoreSer" Member="ScoreSer"  DbType="INT" UpdateCheck="Never"/>
+      <Column Name="IDSource" Member="IDSource" DbType="INT NOT NULL" CanBeNull="false" UpdateCheck="Never"/>
     </Type>
   </Table>
 </Database>

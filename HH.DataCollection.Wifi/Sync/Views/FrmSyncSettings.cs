@@ -71,8 +71,9 @@ namespace HH.DataCollection.Wifi.Sync
 
         private static TextBox CreateInput(int tabIndex)
         {
-            return new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right, AutoSize = false,
-                Height = 28, BorderStyle = BorderStyle.FixedSingle,
+            // 单行文本框使用字体对应的原生高度，避免强制增高后文字贴上边。
+            return new TextBox { Anchor = AnchorStyles.Left | AnchorStyles.Right, AutoSize = true,
+                BorderStyle = BorderStyle.FixedSingle,
                 Margin = new Padding(0, 4, 0, 4), TabIndex = tabIndex };
         }
 

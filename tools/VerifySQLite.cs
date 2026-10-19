@@ -36,6 +36,52 @@ internal static class VerifySQLite
     static void Observe(IEnumerable<StudentScore> rows) { foreach(var r in rows.OrderBy(x=>x.Key)) observations.Add(string.Join("|", new object[]{r.Key,r.ProjectID,r.StudentID,r.StudentName,r.Sex,r.TestID,r.Score,r.SpecialType,r.CreateTime.ToString("O"),r.ScoreFrom,r.HostSn,r.HostID,r.ScoreSer})); }
     static string Shape(MethodDefinition m) { return m.Name+"("+string.Join(",",m.Parameters.Select(p=>p.ParameterType.FullName+":"+p.Attributes+":"+p.Name+":"+p.Constant))+ "):"+m.ReturnType.FullName+":"+m.Attributes; }
 #if SOURCE
+    static void VerifyIDSources()
+    {
+        Check(typeof(StudentScore).GetProperty("IDSource").PropertyType == typeof(int), "IDSource model contract");
+        Check(typeof(StudentScore).GetProperty("Data") == null, "raw payload is not persisted in model");
+        using (var c = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
+        {
+            c.Open();
+            using (var cmd = c.CreateCommand())
+            {
+                cmd.CommandText = "PRAGMA table_info(StudentScore)";
+                using (var reader = cmd.ExecuteReader())
+                {
+                    bool found = false;
+                    while (reader.Read())
+                    {
+                        string name = Convert.ToString(reader["name"]);
+                        Check(!string.Equals(name, "Data", StringComparison.OrdinalIgnoreCase), "raw payload column absent");
+                        if (name != "IDSource") continue;
+                        found = true;
+                        Check(Convert.ToString(reader["type"]) == "INT" && Convert.ToInt32(reader["notnull"]) == 1
+                            && Convert.ToString(reader["dflt_value"]) == "0", "IDSource schema type, nullability and default");
+                    }
+                    Check(found, "IDSource column exists");
+                }
+            }
+        }
+        var svc = new StudentScoresSavingService();
+        var sources = Enum.GetValues(typeof(IDSource)).Cast<IDSource>().ToArray();
+        for (int i = 0; i < sources.Length; i++)
+        {
+            var record = Record(i);
+            record.IDSource = sources[i];
+            record.Data = new byte[52];
+            svc.AddScore("ID-SOURCES", record, ScoreSource.Huihai200Host, "HOST");
+        }
+        Check(svc.Stop(TimeSpan.FromSeconds(10)), "IDSource queue drained");
+        var rows = All().OrderBy(x => x.ScoreSer).ToList();
+        Check(rows.Count == sources.Length, "all ID sources saved");
+        for (int i = 0; i < sources.Length; i++)
+        {
+            Check(rows[i].IDSource == (int)sources[i], "IDSource round trip: " + sources[i]);
+            Check(Convert.ToInt32(Scalar("SELECT IDSource FROM StudentScore WHERE ScoreSer=" + i)) == (int)sources[i], "IDSource database value: " + sources[i]);
+        }
+        Check(Provider().BatchDelete(rows, "ID-SOURCES").Result == ResultCode.Successful && All().Count == 0, "IDSource fixtures removed");
+    }
+
     static string MovedName(string name)
     {
         return name.Replace("HH.TiYu.SQLite.StudentRawScoreSearchCondition", "HH.TiYu.Model.SearchCondition.StudentScoreSearchCondition")
@@ -117,6 +163,7 @@ internal static class VerifySQLite
             Check(Provider().BatchDelete(All(),"P1").Result==ResultCode.Successful && All().Count==0,"delete");
 #if SOURCE
             Api(args[0]);
+            VerifyIDSources();
             svc=new StudentScoresSavingService();
             // More than one 500-row batch, with a different current project.
             PhysicalProject.Current=new PhysicalProject{ID="UNRELATED"};

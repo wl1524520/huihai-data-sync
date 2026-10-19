@@ -198,6 +198,7 @@ namespace HH.DataCollection.Wifi.Db
   [HostSn] nvarchar(50),
   [HostID] INT,
   [ScoreSer] INT,
+  [IDSource] INT NOT NULL DEFAULT 0,
   [Uploaded] tinyint NOT NULL DEFAULT 0,
   CONSTRAINT [sqlite_autoindex_StudentScore_1] PRIMARY KEY ([ID]))",
             // 同步配置

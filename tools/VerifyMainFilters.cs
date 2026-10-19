@@ -113,6 +113,9 @@ internal static class VerifyMainFilters
                     Check(save.Parent == cancel.Parent && save.Left < cancel.Left && save.Top == cancel.Top,
                         "Save and cancel actions must be aligned at the bottom right");
                     CheckVisibleBounds(dialog);
+                    // 使用示例内容预览文字对齐，不将实际配置中的令牌写入截图。
+                    url.Text = "https://example.com/api/hh";
+                    token.Text = "preview-token";
                     SaveWindowPreview(dialog, "SyncSettings");
                     url.Text = "http://127.0.0.1/unsaved";
                     token.Text = "unsaved-verification-token";
