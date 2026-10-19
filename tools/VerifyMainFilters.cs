@@ -343,6 +343,118 @@ internal static class VerifyMainFilters
         Check(counts.Item1 == 1 && counts.Item2 == 0 && ScoreUpload.CountByUploaded("other").Item1 == 1,
             "Reset must preserve other projects and make the score pending again");
     }
+
+    private static void VerifyReset(FrmMain form)
+    {
+        var button = Field<Button>(form, "_btnReset");
+        Check(button.Enabled && button.Text == "重置上传标记",
+            "Local reset must be available without sync configuration");
+        typeof(FrmMain).GetMethod("BtnTasks_Click", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, new object[] { null, EventArgs.Empty });
+        var tasks = Field<FrmSyncTasks>(form, "_tasksForm");
+        Check(!Field<ToolStripButton>(form, "_btnSettings").Enabled,
+            "Sync settings must be locked while the sync task window is open");
+        Check(typeof(FrmSyncTasks).GetField("_btnReset", BindingFlags.Instance | BindingFlags.NonPublic) == null,
+            "Sync tasks must no longer contain the reset entry");
+        var search = Field<TextBox>(form, "_txtSearch");
+        var students = Field<DataGridView>(form, "_gridStudents");
+        string selected = Convert.ToString(students.Rows[0].Cells["标识"].Value);
+        search.Text = selected;
+        Call(form, "LoadStudents");
+        ClickStudent(students, 0);
+        Sql("UPDATE StudentScore SET Uploaded=1");
+        int item = ((int[])typeof(ScoreUpload).GetField("UploadableItems", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null))[0];
+        Sql("INSERT INTO StudentScore([Key],ID,ProjectID,StudentID,TestID,ScoreFrom,Score,CreateTime,Uploaded) " +
+            "VALUES('reset-pending','reset-pending','filters','A002'," + item + ",0,15,'2026-10-18 12:00:00',0)");
+        Sql("INSERT INTO StudentScore([Key],ID,ProjectID,StudentID,TestID,ScoreFrom,CreateTime,Uploaded) " +
+            "VALUES('reset-null','reset-null','filters','A002'," + item + ",0,'2026-10-18 12:00:00',1)");
+        Call(form, "RefreshPendingCount");
+        Call(form, "LoadScores");
+        Check(Scores(form).Select("状态 = '待上传'").Length == 0, "Selected score must initially show uploaded status");
+        // Use the real worker lifecycle without calling a remote platform.
+        foreach (bool fail in new bool[] { false, true })
+        using (var release = new ManualResetEvent(false))
+        {
+            Action<Action<string>, Func<bool>> work = (log, stop) =>
+            {
+                release.WaitOne();
+                if (fail) throw new Exception("Simulated sync failure");
+            };
+            typeof(FrmSyncTasks).GetMethod("StartTask", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(tasks, new object[] { work });
+            try
+            {
+                Check(FrmSyncTasks.IsBusy && !button.Enabled, "Starting a sync task must immediately disable reset");
+                bool rejected = false;
+                try { Call(form, "ResetUploadedScores"); }
+                catch (TargetInvocationException ex) { rejected = ex.InnerException is InvalidOperationException; }
+                Check(rejected && ScoreUpload.CountByUploaded("filters").Item2 == 1,
+                    "The execution guard must reject reset without modifying flags while sync is busy");
+            }
+            finally { release.Set(); }
+            WaitFor(() => !FrmSyncTasks.IsBusy);
+            Check(button.Enabled, "Both successful and failed sync tasks must restore reset availability");
+        }
+        using (var collect = new Form())
+        using (var download = Download(form, (log, stop, progress) => { progress(0, 0); }))
+        {
+            typeof(FrmMain).GetField("_collectForm", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(form, collect);
+            Call(form, "RefreshGate");
+            Check(button.Enabled, "Collection and roster downloading must not disable local reset");
+            WaitFor(() => download.IsDisposed);
+            typeof(FrmMain).GetField("_collectForm", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(form, null);
+        }
+        int count = (int)typeof(FrmMain).GetMethod("ResetUploadedScores", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, null);
+        Check(count == 2 && ScoreUpload.CountByUploaded("filters").Item1 == 2 && ScoreUpload.CountByUploaded("filters").Item2 == 0,
+            "Reset must include eligible scores outside the selected and filtered student, including already pending scores");
+        using (var conn = new SQLiteConnection(LocalDb.ConnStr))
+        {
+            conn.Open();
+            using (var cmd = new SQLiteCommand("SELECT COUNT(*) FROM StudentScore WHERE Uploaded=1", conn))
+                Check(Convert.ToInt32(cmd.ExecuteScalar()) == 4,
+                    "Reset must preserve other projects, special scores, unmapped items and null scores");
+        }
+        Check(search.Text == selected && students.SelectedRows.Count == 1 &&
+            Convert.ToString(students.SelectedRows[0].Cells["标识"].Value) == selected,
+            "Reset must preserve student selection and filters");
+        Check(Scores(form).Select("状态 = '待上传'").Length == 1,
+            "Reset must immediately refresh the selected student's visible score status");
+        Check(Field<ToolStripStatusLabel>(form, "_lblPending").Text.Contains("待上传 2 条 / 已上传 0 条") &&
+            Field<Label>(tasks, "_lblPending").Text.Contains("待上传 2 条,已上传 0 条") &&
+            Field<TextBox>(tasks, "_txtLog").Text.Contains("已重置 2 条"),
+            "Reset must refresh main and sync counts and retain a sync log entry");
+        search.Clear();
+        Call(form, "LoadStudents");
+        students.ClearSelection();
+        Call(form, "LoadScores");
+        Check(Scores(form).Select("状态 = '待上传'").Length == 2, "Main score status must refresh after reset");
+        tasks.Close();
+        Check(button.Enabled, "Closing sync tasks must leave reset enabled");
+        Check(Field<ToolStripButton>(form, "_btnSettings").Enabled &&
+            Field<ToolStripStatusLabel>(form, "_lnkSwitch").Enabled,
+            "Closing sync tasks after reset must immediately unlock sync settings and project switching");
+        using (var collect = new Form())
+        {
+            typeof(FrmMain).GetField("_collectForm", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(form, collect);
+            typeof(FrmMain).GetMethod("BtnTasks_Click", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(form, new object[] { null, EventArgs.Empty });
+            Field<FrmSyncTasks>(form, "_tasksForm").Close();
+            Check(!Field<ToolStripButton>(form, "_btnSettings").Enabled &&
+                !Field<ToolStripStatusLabel>(form, "_lnkSwitch").Enabled,
+                "Closing sync tasks must preserve locks while a collection window is still open");
+            typeof(FrmMain).GetField("_collectForm", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(form, null);
+            Call(form, "UpdateLockState");
+            Check(Field<ToolStripButton>(form, "_btnSettings").Enabled &&
+                Field<ToolStripStatusLabel>(form, "_lnkSwitch").Enabled,
+                "Settings and project switching must unlock after all locking windows close");
+        }
+        typeof(FrmMain).GetMethod("BtnTasks_Click", BindingFlags.Instance | BindingFlags.NonPublic)
+            .Invoke(form, new object[] { null, EventArgs.Empty });
+        Field<FrmSyncTasks>(form, "_tasksForm").Close();
+        Check(Field<ToolStripButton>(form, "_btnSettings").Enabled,
+            "Reopening and closing sync tasks must not leave settings locked");
+    }
     [STAThread]
     private static int Main()
     {
@@ -377,6 +489,7 @@ internal static class VerifyMainFilters
                 Check(Field<DataGridView>(form, "_gridStudents").SelectedRows.Count == 0,
                     "Showing main form must not select the first student");
                 VerifyScores(form);
+                VerifyReset(form);
                 cls.SelectedItem = "1班";
                 Check(Count(form) == 2, "Same class name must match across all grades");
                 Check(studentCount.Text == "学生总数 4 人 / 当前显示 2 人", "Filtering must preserve total and update displayed count");
@@ -435,10 +548,15 @@ internal static class VerifyMainFilters
                         Check(group.Top >= lastTop, "Filter groups must retain their order");
                         lastTop = group.Top;
                     }
-                    Check(filters.Width == filters.Parent.ClientSize.Width && filters.Parent == split.Parent,
+                    var filterArea = filters.Parent;
+                    var reset = Field<Button>(form, "_btnReset");
+                    Check(filterArea.Width == filterArea.Parent.ClientSize.Width && filterArea.Parent == split.Parent,
                         "Filters must span the full content width above both grids");
-                    Check(filters.Bottom <= split.Top,
+                    Check(filterArea.Bottom <= split.Top,
                         "Both grids must be below the filters");
+                    Check(reset.Right == filterArea.ClientSize.Width - reset.Margin.Right &&
+                        filters.Right <= reset.Left && reset.Bottom <= filterArea.Height,
+                        "Reset must remain at the far right without overlapping wrapped filters at width " + width);
                     Check(Math.Abs(split.Panel1.Width - split.Panel2.Width) <= 2,
                         "Student and score panels must each occupy half the available width");
                     Check(students.Bounds == split.Panel1.ClientRectangle && scores.Bounds == split.Panel2.ClientRectangle,

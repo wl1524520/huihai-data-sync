@@ -7,7 +7,7 @@ using HH.TiYu.Model;
 namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
-    /// 同步任务窗(非模态):读取远端信息/上传成绩一次/自动上传轮询/重置上传标记 + 同步日志。
+    /// 同步任务窗(非模态):读取远端信息/上传成绩一次/自动上传轮询 + 同步日志。
     /// 与同步设置窗(FrmSyncSettings)分开,从主界面工具栏进入。
     /// 任务在后台线程执行,日志通过 BeginInvoke 回 UI 线程。
     /// </summary>
@@ -15,11 +15,11 @@ namespace HH.DataCollection.Wifi.Sync
     {
         /// <summary>是否有同步任务正在执行(主界面切换项目前检查)。</summary>
         public static bool IsBusy { get; private set; }
+        public event EventHandler BusyStateChanged;
 
         private readonly Button _btnInfo;
         private readonly Button _btnUploadOnce;
         private readonly Button _btnAutoUpload;
-        private readonly Button _btnReset;
         private readonly Label _lblPending;
         private readonly TextBox _txtLog;
 
@@ -43,9 +43,6 @@ namespace HH.DataCollection.Wifi.Sync
             _btnAutoUpload = new Button { Text = "开始自动上传", Location = new Point(232, 25), Width = 110 };
             _btnAutoUpload.Click += BtnAutoUpload_Click;
             grpTask.Controls.Add(_btnAutoUpload);
-            _btnReset = new Button { Text = "重置上传标记", Location = new Point(352, 25), Width = 100 };
-            _btnReset.Click += BtnReset_Click;
-            grpTask.Controls.Add(_btnReset);
             Controls.Add(grpTask);
 
             _lblPending = new Label { Text = "", AutoSize = true, Location = new Point(15, 90) };
@@ -82,14 +79,17 @@ namespace HH.DataCollection.Wifi.Sync
             }
         }
 
-        private void BtnReset_Click(object sender, EventArgs e)
+        internal void NotifyUploadedReset(int count)
         {
-            if (MessageBox.Show("确定要清除当前项目全部可上传成绩的上传标记吗?\r\n清除后这些成绩将在下次上传时重新上传(平台按暂存身份幂等接收,不会重复计分)。",
-                    "重置上传标记", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
-                return;
-            int n = ScoreUpload.ResetUploaded(PhysicalProject.Current.ID);
-            Log("已重置上传标记:" + n + " 条成绩恢复为待上传");
+            Log("已重置 " + count + " 条可上传成绩为待上传（包含原本待上传的成绩）");
             RefreshPendingCount();
+        }
+
+        private void SetBusy(bool busy)
+        {
+            IsBusy = busy;
+            var handler = BusyStateChanged;
+            if (handler != null) handler(this, EventArgs.Empty);
         }
 
         private void BtnAutoUpload_Click(object sender, EventArgs e)
@@ -101,7 +101,7 @@ namespace HH.DataCollection.Wifi.Sync
                 return;
             }
             // 别的任务在跑时不进入"停止自动上传"状态,避免按钮停在错误状态
-            if (_worker != null && _worker.IsAlive)
+            if (IsBusy || (_worker != null && _worker.IsAlive))
             {
                 MessageBox.Show("已有同步任务在执行,请先停止。", "任务进行中", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -168,13 +168,13 @@ namespace HH.DataCollection.Wifi.Sync
 
         private void StartTask(Action<Action<string>, Func<bool>> task)
         {
-            if (_worker != null && _worker.IsAlive)
+            if (IsBusy || (_worker != null && _worker.IsAlive))
             {
                 MessageBox.Show("已有同步任务在执行,请先停止。", "任务进行中", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             _stopRequested = false;
-            IsBusy = true;
+            SetBusy(true);
             SetButtonsEnabled(false);
             _worker = new Thread(() =>
             {
@@ -193,7 +193,6 @@ namespace HH.DataCollection.Wifi.Sync
                 finally
                 {
                     _autoUpload = false;
-                    IsBusy = false;
                     // 窗体可能已被销毁(关窗被拒的缝隙场景也存在),回调前先防御
                     try
                     {
@@ -204,6 +203,7 @@ namespace HH.DataCollection.Wifi.Sync
                                 SetButtonsEnabled(true);
                                 _btnAutoUpload.Text = "开始自动上传";
                                 RefreshPendingCount();
+                                SetBusy(false);
                             }));
                         }
                     }
@@ -211,14 +211,21 @@ namespace HH.DataCollection.Wifi.Sync
                 }
             });
             _worker.IsBackground = true;
-            _worker.Start();
+            try { _worker.Start(); }
+            catch
+            {
+                _autoUpload = false;
+                _btnAutoUpload.Text = "开始自动上传";
+                SetButtonsEnabled(true);
+                SetBusy(false);
+                throw;
+            }
         }
 
         private void SetButtonsEnabled(bool enabled)
         {
             _btnInfo.Enabled = enabled;
             _btnUploadOnce.Enabled = enabled;
-            _btnReset.Enabled = enabled;
             // 自动上传按钮在任务进行中保持可用,用于停止
         }
 

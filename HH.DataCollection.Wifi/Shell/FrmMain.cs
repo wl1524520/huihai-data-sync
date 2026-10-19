@@ -40,6 +40,7 @@ namespace HH.DataCollection.Wifi
         private readonly ComboBox _cboSex;
         private bool _loadingFilters;
         private readonly TextBox _txtSearch;
+        private readonly Button _btnReset;
         private readonly DataGridView _gridStudents;
         private readonly DataGridView _gridScores;
         private bool _loadingStudents;
@@ -156,7 +157,23 @@ namespace HH.DataCollection.Wifi
             btnRefresh.Click += (s, e) => ReloadStudentsAndClasses();
             searchGroup.Controls.Add(btnRefresh);
             filterPanel.Controls.Add(searchGroup);
-            content.Controls.Add(filterPanel);
+            var filterArea = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 2, RowCount = 1, Margin = Padding.Empty
+            };
+            filterArea.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            filterArea.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            filterPanel.Dock = DockStyle.Fill;
+            filterArea.Controls.Add(filterPanel, 0, 0);
+            _btnReset = new Button
+            {
+                Text = "重置上传标记", AutoSize = true, Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                Margin = new Padding(6, 6, 6, 3)
+            };
+            _btnReset.Click += BtnReset_Click;
+            filterArea.Controls.Add(_btnReset, 1, 0);
+            content.Controls.Add(filterArea);
 
             _gridStudents = new StudentGrid
             {
@@ -362,9 +379,68 @@ namespace HH.DataCollection.Wifi
                 return;
             }
             _tasksForm = new FrmSyncTasks();
-            _tasksForm.FormClosed += (s, args) => UpdateLockState();
+            _tasksForm.BusyStateChanged += (s, args) =>
+            {
+                RefreshResetState();
+                if (!FrmSyncTasks.IsBusy)
+                {
+                    RefreshPendingCount();
+                    LoadScores();
+                }
+            };
+            _tasksForm.FormClosed += (s, args) =>
+            {
+                // FormClosed 触发时 IsDisposed 仍可能为 false，先清除引用再解除锁定。
+                _tasksForm = null;
+                UpdateLockState();
+                RefreshResetState();
+            };
             _tasksForm.Show(this);
             UpdateLockState();
+        }
+
+        private void RefreshResetState()
+        {
+            _btnReset.Enabled = !FrmSyncTasks.IsBusy && PhysicalProject.Current != null;
+        }
+
+        private void BtnReset_Click(object sender, EventArgs e)
+        {
+            if (FrmSyncTasks.IsBusy || PhysicalProject.Current == null) return;
+            string projectID = PhysicalProject.Current.ID;
+            if (MessageBox.Show(this,
+                    "确定要重置当前项目全部可上传成绩的上传标记吗？\r\n" +
+                    "此操作不受查询筛选或选中学生影响，重置后将在下次上传时重新上传。",
+                    "重置上传标记", MessageBoxButtons.OKCancel, MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button2) != DialogResult.OK) return;
+            // 确认框会处理窗口消息，执行前再次检查任务及项目状态。
+            if (FrmSyncTasks.IsBusy || PhysicalProject.Current == null || PhysicalProject.Current.ID != projectID)
+            {
+                MessageBox.Show(this, "同步任务或当前项目状态已变化，请稍后重试。", "无法重置上传标记",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            try
+            {
+                int count = ResetUploadedScores();
+                MessageBox.Show(this, "已重置 " + count + " 条可上传成绩为待上传（包含原本待上传的成绩）。",
+                    "重置完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Program.WriteLog("ERROR", "重置上传标记失败:" + ex);
+                MessageBox.Show(this, ex.Message, "重置上传标记失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private int ResetUploadedScores()
+        {
+            if (FrmSyncTasks.IsBusy) throw new InvalidOperationException("同步任务正在执行，请先停止后再重置。");
+            int count = ScoreUpload.ResetUploaded(PhysicalProject.Current.ID);
+            RefreshPendingCount();
+            LoadScores();
+            if (_tasksForm != null && !_tasksForm.IsDisposed) _tasksForm.NotifyUploadedReset(count);
+            return count;
         }
 
         // ===== 底部切换项目 =====
@@ -435,6 +511,7 @@ namespace HH.DataCollection.Wifi
             _btnCollect.Enabled = ok;
             _btnTasks.Enabled = ok;
             _btnDownload.Enabled = ok && (_downloadForm == null || _downloadForm.IsDisposed);
+            RefreshResetState();
             _lblGate.Visible = !ok;
             _lblSchool.Text = "学校:" + (conf != null && !string.IsNullOrEmpty(conf.SchoolName)
                 ? conf.SchoolName : "未设置");
