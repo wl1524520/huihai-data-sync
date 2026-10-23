@@ -63,6 +63,7 @@ internal static class VerifyDal
             CheckProjectPhysicalItems();
             CheckStudentsAndProjects();
             CheckStudentSync();
+            CheckScoreUploadPrimitives();
             Check(typeof(Student).Assembly.GetType("HH.TiYu.Model.StudentPhoto") == null, "Photo model remains");
             Check(typeof(Student).GetProperty("HasPhoto") == null, "Photo flag remains");
             Check(!typeof(StudentBLL).GetMethods().Any(m => m.Name.Contains("Photo")), "Photo BLL remains");
@@ -210,6 +211,54 @@ internal static class VerifyDal
         new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students);
         Check(project.AllFacilities.Count == 1 && project.AllStudents["0001"].Name == "更新姓名" && project.AllStudents["0001"].ClassName == "一班", "Synced school and roster load without region table");
         Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name='Division'")) == 0, "Sync recreated retired region table");
+        // 年级保护(DAL SyncRemotePage 语义):越界年级新增写 NULL、更新保留本地原年级
+        var outOfRange = Newtonsoft.Json.Linq.JArray.Parse("[{test_no:'0002',name:'越界',gender:2,grade:99,class_name:'二班'}]");
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target, issues });
+        Check(result.Item1 == 1 && result.Item2 == 0 && issues.Count == 1, "Out-of-range grade must insert with report");
+        Check(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'") == DBNull.Value, "Out-of-range grade must persist as NULL");
+        outOfRange[0]["grade"] = 21;
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target, issues });
+        Check(result.Item1 == 0 && result.Item2 == 1 && Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'")) == 21, "Valid grade update must overwrite");
+        outOfRange[0]["grade"] = 99;
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target, issues });
+        Check(result.Item1 == 0 && result.Item2 == 1 && Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'")) == 21, "Out-of-range grade update must keep local grade");
+        // Provider 级语义:test_no 去首尾空白后按忽略大小写匹配,不重复建行;超长标识明确拒绝
+        var studentProvider = ProviderFactory.Create<StudentProvider>(Uri);
+        var trimmed = studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = " 0001 ", Name = "再更新", Sex = Sex.Male, Grade = 31, ClassName = "三班" } }, "SYNC", "SYNC-F");
+        Check(trimmed.Item1 == 0 && trimmed.Item2 == 1 &&
+            Convert.ToString(Scalar("SELECT Name FROM Student WHERE ProjectID='SYNC' AND StudentID='0001'")) == "再更新" &&
+            Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0001'")) == 31,
+            "Provider upsert trims test_no and matches existing row");
+        Check(Convert.ToInt32(Scalar("SELECT COUNT(*) FROM Student WHERE ProjectID='SYNC'")) == 2, "Trimmed upsert must not duplicate roster rows");
+        bool tooLong = false;
+        try { studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = new string('x', 61), Name = "超长", Sex = Sex.Male } }, "SYNC", "SYNC-F"); }
+        catch (ArgumentException) { tooLong = true; }
+        Check(tooLong, "Over-length test_no must be rejected, not silently truncated");
+    }
+    private static void CheckScoreUploadPrimitives()
+    {
+        var scores = ProviderFactory.Create<StudentScoreProvider>(Uri);
+        int[] whitelist = { 1, 5 };
+        var older = new StudentScore { ID = Guid.NewGuid(), Key = "up-1", StudentID = "s1", TestID = 1, ScoreFrom = ScoreSource.ManualEntry, CreateTime = new DateTime(2026, 10, 1, 8, 0, 0), Score = 10m };
+        var newer = new StudentScore { ID = Guid.NewGuid(), Key = "up-2", StudentID = "s2", TestID = 5, ScoreFrom = ScoreSource.FileImport, CreateTime = new DateTime(2026, 10, 1, 9, 0, 0), Score = 20m };
+        var outside = new StudentScore { ID = Guid.NewGuid(), Key = "up-3", StudentID = "s3", TestID = 2, ScoreFrom = ScoreSource.ManualEntry, CreateTime = new DateTime(2026, 10, 1, 10, 0, 0), Score = 30m };
+        Check(scores.BatchAdd(new List<StudentScore> { older, newer, outside }, "UP").Result == ResultCode.Successful, "Upload primitive fixture insert");
+        // 文本形态 ID 行:与历史测试数据一致,上传原语必须与 GUID 存储格式无关
+        Execute("INSERT INTO StudentScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Score,Uploaded) VALUES('text-id-row','UP','up-4','s4',1,3,'2026-10-01 08:30:00',15,0)");
+        var pending = scores.GetPendingForUpload("UP", whitelist);
+        Check(pending.Count == 3 && pending[0].StudentID == "s1" && pending[1].StudentID == "s4" && pending[2].StudentID == "s2",
+            "Pending query must filter by project, whitelist and upload flag, ordered by CreateTime");
+        Check(pending.All(r => !string.IsNullOrEmpty(r.Mono)), "Pending rows must carry DB-computed HEX(ID)");
+        Check(scores.CountByUploaded("UP", 0, whitelist) == 3 && scores.CountByUploaded("UP", 1, whitelist) == 0, "Upload counts before ack");
+        Check(scores.MarkUploaded(null) == 0 && scores.MarkUploaded(new List<string>()) == 0, "Empty ack batch is a no-op");
+        Check(scores.MarkUploaded(pending.Select(r => r.Mono)) == 3, "Ack marks exactly the pending batch");
+        Check(scores.CountByUploaded("UP", 0, whitelist) == 0 && scores.CountByUploaded("UP", 1, whitelist) == 3, "Upload counts after ack");
+        Check(Convert.ToInt32(Scalar("SELECT COUNT(*) FROM StudentScore WHERE ProjectID='UP' AND Uploaded=0")) == 1, "Non-whitelist score must stay unmarked");
+        Check(scores.ResetUploaded("UP", whitelist) == 3, "Reset clears only uploadable scores in the project");
+        Check(scores.CountByUploaded("UP", 0, whitelist) == 3 && scores.CountByUploaded("UP", 1, whitelist) == 0, "Upload counts after reset");
+        bool rejected = false;
+        try { scores.GetPendingForUpload("UP", new int[0]); } catch (ArgumentException) { rejected = true; }
+        Check(rejected, "Empty whitelist must be rejected explicitly");
     }
     private static void CheckStudentsAndProjects()
     {
@@ -247,8 +296,7 @@ internal static class VerifyDal
         var generated = new PhysicalProject { Name = "新项目", CreateDate = DateTime.Now };
         Check(projects.Insert(generated).Result == ResultCode.Successful && !string.IsNullOrEmpty(generated.ID), "Project ID must not require legacy numbering table");
         PhysicalProject.Current = generated;
-        // 学生导入由 StudentSync 直接 SQL 完成，BLL 导入路径已随本轮精简移除；
-        // 此处改为直接验证内存名册的 AddStudents 行为。
+        // 学生同步的 SQL 已收编进 DAL StudentProvider.SyncRemotePage；此处直接验证内存名册的 AddStudents 行为。
         var imported = new Student { StudentID = "imported", FacilityID = "F1", Name = "保留原名", Sex = Sex.Female };
         generated.AddStudents(new List<Student> { imported });
         Check(generated.AllStudents.ContainsKey("IMPORTED") && generated.AllStudents["IMPORTED"].Name == "保留原名", "In-memory roster import");

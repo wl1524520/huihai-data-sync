@@ -1,6 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
+using System.Linq;
+using HH.GeneralLibrary.Core.DAL;
+using HH.TiYu.DAL;
+using HH.TiYu.DAL.LinqProvider;
+using HH.TiYu.Model;
+using HH.TiYu.Model.SearchCondition;
 using Newtonsoft.Json.Linq;
 
 namespace HH.DataCollection.Wifi.Sync
@@ -14,15 +19,23 @@ namespace HH.DataCollection.Wifi.Sync
     ///     表外科目留在本地底账;SpecialType 非空的特殊成绩不上传(与原工具一致)
     ///   - 每批 1000 条;网络错误/5xx 由 SyncApi 有限退避后仍失败则跳过本批传下一批,下轮自然重传;
     ///     429 退避后仍未缓解停止本轮;200+success=false 与 422 按文档 §4/§7 停止本轮,重启后原样补传
-    ///   - 仅当 HTTP 200 + JSON success===true 才在事务内把该批标记 Uploaded=1
+    ///   - 仅当 HTTP 200 + JSON success===true 才把该批标记 Uploaded=1
     ///   - 401/400 停止本轮;上传前按文档 §4/§5 做本地预校验,非法行隔离不上传、不阻断其他成绩
     ///   - 另做一次"标识是否在本地名单中"的核对:后台业务拒绝(学生不存在/免测/日期越界等)
     ///     不通过接口返回(文档 §6.2),客户端唯一能自救的是把这类行提前报出来;只报告、不阻断
+    ///   - 本类不含 SQL:取待传、置位、重置、统计与上传口径由 DAL StudentScoreProvider 的上传原语
+    ///     承担,本类只持有科目白名单(CodeMap)并把它传给 DAL,四个原语共用同一份白名单
     /// </summary>
     public class ScoreUpload
     {
         public const int BatchSize = 1000;
         public const int RoundIntervalSeconds = 120;
+
+        /// <summary>创建成绩 Provider;连接 URI 与 SyncConfig 等现有 DAL 调用同一来源。</summary>
+        private static StudentScoreProvider CreateScoreProvider()
+        {
+            return ProviderFactory.Create<StudentScoreProvider>(Db.LocalDb.DalConnStr);
+        }
 
         /// <summary>
         /// 本地 TestID → 平台 code 的显式映射(文档 §5.1)。
@@ -170,7 +183,7 @@ namespace HH.DataCollection.Wifi.Sync
         /// 会让整批 422,且按 CreateTime 排序后永远卡在队首堵死全部上传("毒行")。
         /// 隔离行保持 Uploaded=0,每轮重复报告,直到原始数据被修正。
         /// </summary>
-        private static void IsolateInvalidRows(List<RawScoreRow> pending, Action<string> report)
+        private static void IsolateInvalidRows(List<StudentScoreProvider.PendingUploadScore> pending, Action<string> report)
         {
             int isolated = 0;
             for (int i = pending.Count - 1; i >= 0; i--)
@@ -191,7 +204,7 @@ namespace HH.DataCollection.Wifi.Sync
         }
 
         /// <summary>返回该行违反接口格式的原因,合法返回 null。Score 已由查询保证非空。</summary>
-        private static string ValidateRow(RawScoreRow row)
+        private static string ValidateRow(StudentScoreProvider.PendingUploadScore row)
         {
             // 文档 §8:test_no 最大 60 字符,不静默截断——超长直接隔离并报告
             string testNo = (row.StudentID ?? "").Trim();
@@ -217,7 +230,7 @@ namespace HH.DataCollection.Wifi.Sync
         /// (本地只存 test_no 一个字符串,没有独立的学号/身份证列),能做的只有提前暴露。
         /// 只报告、不阻断:这些行不会让整批 422,阻断反而可能在名单陈旧时搁置数据。
         /// </summary>
-        private void ReportUnknownIdentifiers(List<RawScoreRow> pending, Action<string> report)
+        private void ReportUnknownIdentifiers(List<StudentScoreProvider.PendingUploadScore> pending, Action<string> report)
         {
             if (pending.Count == 0) return;
             var known = LoadKnownIdentifiers();
@@ -226,7 +239,7 @@ namespace HH.DataCollection.Wifi.Sync
                 report("提示:本地暂无学生名单,跳过标识核对(先执行一次学生同步即可启用本项)");
                 return;
             }
-            var unknown = new List<RawScoreRow>();
+            var unknown = new List<StudentScoreProvider.PendingUploadScore>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var row in pending)
             {
@@ -247,28 +260,21 @@ namespace HH.DataCollection.Wifi.Sync
         private HashSet<string> LoadKnownIdentifiers()
         {
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
+            var result = ProviderFactory.Create<IProvider<Student, Guid>>(Db.LocalDb.DalConnStr)
+                .GetItems(new StudentSearchCondition { ProjectID = _projectID });
+            if (result.Result == ResultCode.Successful && result.QueryObjects != null)
             {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
+                foreach (var student in result.QueryObjects)
                 {
-                    cmd.CommandText = "SELECT StudentID FROM Student WHERE ProjectID = @p";
-                    cmd.Parameters.AddWithValue("@p", _projectID);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            string id = Convert.ToString(reader["StudentID"]);
-                            if (id != null && id.Trim().Length > 0) set.Add(id.Trim());
-                        }
-                    }
+                    string id = (student.StudentID ?? "").Trim();
+                    if (id.Length > 0) set.Add(id);
                 }
             }
             return set;
         }
 
         /// <summary>报告用的定位文字:姓名(有则显示)+ 打码后的标识。</summary>
-        private static string DescribeRow(RawScoreRow row)
+        private static string DescribeRow(StudentScoreProvider.PendingUploadScore row)
         {
             string name = (row.StudentName ?? "").Trim();
             string id = MaskTestNoForLog(row.StudentID);
@@ -291,37 +297,10 @@ namespace HH.DataCollection.Wifi.Sync
             return v.Substring(0, 6) + new string('*', 8) + v.Substring(14);
         }
 
-        private List<RawScoreRow> GetPendingScores()
+        /// <summary>取当前项目未上传的可上传成绩(库内过滤,按设备记录时间升序);口径由 DAL 维护。</summary>
+        private List<StudentScoreProvider.PendingUploadScore> GetPendingScores()
         {
-            var list = new List<RawScoreRow>();
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText =
-                        "SELECT HEX(ID) AS Mono, StudentID, StudentName, TestID, Score, CreateTime FROM StudentScore " +
-                        "WHERE ProjectID = @p AND Uploaded = 0 AND " + UploadableWhere + " " +
-                        "ORDER BY CreateTime";
-                    cmd.Parameters.AddWithValue("@p", _projectID);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            list.Add(new RawScoreRow
-                            {
-                                Mono = Convert.ToString(reader["Mono"]),
-                                StudentID = Convert.ToString(reader["StudentID"]),
-                                StudentName = Convert.ToString(reader["StudentName"]),
-                                TestID = Convert.ToInt32(reader["TestID"]),
-                                Score = reader["Score"] == DBNull.Value ? (decimal?)null : Convert.ToDecimal(reader["Score"]),
-                                CreateTime = Convert.ToDateTime(reader["CreateTime"]),
-                            });
-                        }
-                    }
-                }
-            }
-            return list;
+            return CreateScoreProvider().GetPendingForUpload(_projectID, UploadableItems);
         }
 
         /// <summary>
@@ -329,7 +308,7 @@ namespace HH.DataCollection.Wifi.Sync
         /// 契约要点:items[].modifier 必须不存在(null/空串同样 422 整批拒收);顶层只发 items;
         /// 旧字段 number 已废弃且不提供兼容。score 用普通十进制字符串保留精度。
         /// </summary>
-        private static JArray BuildItems(List<RawScoreRow> batch)
+        private static JArray BuildItems(List<StudentScoreProvider.PendingUploadScore> batch)
         {
             var items = new JArray();
             foreach (var row in batch)
@@ -347,82 +326,25 @@ namespace HH.DataCollection.Wifi.Sync
             return items;
         }
 
-        /// <summary>ACK 成功后,在单个事务内把本批标记为已上传。</summary>
-        private void MarkUploaded(List<RawScoreRow> batch)
+        /// <summary>ACK 成功后,在单个事务内把本批标记为已上传(DAL 原语,失败抛异常)。</summary>
+        private void MarkUploaded(List<StudentScoreProvider.PendingUploadScore> batch)
         {
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
-            {
-                conn.Open();
-                using (var tx = conn.BeginTransaction())
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.Transaction = tx;
-                    cmd.CommandText = "UPDATE StudentScore SET Uploaded = 1 WHERE HEX(ID) = @mono";
-                    var p = cmd.Parameters.Add("@mono", System.Data.DbType.String);
-                    foreach (var row in batch)
-                    {
-                        p.Value = row.Mono;
-                        cmd.ExecuteNonQuery();
-                    }
-                    tx.Commit();
-                }
-            }
+            CreateScoreProvider().MarkUploaded(batch.Select(row => row.Mono));
         }
 
-        /// <summary>
-        /// 可上传成绩的过滤条件,与 UploadableItems 白名单同一份来源:
-        /// 白名单科目 + 非特殊成绩 + 有成绩值。统计/重置必须与上传同口径,
-        /// 否则永不上传的行(白名单外科目、特殊成绩)会永远计入"待上传"误导现场。
-        /// </summary>
-        private static readonly string UploadableWhere =
-            "SpecialType IS NULL AND Score IS NOT NULL AND TestID IN (" + string.Join(",", UploadableItems) + ")";
-
-        /// <summary>重置上传标记:清当前项目全部可上传成绩的 Uploaded,用于补传。</summary>
+        /// <summary>重置上传标记:清当前项目全部可上传成绩的 Uploaded,用于补传;口径由 DAL 维护。</summary>
         public static int ResetUploaded(string projectID)
         {
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
-            {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "UPDATE StudentScore SET Uploaded = 0 WHERE ProjectID = @p AND " + UploadableWhere;
-                    cmd.Parameters.AddWithValue("@p", projectID);
-                    return cmd.ExecuteNonQuery();
-                }
-            }
+            return CreateScoreProvider().ResetUploaded(projectID, UploadableItems);
         }
 
         /// <summary>统计当前项目待上传/已上传条数(与上传同口径,界面展示用)。</summary>
         public static Tuple<int, int> CountByUploaded(string projectID)
         {
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
-            {
-                conn.Open();
-                int pending = CountUploadable(conn, projectID, 0);
-                int done = CountUploadable(conn, projectID, 1);
-                return Tuple.Create(pending, done);
-            }
-        }
-
-        private static int CountUploadable(SQLiteConnection conn, string projectID, int uploaded)
-        {
-            using (var cmd = conn.CreateCommand())
-            {
-                cmd.CommandText = "SELECT COUNT(*) FROM StudentScore WHERE ProjectID = @p " +
-                                  "AND Uploaded = " + uploaded + " AND " + UploadableWhere;
-                cmd.Parameters.AddWithValue("@p", projectID);
-                return Convert.ToInt32(cmd.ExecuteScalar());
-            }
-        }
-
-        private class RawScoreRow
-        {
-            public string Mono;
-            public string StudentID;
-            public string StudentName;
-            public int TestID;
-            public decimal? Score;
-            public DateTime CreateTime;
+            var provider = CreateScoreProvider();
+            int pending = provider.CountByUploaded(projectID, 0, UploadableItems);
+            int done = provider.CountByUploaded(projectID, 1, UploadableItems);
+            return Tuple.Create(pending, done);
         }
     }
 }

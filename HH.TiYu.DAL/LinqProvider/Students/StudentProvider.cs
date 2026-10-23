@@ -1,4 +1,4 @@
-﻿// Recovered from lib/DAL.dll using ILSpy; see README.md for provenance and supported scope.
+// Recovered from lib/DAL.dll using ILSpy; see README.md for provenance and supported scope.
 using System;
 using System.Collections.Generic;
 using System.Data.Linq;
@@ -134,6 +134,65 @@ namespace HH.TiYu.DAL.LinqProvider
                 return new CommandResult(ResultCode.Successful, string.Empty);
             }
             catch (Exception ex) { return new CommandResult(ResultCode.Fail, ex.Message); }
+        }
+
+        /// <summary>
+        /// 平台名单同步的整页 upsert(单事务),按项目内 StudentID(去首尾空白、忽略大小写)定位:
+        ///   - 已存在:更新 StudentID(写回规范化值)/Name/Sex/ClassName/UpdateDate;Grade 仅在传入
+        ///     非空时覆盖——平台年级越界时调用方传 null,即保留本地原年级,不让脏值覆盖好数据;
+        ///   - 不存在:新增,Grade 原样写入(可为 null),FacilityID 取参数值。
+        /// 返回(新增数, 更新数);失败抛异常,由调用方终止本轮同步。
+        /// </summary>
+        public Tuple<int, int> SyncRemotePage(List<Student> page, string projectID, string facilityID)
+        {
+            if (page == null) throw new ArgumentNullException("page");
+            int inserted = 0, updated = 0;
+            using (var dc = CreateDataContext())
+            {
+                var existing = new Dictionary<string, Student>(StringComparer.OrdinalIgnoreCase);
+                foreach (var row in dc.GetTable<Student>().Where(s => s.ProjectID == projectID).ToList())
+                {
+                    string key = (row.StudentID ?? string.Empty).Trim();
+                    if (!existing.ContainsKey(key)) existing.Add(key, row);
+                }
+                foreach (var source in page)
+                {
+                    string testNo = (source.StudentID ?? string.Empty).Trim();
+                    if (testNo.Length == 0 || testNo.Length > 60)
+                        throw new ArgumentException("学生 test_no 必须为 1 至 60 个字符");
+                    Student target;
+                    if (existing.TryGetValue(testNo, out target))
+                    {
+                        target.StudentID = testNo;
+                        target.Name = source.Name;
+                        target.Sex = source.Sex;
+                        if (source.Grade.HasValue) target.Grade = source.Grade;
+                        target.ClassName = source.ClassName;
+                        target.UpdateDate = DateTime.Now;
+                        updated++;
+                    }
+                    else
+                    {
+                        target = new Student
+                        {
+                            ID = source.ID == Guid.Empty ? Guid.NewGuid() : source.ID,
+                            ProjectID = projectID,
+                            StudentID = testNo,
+                            Name = source.Name,
+                            Sex = source.Sex,
+                            FacilityID = facilityID,
+                            Grade = source.Grade,
+                            ClassName = source.ClassName,
+                            UpdateDate = DateTime.Now,
+                        };
+                        dc.GetTable<Student>().InsertOnSubmit(target);
+                        existing.Add(testNo, target);
+                        inserted++;
+                    }
+                }
+                dc.SubmitChanges();
+            }
+            return Tuple.Create(inserted, updated);
         }
     }
 }

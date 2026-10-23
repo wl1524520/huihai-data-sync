@@ -12,8 +12,8 @@
 | `Db/LocalDb.cs` | 七表数据库创建与测试科目字典初始化 |
 | `Sync/SyncConfig.cs` | 同步配置读写、校验、当前项目的学校绑定 |
 | `Sync/SyncApi.cs` | HTTP 接口、响应与错误类型、重试和服务端错误处理 |
-| `Sync/StudentSync.cs` | 学生名单下发解析、校验与本地数据库更新 |
-| `Sync/ScoreUpload.cs` | 原始成绩筛选、转换、上传与上传标记维护 |
+| `Sync/StudentSync.cs` | 学生名单下发解析、校验与分页事务(DAL 落库) |
+| `Sync/ScoreUpload.cs` | 原始成绩筛选、转换、上传与上传批次调度(标记维护走 DAL) |
 | `Sync/Views/` | 同步设置 `FrmSyncSettings`、任务执行与日志窗口 `FrmSyncTasks` |
 | `Resources/` | 采集、上传和网络设置工具栏图标 |
 | `app.config` | 运行时配置与程序集绑定策略 |
@@ -26,7 +26,7 @@
 
 同步接口以工作区的[汇海同步接口文档](../../unite-tizhi-docs/docs/汇海同步接口文档.md)为准。目录整理不修改请求、响应、认证、重试或上传行为；修改这些行为时应先核对接口文档。
 
-`StudentSync` 和 `ScoreUpload` 存在直接 SQL 路径，不会自动经过 BLL/DAL。调整学生或成绩字段时，应同时检查 `Db/LocalDb.cs`、Model 实体、DAL 映射及同步 SQL。当前库为七表，由 DAL 统一映射；原始成绩实体在 Model，设备转换与后台保存服务在 BLL，Program 负责服务启停。
+`StudentSync` 和 `ScoreUpload` 的库表读写全部经过 DAL:`StudentProvider.SyncRemotePage` 承担名单 upsert,`StudentScoreProvider` 的上传原语承担取待传、置位、重置与统计,`Uploaded` 列仍不映射。调整学生或成绩字段时,应同时检查 `Db/LocalDb.cs`、Model 实体与 DAL 映射/上传原语 SQL;同步类只持有接口契约与科目白名单等业务规则。当前库为七表,由 DAL 统一映射;原始成绩实体在 Model,设备转换与后台保存服务在 BLL,Program 负责服务启停。
 
 启动使用应用目录下的 `HH_Data.db`，错误日志位于 `logs/error.log`；源码目录不决定运行时文件位置。单实例、保存队列与退出排空流程由 `Program` 协调，目录调整保持现有行为。
 

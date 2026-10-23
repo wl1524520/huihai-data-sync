@@ -10,9 +10,9 @@
 | `Contracts/IBatchProvider.cs` | 批量新增、删除、修改的数据访问契约 |
 | `Factories/ProviderFactory.cs` | 创建有效 Provider、缓存并加载嵌入式映射 |
 | `LinqProvider/Organizations/` | 学校的查询、删除约束 |
-| `LinqProvider/Students/` | 学生查询、导入、覆盖与批量修改、删除 |
+| `LinqProvider/Students/` | 学生查询、导入、覆盖与批量修改、删除，平台名单同步 upsert |
 | `LinqProvider/PhysicalTests/` | 体测项目、科目字典、项目科目关联的读写 |
-| `LinqProvider/Scores/` | 原始成绩查询、排序分页、按项目与 Key 去重写入和删除 |
+| `LinqProvider/Scores/` | 原始成绩查询、排序分页、按项目与 Key 去重写入和删除，成绩上传原语 |
 | `LinqProvider/Configuration/` | 同步配置的查询和事务保存 |
 | `LinqProvider/DataMapping.xml` | 七表共享的 LINQ to SQL 映射资源 |
 | `Properties/AssemblyInfo.cs` | 程序集元数据 |
@@ -50,14 +50,16 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 工厂不再吞掉映射异常，也不存在可实例化的停用 Provider：本轮精简已删除 15 个停用 Provider 源码（Alarm、AppraiseTemplate、Discussion、Operator、PhysicalProjectState、PhysicalScore、Role、Sports、SportsStudentPair、SportSuggestion、Standard、StudentCheckRecord、StudentGroup、StudentGroupPair、Sysparameter）以及 `AutoNumberCreater`、`AutoCreateNumber` 两个编号类型，并移除了 DAL 项目对 `System.Data.SQLite` 的显式引用（保留的 Provider 只用 LINQ 映射，无 SQLite 类型使用）。旧实现仍可从原始 `lib/DAL.dll` 基线重新反编译恢复。
 
 - StudentScoreProvider 按项目与 Key 去重，已有行不覆盖；数据库结构与原始成绩字段保持不变。
+- StudentScoreProvider 的上传原语（GetPendingForUpload / MarkUploaded / ResetUploaded / CountByUploaded）集中维护上传口径 SQL：白名单科目由调用方传入，HEX(ID) 由数据库侧计算，与 GUID 存储格式无关；MarkUploaded 在单事务内置位。Uploaded 列仍不映射（见上文），避免 LINQ 写回覆盖上传状态。
 - StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；查询条件只保留项目、学校（映射到 FacilityID）与标识集合三项，未映射字段修改明确失败。
+- StudentProvider.SyncRemotePage 承担平台名单同步的整页 upsert：按项目内 test_no（去首尾空白、忽略大小写）定位，返回新增/更新计数；Grade 传 null 时更新保留本地原年级、新增写 NULL，超长或空标识明确抛 ArgumentException。
 - 删除学生名单不删除已经采集的 StudentScore。
 - PhysicalProjectProvider 使用 GUID 生成项目编号；当前已移除模板项目科目复制分支，项目编号不依赖任何编号表。
 - ProjectPhysicalItemProvider 的批量导入按性别与年级替换同组记录，批量删除按主键删除；`BatchPatch` 明确抛出 NotSupportedException，采集器不支持项目科目的批量修改。
 - 显式删除项目时，在一个事务中清理项目、学校、名单、科目关联和原始成绩；工作单元入口没有显式事务时拒绝执行。
 - SyncConfigProvider.SavePairs 使用映射读写，并在单个事务中新增/覆盖传入键，保留其他键，空值转换为空字符串。
 - 采集器 SyncConfig.Load/Save 已接入 DAL，保留六项设置、URL 规范化与原有配置校验。
-- 学生同步、成绩上传仍有独立 SQL 路径；修改 DAL 不会自动修改这些逻辑。
+- 学生同步（StudentSync）与成绩上传（ScoreUpload）的库表读写已全部收编进 DAL：同步类不再含 SQL，只持有接口契约、科目白名单（CodeMap）与分批/ACK 语义；Uploaded 列的读写经 StudentScoreProvider 上传原语完成。
 
 ## 无学生照片
 
@@ -68,7 +70,7 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 ## 验证
 
 在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
-测试在全新隔离目录使用真实 LocalDb 七表结构，覆盖七表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、七个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载学校、学生和科目、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置六项回读与事务回滚、项目删除回滚、照片类型删除。
+测试在全新隔离目录使用真实 LocalDb 七表结构，覆盖七表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、七个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载学校、学生和科目、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置六项回读与事务回滚、项目删除回滚、照片类型删除、名单同步 upsert 的年级保护与标识规范化、成绩上传原语的口径/置位/重置与存储格式无关性。
 不再扩展旧业务表，也不再要求映射与原 DLL 逐字相同。
 VerifyBusiness 保留模型算法的原 DLL 对照；VerifyRecoveredApi 验证剩余 API 和所有源码组件间的引用解析。
 未连接真实设备或云平台。

@@ -28,6 +28,12 @@ namespace HH.DataCollection.Wifi.Db
             get { return "Data Source=" + DbPath; }
         }
 
+        /// <summary>经过 DAL(ProviderFactory)访问本库时的连接 URI。</summary>
+        public static string DalConnStr
+        {
+            get { return "SQLITE:" + ConnStr; }
+        }
+
         /// <summary>
         /// 确保库文件与全部表结构存在(幂等)。只建表,不含种子数据。
         /// </summary>

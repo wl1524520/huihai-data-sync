@@ -23,7 +23,7 @@
 
 文件移动不改变命名空间：查询条件仍为 `HH.TiYu.Model.SearchCondition`，操作员仍为 `HH.TiYu.Model.Security`，其余现有类型仍为 `HH.TiYu.Model`。公开接口、枚举数值、程序集身份以及序列化声明保持不变；不按物理目录重命名现有类型。新增源码须显式加入 `HH.TiYu.Model.csproj` 的 `Compile Include`。
 
-`Model` 不只是数据结构：单位转换、成绩文本解析都在本项目。修改科目编号时需同时检查采集设备映射、DAL 映射和同步接口。同步仍遵循 `unite-tizhi-docs/docs/汇海同步接口文档.md`；采集器 `Sync` 目录中的直接 SQL 不会自动经过模型层。
+`Model` 不只是数据结构：单位转换、成绩文本解析都在本项目。修改科目编号时需同时检查采集设备映射、DAL 映射和同步接口。同步仍遵循 `unite-tizhi-docs/docs/汇海同步接口文档.md`；采集器 `Sync` 目录的库表读写经过 DAL，但接口契约与科目白名单等业务规则不经过模型层。
 
 ## 采集器适配
 

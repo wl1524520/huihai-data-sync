@@ -16,7 +16,7 @@
 
 使用 Visual Studio 或 .NET Framework 4.0 MSBuild 构建解决方案的 `Debug|x86` / `Release|x86`。发布使用 `HH.DataCollection.Wifi/bin/Release` 中的完整文件集；不要用 `lib` 中的原始业务 DLL 覆盖生成的 DLL。六个业务程序集均从本仓库源码编译，不再执行二进制补丁。
 
-代码入口、恢复来源和维护限制见 [主程序说明](HH.DataCollection.Wifi/README.md)、[Model 说明](HH.TiYu.Model/README.md)、[DAL 说明](HH.TiYu.DAL/README.md)、[BLL 说明](HH.TiYu.BLL/README.md)。修改学生/成绩处理时，区分这些业务层与 `Sync` 模块的直接 SQL 路径。数据同步按工作区 `unite-tizhi-docs/docs/汇海同步接口文档.md` 维护。
+代码入口、恢复来源和维护限制见 [主程序说明](HH.DataCollection.Wifi/README.md)、[Model 说明](HH.TiYu.Model/README.md)、[DAL 说明](HH.TiYu.DAL/README.md)、[BLL 说明](HH.TiYu.BLL/README.md)。学生/成绩处理的库表读写统一经过 DAL（含 `Sync` 模块），业务规则留在各业务层与 `Sync` 模块。数据同步按工作区 `unite-tizhi-docs/docs/汇海同步接口文档.md` 维护。
 
 在解决方案目录验证：
 

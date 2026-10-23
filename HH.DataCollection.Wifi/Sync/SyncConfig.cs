@@ -28,7 +28,7 @@ namespace HH.DataCollection.Wifi.Sync
         public static SyncConfig Load()
         {
             var conf = new SyncConfig();
-            var result = ProviderFactory.Create<IProvider<SyncConfigEntry, string>>("SQLITE:" + LocalDb.ConnStr).GetItems(null);
+            var result = ProviderFactory.Create<IProvider<SyncConfigEntry, string>>(LocalDb.DalConnStr).GetItems(null);
             if (result.Result != ResultCode.Successful) throw new ConfigException("读取同步配置失败: " + result.Message);
             foreach (var entry in result.QueryObjects)
             {
@@ -52,7 +52,7 @@ namespace HH.DataCollection.Wifi.Sync
 
         public void Save()
         {
-            ProviderFactory.Create<SyncConfigProvider>("SQLITE:" + LocalDb.ConnStr).SavePairs(new Dictionary<string, string>
+            ProviderFactory.Create<SyncConfigProvider>(LocalDb.DalConnStr).SavePairs(new Dictionary<string, string>
             {
                 { "api_url", ApiUrl }, { "api_token", ApiToken },
                 { "source_facility_id", SourceFacilityId }, { "school_name", SchoolName },

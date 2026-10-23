@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.Globalization;
+using HH.GeneralLibrary.Core.DAL;
+using HH.TiYu.DAL;
+using HH.TiYu.DAL.LinqProvider;
 using HH.TiYu.Model;
 using Newtonsoft.Json.Linq;
 
@@ -13,8 +15,8 @@ namespace HH.DataCollection.Wifi.Sync
     ///   - 先 /sync/info 核对,再逐页拉取;首页记录 (project_id, project_year) 与
     ///     (total, per_page, last_page),后续页任一变化即中止
     ///     (文档 §3.4:服务器 offset 分页、无快照,读取期间增删会造成重复或遗漏)
-    ///   - 整页单事务 upsert:按 FacilityID+ProjectID+test_no(去首尾空白、忽略大小写)定位,
-    ///     即唯一键 (StudentID, ProjectID)
+    ///   - 整页单事务 upsert(DAL StudentProvider.SyncRemotePage):按项目内 test_no
+    ///     (去首尾空白、忽略大小写)定位,即唯一键 (StudentID, ProjectID)
     ///   - 无 PhysicalScore 表(本软件不建),标识/年级变更的成绩联动因此跳过,
     ///     原始成绩按设备上报时的标识原样保留
     ///   - 2026-10-16 12:42 版契约(§3.2/§10):items[] 仅五字段
@@ -24,7 +26,8 @@ namespace HH.DataCollection.Wifi.Sync
     ///   - 平台不再下发 birth/nation/origin_id/addr/class_id/mc:本地只写 9 个真值列,
     ///     Student 表仅保留当前同步和采集实际使用的九个字段
     ///   - grade 按契约 §3.2 的年级编码表校验(11-44)。越界只报告不阻断:整页照常落库,
-    ///     新增按无年级(NULL)写入,更新保留本地原年级,避免平台的脏值覆盖本地好数据
+    ///     新增按无年级(NULL)写入,更新保留本地原年级(DAL 对 Grade 传 null 不覆盖),
+    ///     避免平台的脏值覆盖本地好数据
     /// </summary>
     public class StudentSync
     {
@@ -118,125 +121,47 @@ namespace HH.DataCollection.Wifi.Sync
                 "请核对平台年级设置)", issues.Count));
         }
 
-        /// <summary>整页单事务 upsert,返回 (新增数, 更新数);越界年级记入 gradeIssues 由 Run 统一报告。</summary>
+        /// <summary>整页单事务 upsert(DAL),返回 (新增数, 更新数);越界年级记入 gradeIssues 由 Run 统一报告。</summary>
         private Tuple<int, int> UpsertPage(JArray items, FacilityTarget facility, List<string> gradeIssues)
         {
-            int inserted = 0, updated = 0;
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
+            var page = new List<Student>();
+            foreach (var token in items)
             {
-                conn.Open();
-                using (var tx = conn.BeginTransaction())
+                var st = RemoteStudent.Parse((JObject)token);
+                if (st.GradeOutOfRange)
+                    gradeIssues.Add(string.Format("{0} 年级={1}", st.TestNo, st.RawGrade));
+                // Grade 为 null(越界)时:新增按无年级写入,更新保留本地原年级(Provider 语义)
+                page.Add(new Student
                 {
-                    foreach (var token in items)
-                    {
-                        var st = RemoteStudent.Parse((JObject)token);
-                        if (st.GradeOutOfRange)
-                            gradeIssues.Add(string.Format("{0} 年级={1}", st.TestNo, st.RawGrade));
-                        string existingRowid = null;
-                        using (var cmd = conn.CreateCommand())
-                        {
-                            cmd.Transaction = tx;
-                            // 定位键 = test_no(去首尾空白、忽略大小写);唯一约束 (StudentID, ProjectID)
-                            // 保证同项目内至多命中一条,不再需要旧版"多匹配即冲突"的判断
-                            cmd.CommandText = "SELECT rowid FROM Student WHERE FacilityID = @f AND ProjectID = @p " +
-                                              "AND UPPER(TRIM(StudentID)) = UPPER(@no) LIMIT 1";
-                            cmd.Parameters.AddWithValue("@f", facility.ID);
-                            cmd.Parameters.AddWithValue("@p", facility.ProjectID);
-                            cmd.Parameters.AddWithValue("@no", st.TestNo);
-                            object rowid = cmd.ExecuteScalar();
-                            if (rowid != null) existingRowid = Convert.ToString(rowid);
-                        }
-
-                        if (existingRowid == null)
-                        {
-                            using (var cmd = conn.CreateCommand())
-                            {
-                                cmd.Transaction = tx;
-                                cmd.CommandText =
-                                    "INSERT INTO Student (ID, StudentID, ProjectID, Name, Sex, FacilityID, " +
-                                    "Grade, ClassName, UpdateDate) VALUES (" +
-                                    "@ID, @StudentID, @ProjectID, @Name, @Sex, @FacilityID, " +
-                                    "@Grade, @ClassName, @UpdateDate)";
-                                cmd.Parameters.AddWithValue("@ID", Guid.NewGuid());
-                                AddStudentParams(cmd, st, true);
-                                cmd.Parameters.AddWithValue("@ProjectID", facility.ProjectID);
-                                cmd.Parameters.AddWithValue("@FacilityID", facility.ID);
-                                cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
-                                cmd.ExecuteNonQuery();
-                            }
-                            inserted++;
-                        }
-                        else
-                        {
-                            using (var cmd = conn.CreateCommand())
-                            {
-                                cmd.Transaction = tx;
-                                // 年级越界时不写 Grade 列:保留本地原年级,不让平台的脏值覆盖
-                                cmd.CommandText = st.GradeOutOfRange
-                                    ? "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, " +
-                                      "ClassName=@ClassName, UpdateDate=@UpdateDate WHERE rowid = @rowid"
-                                    : "UPDATE Student SET StudentID=@StudentID, Name=@Name, Sex=@Sex, " +
-                                      "Grade=@Grade, ClassName=@ClassName, UpdateDate=@UpdateDate " +
-                                      "WHERE rowid = @rowid";
-                                AddStudentParams(cmd, st, !st.GradeOutOfRange);
-                                cmd.Parameters.AddWithValue("@UpdateDate", DateTime.Now);
-                                cmd.Parameters.AddWithValue("@rowid", existingRowid);
-                                cmd.ExecuteNonQuery();
-                            }
-                            updated++;
-                            // 原工具此处联动更新 PhysicalScore 的标识/年级;本软件无该表,原始成绩原样保留
-                        }
-                    }
-                    tx.Commit();
-                }
+                    StudentID = st.TestNo,
+                    Name = st.Name,
+                    Sex = (Sex)st.Gender,
+                    Grade = st.Grade,
+                    ClassName = st.ClassName,
+                });
             }
-            return Tuple.Create(inserted, updated);
-        }
-
-        /// <summary>
-        /// 绑定学生参数:只绑定 9 个真值列里的可写项。其余列(含 DAL 列映射强制要求的
-        /// 旧字段)不出现在 INSERT/UPDATE 的列清单里，也不再由新库创建。
-        /// includeGrade 为 false 时(年级越界的更新)不绑定 @Grade，让列保持原值。
-        /// </summary>
-        private static void AddStudentParams(SQLiteCommand cmd, RemoteStudent st, bool includeGrade)
-        {
-            cmd.Parameters.AddWithValue("@StudentID", st.TestNo);
-            cmd.Parameters.AddWithValue("@Name", st.Name);
-            cmd.Parameters.AddWithValue("@Sex", st.Gender);
-            if (includeGrade)
-            {
-                // 显式声明类型:AddWithValue 传 null 时的类型推断不可靠,无年级必须写 DBNull
-                cmd.Parameters.Add("@Grade", System.Data.DbType.Int32).Value =
-                    st.Grade.HasValue ? (object)st.Grade.Value : DBNull.Value;
-            }
-            cmd.Parameters.AddWithValue("@ClassName", st.ClassName);
+            // 原工具此处联动更新 PhysicalScore 的标识/年级;本软件无该表,原始成绩原样保留
+            return ProviderFactory.Create<StudentProvider>(Db.LocalDb.DalConnStr)
+                .SyncRemotePage(page, facility.ProjectID, facility.ID);
         }
 
         private FacilityTarget GetFacility()
         {
-            using (var conn = new SQLiteConnection(HH.DataCollection.Wifi.Db.LocalDb.ConnStr))
+            var facilityResult = ProviderFactory.Create<IProvider<Facility, string>>(Db.LocalDb.DalConnStr)
+                .GetByID(_conf.SourceFacilityId);
+            if (facilityResult.Result != ResultCode.Successful || facilityResult.QueryObject == null)
+                throw new SyncException("未找到已配置的源学校或项目,请先在设置中保存学校");
+            var projectResult = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Db.LocalDb.DalConnStr)
+                .GetByID(facilityResult.QueryObject.ProjectID);
+            if (projectResult.Result != ResultCode.Successful || projectResult.QueryObject == null)
+                throw new SyncException("未找到已配置的源学校或项目,请先在设置中保存学校");
+            return new FacilityTarget
             {
-                conn.Open();
-                using (var cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT f.ID, f.Name AS SchoolName, f.ProjectID, p.Name AS ProjectName " +
-                                      "FROM Facility AS f JOIN PhysicalProject AS p ON f.ProjectID = p.ID " +
-                                      "WHERE f.ID = @id LIMIT 1";
-                    cmd.Parameters.AddWithValue("@id", _conf.SourceFacilityId);
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        if (!reader.Read())
-                            throw new SyncException("未找到已配置的源学校或项目,请先在设置中保存学校");
-                        return new FacilityTarget
-                        {
-                            ID = Convert.ToString(reader["ID"]),
-                            SchoolName = Convert.ToString(reader["SchoolName"]),
-                            ProjectID = Convert.ToString(reader["ProjectID"]),
-                            ProjectName = Convert.ToString(reader["ProjectName"]),
-                        };
-                    }
-                }
-            }
+                ID = facilityResult.QueryObject.ID,
+                SchoolName = facilityResult.QueryObject.Name,
+                ProjectID = projectResult.QueryObject.ID,
+                ProjectName = projectResult.QueryObject.Name,
+            };
         }
 
         private class FacilityTarget
