@@ -1,4 +1,4 @@
-﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
+// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,7 +40,7 @@ namespace HH.TiYu.Model
         {
             ProjectPhysicalItem projectPhysicalItem = new ProjectPhysicalItem
             {
-                ID = Guid.NewGuid(),
+                ID = Guid.NewGuid().ToString(),
                 Grade = grade,
                 Sex = sex
             };

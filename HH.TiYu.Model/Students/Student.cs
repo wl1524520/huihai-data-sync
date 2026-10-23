@@ -1,4 +1,4 @@
-﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
+// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using HH.GeneralLibrary.Core.DAL;
 
@@ -12,9 +12,9 @@ namespace HH.TiYu.Model
     /// <para>Grade 取值按平台约定为 11-44(见 <see cref="GradeHelper"/>),
     /// 平台下发的越界值在同步解析处被拦下并报告,本类不做校验、原样存取。</para>
     /// </summary>
-    public class Student : IEntity<Guid>
+    public class Student : IEntity<string>
     {
-        public Guid ID { get; set; }
+        public string ID { get; set; }
 
         public string ProjectID { get; set; }
 

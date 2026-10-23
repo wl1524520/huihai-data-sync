@@ -1,4 +1,4 @@
-﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
+// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,9 +12,9 @@ using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
 {
-    public class ProjectPhysicalItem : IEntity<Guid>
+    public class ProjectPhysicalItem : IEntity<string>
     {
-        public Guid ID { get; set; }
+        public string ID { get; set; }
 
         public string ProjectID { get; set; }
 

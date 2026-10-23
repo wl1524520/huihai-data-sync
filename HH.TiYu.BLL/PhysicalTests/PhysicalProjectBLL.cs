@@ -1,4 +1,4 @@
-﻿// 从 lib/BLL.dll 还原；维护范围与差异见 README.md。
+// 从 lib/BLL.dll 还原；维护范围与差异见 README.md。
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,7 +86,7 @@ namespace HH.TiYu.BLL
                         project.AllPhysicalItems.Insert(2, physicalItem);
                     }
                 }
-                project.PhysicalItems = ProviderFactory.Create<IProvider<ProjectPhysicalItem, Guid>>(base.RepoUri).GetItems(new ProjectPhysicalItemSearchCondition
+                project.PhysicalItems = ProviderFactory.Create<IProvider<ProjectPhysicalItem, string>>(base.RepoUri).GetItems(new ProjectPhysicalItemSearchCondition
                 {
                     ProjectID = project.ID
                 }).QueryObjects;
@@ -95,7 +95,7 @@ namespace HH.TiYu.BLL
 
         public CommandResult SavePhysicalItems(PhysicalProject project, Sex sex, List<ProjectPhysicalItem> items)
         {
-            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, Guid>>(base.RepoUri).BatchAdd(items, project.ID, ImportOption.Override);
+            CommandResult commandResult = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, string>>(base.RepoUri).BatchAdd(items, project.ID, ImportOption.Override);
             if (commandResult.Result == ResultCode.Successful)
             {
                 GetFullInfo(project, ProjectLoadOptions.PhysicalItems);

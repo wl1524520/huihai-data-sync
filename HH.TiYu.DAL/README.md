@@ -50,7 +50,7 @@ ProviderFactory 缓存映射，只允许创建上述七表的 Provider；其余�
 工厂不再吞掉映射异常，也不存在可实例化的停用 Provider：本轮精简已删除 15 个停用 Provider 源码（Alarm、AppraiseTemplate、Discussion、Operator、PhysicalProjectState、PhysicalScore、Role、Sports、SportsStudentPair、SportSuggestion、Standard、StudentCheckRecord、StudentGroup、StudentGroupPair、Sysparameter）以及 `AutoNumberCreater`、`AutoCreateNumber` 两个编号类型，并移除了 DAL 项目对 `System.Data.SQLite` 的显式引用（保留的 Provider 只用 LINQ 映射，无 SQLite 类型使用）。旧实现仍可从原始 `lib/DAL.dll` 基线重新反编译恢复。
 
 - StudentScoreProvider 按项目与 Key 去重，已有行不覆盖；数据库结构与原始成绩字段保持不变。
-- StudentScoreProvider 的上传原语（GetPendingForUpload / MarkUploaded / ResetUploaded / CountByUploaded）集中维护上传口径 SQL：白名单科目由调用方传入，HEX(ID) 由数据库侧计算，与 GUID 存储格式无关；MarkUploaded 在单事务内置位。Uploaded 列仍不映射（见上文），避免 LINQ 写回覆盖上传状态。
+- StudentScoreProvider 的上传原语（GetPendingForUpload / MarkUploaded / ResetUploaded / CountByUploaded）集中维护上传口径 SQL：白名单科目由调用方传入，主键字符串化后 ID 按原值直接取数、MarkUploaded 在单事务内按原值置位。Uploaded 列仍不映射（见上文），避免 LINQ 写回覆盖上传状态。
 - StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；查询条件只保留项目、学校（映射到 FacilityID）与标识集合三项，未映射字段修改明确失败。
 - StudentProvider.SyncRemotePage 承担平台名单同步的整页 upsert：按项目内 test_no（去首尾空白、忽略大小写）定位，返回新增/更新计数；Grade 传 null 时更新保留本地原年级、新增写 NULL，超长或空标识明确抛 ArgumentException。
 - 删除学生名单不删除已经采集的 StudentScore。

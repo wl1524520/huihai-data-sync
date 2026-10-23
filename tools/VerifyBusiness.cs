@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -132,12 +132,20 @@ internal static class VerifyBusiness
         "HH.TiYu.Model.GradeHelper:年龄50_54","HH.TiYu.Model.GradeHelper:年龄55_59","HH.TiYu.Model.GradeHelper:年龄60_64",
         "HH.TiYu.Model.GradeHelper:年龄65_69",
         // PhysicalProject:GetStudentByID 由 (String, Boolean, Boolean) 收窄为 (String),见 ChangedMembers。
+        // 主键 Guid 统一改存字符串(2026-10):三张表实体 ID 成员与 IEntity<T> 实参的 Guid 形状移除、String 形状放行。
+        "HH.TiYu.Model.Student:get_ID","HH.TiYu.Model.Student:set_ID","HH.TiYu.Model.Student:ID","HH.TiYu.Model.Student:HH.GeneralLibrary.Core.DAL.IEntity",
+        "HH.TiYu.Model.PhysicalScore:get_ID","HH.TiYu.Model.PhysicalScore:set_ID","HH.TiYu.Model.PhysicalScore:ID","HH.TiYu.Model.PhysicalScore:HH.GeneralLibrary.Core.DAL.IEntity",
+        "HH.TiYu.Model.ProjectPhysicalItem:get_ID","HH.TiYu.Model.ProjectPhysicalItem:set_ID","HH.TiYu.Model.ProjectPhysicalItem:ID","HH.TiYu.Model.ProjectPhysicalItem:HH.GeneralLibrary.Core.DAL.IEntity",
         "HH.TiYu.Model.PhysicalProject:GetStudentByID",
     };
     // 允许"签名收窄"的成员:原始契约里的同名成员被新签名取代。只放行此表登记的名字,
     // 其余在源码里新增的契约行一律报错(CheckApi 的 added 检查)。
     private static readonly string[] ChangedMembers =
     {
+        // 主键 Guid 统一改存字符串(2026-10):三张表实体 ID 成员与 IEntity<T> 实参的 Guid 形状移除、String 形状放行。
+        "HH.TiYu.Model.Student:get_ID","HH.TiYu.Model.Student:set_ID","HH.TiYu.Model.Student:ID","HH.TiYu.Model.Student:HH.GeneralLibrary.Core.DAL.IEntity",
+        "HH.TiYu.Model.PhysicalScore:get_ID","HH.TiYu.Model.PhysicalScore:set_ID","HH.TiYu.Model.PhysicalScore:ID","HH.TiYu.Model.PhysicalScore:HH.GeneralLibrary.Core.DAL.IEntity",
+        "HH.TiYu.Model.ProjectPhysicalItem:get_ID","HH.TiYu.Model.ProjectPhysicalItem:set_ID","HH.TiYu.Model.ProjectPhysicalItem:ID","HH.TiYu.Model.ProjectPhysicalItem:HH.GeneralLibrary.Core.DAL.IEntity",
         "HH.TiYu.Model.PhysicalProject:GetStudentByID",
     };
     private static void Require(bool ok, string message) { if (!ok) throw new Exception(message); checks++; }
@@ -246,6 +254,8 @@ internal static class VerifyBusiness
                 if (pair.Key == "HH.TiYu.Model.Student") oldContract = oldContract.Where(c => !c.Contains("HasPhoto")).ToList();
                 if (pair.Key == "HH.TiYu.BLL.StudentBLL") oldContract = oldContract.Where(c => !c.Contains("Photo")).ToList();
                 var newContract = Contract(newTypes[pair.Key]);
+            // StudentBLL 基类实参随主键字符串化收窄(BLLBase<Guid, Student> -> BLLBase<string, Student>)。
+            if (pair.Key == "HH.TiYu.BLL.StudentBLL") { oldContract = oldContract.Where(c => !c.Contains("BLLBase`2<System.Guid")).ToList(); newContract = newContract.Where(c => !c.Contains("BLLBase`2<System.String")).ToList(); }
                 var allowed = new HashSet<string>(RemovedMembers.Where(m => m.StartsWith(pair.Key + ":", StringComparison.Ordinal)).Select(m => m.Substring(pair.Key.Length + 1)), StringComparer.Ordinal);
                 var changed = new HashSet<string>(ChangedMembers.Where(m => m.StartsWith(pair.Key + ":", StringComparison.Ordinal)).Select(m => m.Substring(pair.Key.Length + 1)), StringComparer.Ordinal);
                 var missing = oldContract.Except(newContract).Where(c => !allowed.Contains(MemberName(c))).ToList();

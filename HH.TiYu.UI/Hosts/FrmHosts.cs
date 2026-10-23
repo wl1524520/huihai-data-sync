@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -722,7 +722,7 @@ namespace HH.TiYu.UI
 					{
 						physicalScore = new PhysicalScore
 						{
-							ID = Guid.NewGuid(),
+							ID = Guid.NewGuid().ToString(),
 							StudentID = studentByID.StudentID,
 							Grade = studentByID.Grade,
 							ProjectID = PhysicalProject.Current.ID,
@@ -773,7 +773,7 @@ namespace HH.TiYu.UI
 							}
 							physicalScore = new PhysicalScore
 							{
-								ID = Guid.NewGuid(),
+								ID = Guid.NewGuid().ToString(),
 								StudentID = studentByID.StudentID,
 								Grade = studentByID.Grade,
 								ProjectID = PhysicalProject.Current.ID,

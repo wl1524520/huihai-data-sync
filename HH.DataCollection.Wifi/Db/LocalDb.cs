@@ -162,7 +162,7 @@ namespace HH.DataCollection.Wifi.Db
   CONSTRAINT [sqlite_autoindex_PhysicalItem_1] PRIMARY KEY ([ID]))",
             // 项目-科目关联(加载项 16 会无条件查询,必须存在)
             @"CREATE TABLE IF NOT EXISTS [ProjectPhysicalItems] (
-  [ID] uniqueidentifier NOT NULL,
+  [ID] TEXT(36) NOT NULL,
   [ProjectID] NVARCHAR(50) NOT NULL,
   [Grade] int NOT NULL,
   [Sex] tinyint NOT NULL,
@@ -177,7 +177,7 @@ namespace HH.DataCollection.Wifi.Db
             //   平台 test_no → 本列 → 下发主机的 HostStudent.StudentID → 主机回传
             //   PhysicalRecord.StudentNumber → StudentScore.StudentID → 上传 test_no
             @"CREATE TABLE IF NOT EXISTS [Student] (
-  [ID] uniqueidentifier NOT NULL,
+  [ID] TEXT(36) NOT NULL,
   [StudentID] nvarchar(64) NOT NULL, -- 平台 test_no(去首尾空白,<=60 字符)
   [ProjectID] nvarchar(50) NOT NULL,
   [Name] nvarchar(50) NOT NULL,
@@ -190,7 +190,7 @@ namespace HH.DataCollection.Wifi.Db
   CONSTRAINT [sqlite_autoindex_Student_1] PRIMARY KEY ([ID]))",
             // 唯一成绩表:设备上报的原始成绩,全量原样保存;Uploaded 为上传标记
             @"CREATE TABLE IF NOT EXISTS [StudentScore] (
-  [ID] uniqueidentifier NOT NULL,
+  [ID] TEXT(36) NOT NULL,
   [ProjectID] nvarchar(50) NOT NULL,
   [Key] nvarchar(50) NOT NULL,
   [StudentID] nvarchar(50) not null,

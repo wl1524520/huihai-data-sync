@@ -190,7 +190,7 @@ namespace HH.DataCollection.Wifi
                 foreach (var it in items)
                 {
                     it.ProjectID = project.ID;
-                    if (it.ID == Guid.Empty) it.ID = Guid.NewGuid();
+                    if (string.IsNullOrEmpty(it.ID)) it.ID = Guid.NewGuid().ToString();
                 }
                 projectBLL.SavePhysicalItems(project, sex, items);
             }

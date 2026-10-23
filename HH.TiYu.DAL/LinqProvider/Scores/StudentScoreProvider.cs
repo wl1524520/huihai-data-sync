@@ -11,14 +11,14 @@ using HH.GeneralLibrary.ExceptionHandling;
 
 namespace HH.TiYu.DAL.LinqProvider
 {
-	public class StudentScoreProvider : ProviderBase<StudentScore, Guid>
+	public class StudentScoreProvider : ProviderBase<StudentScore, string>
 	{
 		public StudentScoreProvider(string connStr, MappingSource ms)
 			: base(connStr, ms)
 		{
 		}
 
-		protected override StudentScore GetingItemByID(Guid id, DataContext dc)
+		protected override StudentScore GetingItemByID(string id, DataContext dc)
 		{
 			return dc.GetTable<StudentScore>().SingleOrDefault((StudentScore item) => item.ID == id);
 		}
@@ -143,10 +143,10 @@ namespace HH.TiYu.DAL.LinqProvider
 		// 直接读写该列。上传业务(白名单来源、分批、ACK 后置位)留在采集器 ScoreUpload;
 		// 上传口径与 SQL 在此单点维护,取数/置位/重置/统计不会口径漂移。
 
-		/// <summary>待上传成绩行。Mono 为数据库侧计算的 HEX(ID),与 GUID 存储格式(二进制/文本)无关。</summary>
+		/// <summary>待上传成绩行。ID 即主键字符串,上传后按原值置位,无需 HEX 转换。</summary>
 		public class PendingUploadScore
 		{
-			public string Mono { get; set; }
+			public string ID { get; set; }
 
 			public string StudentID { get; set; }
 
@@ -177,7 +177,7 @@ namespace HH.TiYu.DAL.LinqProvider
 		public List<PendingUploadScore> GetPendingForUpload(string projectID, int[] uploadableTestIds)
 		{
 			var args = new List<object> { projectID };
-			string sql = "SELECT HEX(ID) AS Mono, StudentID, StudentName, TestID, Score, CreateTime FROM StudentScore " +
+			string sql = "SELECT ID, StudentID, StudentName, TestID, Score, CreateTime FROM StudentScore " +
 				"WHERE ProjectID = {0} AND Uploaded = 0 AND " + UploadableFilter(uploadableTestIds, args) +
 				" ORDER BY CreateTime";
 			using (var dc = CreateDataContext())
@@ -186,11 +186,11 @@ namespace HH.TiYu.DAL.LinqProvider
 			}
 		}
 
-		/// <summary>在单个事务内把给定 HEX(ID) 的成绩标记为已上传;返回实际更新行数。</summary>
-		public int MarkUploaded(IEnumerable<string> monos)
+		/// <summary>在单个事务内把给定 ID 的成绩标记为已上传;返回实际更新行数。</summary>
+		public int MarkUploaded(IEnumerable<string> ids)
 		{
-			if (monos == null) return 0;
-			var list = monos.Distinct().ToList();
+			if (ids == null) return 0;
+			var list = ids.Distinct().ToList();
 			if (list.Count == 0) return 0;
 			int updated = 0;
 			using (var dc = CreateDataContext())
@@ -199,8 +199,8 @@ namespace HH.TiYu.DAL.LinqProvider
 				using (var transaction = dc.Connection.BeginTransaction())
 				{
 					dc.Transaction = transaction;
-					foreach (string mono in list)
-						updated += dc.ExecuteCommand("UPDATE StudentScore SET Uploaded = 1 WHERE HEX(ID) = {0}", mono);
+					foreach (string id in list)
+						updated += dc.ExecuteCommand("UPDATE StudentScore SET Uploaded = 1 WHERE ID = {0}", id);
 					transaction.Commit();
 				}
 			}

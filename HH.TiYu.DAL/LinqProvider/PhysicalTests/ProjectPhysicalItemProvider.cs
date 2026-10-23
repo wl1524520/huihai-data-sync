@@ -1,4 +1,4 @@
-﻿// Recovered from lib/DAL.dll using ILSpy; see README.md for provenance and supported scope.
+// Recovered from lib/DAL.dll using ILSpy; see README.md for provenance and supported scope.
 using System;
 using System.Collections.Generic;
 using System.Data.Linq;
@@ -12,14 +12,14 @@ using HH.GeneralLibrary.ExceptionHandling;
 
 namespace HH.TiYu.DAL.LinqProvider
 {
-    internal class ProjectPhysicalItemProvider : ProviderBase<ProjectPhysicalItem, Guid>, IBatchProvider<ProjectPhysicalItem, Guid>, IProvider<ProjectPhysicalItem, Guid>
+    internal class ProjectPhysicalItemProvider : ProviderBase<ProjectPhysicalItem, string>, IBatchProvider<ProjectPhysicalItem, string>, IProvider<ProjectPhysicalItem, string>
     {
         public ProjectPhysicalItemProvider(string connStr, MappingSource ms)
             : base(connStr, ms)
         {
         }
 
-        protected override ProjectPhysicalItem GetingItemByID(Guid id, DataContext dc)
+        protected override ProjectPhysicalItem GetingItemByID(string id, DataContext dc)
         {
             return dc.GetTable<ProjectPhysicalItem>().SingleOrDefault((ProjectPhysicalItem item) => item.ID == id);
         }
@@ -89,7 +89,7 @@ namespace HH.TiYu.DAL.LinqProvider
             }
         }
 
-        public CommandResult BatchPatch(List<UpdateItem<Guid>> patchs)
+        public CommandResult BatchPatch(List<UpdateItem<string>> patchs)
         {
             throw new NotSupportedException("采集器不支持项目科目的批量修改");
         }

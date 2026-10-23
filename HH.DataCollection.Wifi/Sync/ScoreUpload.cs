@@ -260,7 +260,7 @@ namespace HH.DataCollection.Wifi.Sync
         private HashSet<string> LoadKnownIdentifiers()
         {
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var result = ProviderFactory.Create<IProvider<Student, Guid>>(Db.LocalDb.DalConnStr)
+            var result = ProviderFactory.Create<IProvider<Student, string>>(Db.LocalDb.DalConnStr)
                 .GetItems(new StudentSearchCondition { ProjectID = _projectID });
             if (result.Result == ResultCode.Successful && result.QueryObjects != null)
             {
@@ -329,7 +329,7 @@ namespace HH.DataCollection.Wifi.Sync
         /// <summary>ACK 成功后,在单个事务内把本批标记为已上传(DAL 原语,失败抛异常)。</summary>
         private void MarkUploaded(List<StudentScoreProvider.PendingUploadScore> batch)
         {
-            CreateScoreProvider().MarkUploaded(batch.Select(row => row.Mono));
+            CreateScoreProvider().MarkUploaded(batch.Select(row => row.ID));
         }
 
         /// <summary>重置上传标记:清当前项目全部可上传成绩的 Uploaded,用于补传;口径由 DAL 维护。</summary>

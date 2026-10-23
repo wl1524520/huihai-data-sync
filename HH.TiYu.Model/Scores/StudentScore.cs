@@ -1,12 +1,12 @@
-﻿using System;
+using System;
 using HH.GeneralLibrary.Core.DAL;
 
 namespace HH.TiYu.Model
 {
 	/// <summary>主机采集的成绩及来源信息；不保存原始报文字节。</summary>
-	public class StudentScore : IEntity<Guid>
+	public class StudentScore : IEntity<string>
 	{
-		public Guid ID { get; set; }
+		public string ID { get; set; }
 
 		public string ProjectID { get; set; }
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!-- Collector contract. LocalDb creates the schema, including raw scores. -->
 <Database Name="HuihaiTiyu" xmlns="http://schemas.microsoft.com/linqtosql/mapping/2007">
   <Table Name="Facility" Member="HH.TiYu.Model.Facility">
@@ -11,7 +11,7 @@
   </Table>
   <Table Name="Student" Member="HH.TiYu.Model.Student">
     <Type Name="HH.TiYu.Model.Student">
-      <Column Name="ID" Member="ID"  DbType="uniqueidentifier not null" IsPrimaryKey="true"/>
+      <Column Name="ID" Member="ID"  DbType="nvarchar(36) not null" IsPrimaryKey="true"/>
       <Column Name="StudentID" Member="StudentID"  DbType="nvarchar(64) not null" UpdateCheck="Never"/>
       <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
       <Column Name="Name" Member="Name"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
@@ -51,7 +51,7 @@
   </Table>
   <Table Name="ProjectPhysicalItems" Member="HH.TiYu.Model.ProjectPhysicalItem">
     <Type Name="HH.TiYu.Model.ProjectPhysicalItem">
-      <Column Name="ID" Member="ID"  DbType="uniqueidentifier not null" IsPrimaryKey="true"/>
+      <Column Name="ID" Member="ID"  DbType="nvarchar(36) not null" IsPrimaryKey="true"/>
       <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
       <Column Name="Grade" Member="Grade"  DbType="int not null" UpdateCheck="Never"/>
       <Column Name="Sex" Member="Sex"  DbType="tinyint not null" UpdateCheck="Never"/>
@@ -67,7 +67,7 @@
   </Table>
   <Table Name="StudentScore" Member="HH.TiYu.Model.StudentScore">
     <Type Name="HH.TiYu.Model.StudentScore">
-      <Column Name="ID" Member="ID"  DbType="uniqueidentifier not null" IsPrimaryKey="true"/>
+      <Column Name="ID" Member="ID"  DbType="nvarchar(36) not null" IsPrimaryKey="true"/>
       <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
       <Column Name="Key" Member="Key"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
       <Column Name="StudentID" Member="StudentID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>

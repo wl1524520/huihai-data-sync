@@ -1,4 +1,4 @@
-﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
+// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using HH.GeneralLibrary.Core.DAL;
 
@@ -10,9 +10,9 @@ namespace HH.TiYu.Model
     /// 且无处落库,同一批数据由 <c>HH.TiYu.Model.StudentScore</c> 的
     /// HostSn/HostID/ScoreSer/ScoreFrom 独立列承载,故本轮移除。
     /// </summary>
-    public class PhysicalScore : IEntity<Guid>
+    public class PhysicalScore : IEntity<string>
     {
-        public Guid ID { get; set; }
+        public string ID { get; set; }
 
         public string StudentID { get; set; }
 

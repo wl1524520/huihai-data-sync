@@ -11,14 +11,14 @@ using HH.GeneralLibrary.Core.DAL.Linq;
 
 namespace HH.TiYu.DAL.LinqProvider
 {
-    public class StudentProvider : ProviderBase<Student, Guid>, IBatchProvider<Student, Guid>, IProvider<Student, Guid>
+    public class StudentProvider : ProviderBase<Student, string>, IBatchProvider<Student, string>, IProvider<Student, string>
     {
         public StudentProvider(string connStr, MappingSource ms)
             : base(connStr, ms)
         {
         }
 
-        protected override Student GetingItemByID(Guid id, DataContext dc)
+        protected override Student GetingItemByID(string id, DataContext dc)
         {
             return dc.GetTable<Student>().SingleOrDefault((Student item) => item.ID == id);
         }
@@ -83,7 +83,7 @@ namespace HH.TiYu.DAL.LinqProvider
                         }
                         else
                         {
-                            target = new Student { ID = source.ID == Guid.Empty ? Guid.NewGuid() : source.ID,
+                            target = new Student { ID = string.IsNullOrEmpty(source.ID) ? Guid.NewGuid().ToString() : source.ID,
                                 ProjectID = projectID, StudentID = source.StudentID };
                             dc.GetTable<Student>().InsertOnSubmit(target);
                             existing.Add(target.StudentID, target);
@@ -104,7 +104,7 @@ namespace HH.TiYu.DAL.LinqProvider
             catch (Exception ex) { return new CommandResult(ResultCode.Fail, ex.Message); }
         }
 
-        public CommandResult BatchPatch(List<UpdateItem<Guid>> patchs)
+        public CommandResult BatchPatch(List<UpdateItem<string>> patchs)
         {
             try
             {
@@ -175,7 +175,7 @@ namespace HH.TiYu.DAL.LinqProvider
                     {
                         target = new Student
                         {
-                            ID = source.ID == Guid.Empty ? Guid.NewGuid() : source.ID,
+                            ID = string.IsNullOrEmpty(source.ID) ? Guid.NewGuid().ToString() : source.ID,
                             ProjectID = projectID,
                             StudentID = testNo,
                             Name = source.Name,

@@ -87,7 +87,9 @@ internal static class VerifySQLite
         return name.Replace("HH.TiYu.SQLite.StudentRawScoreSearchCondition", "HH.TiYu.Model.SearchCondition.StudentScoreSearchCondition")
             .Replace("HH.TiYu.SQLite.StudentRawScoresSavingService", "HH.TiYu.BLL.StudentScoresSavingService")
             .Replace("HH.TiYu.SQLite.StudentRawScoreProvider", "HH.TiYu.DAL.LinqProvider.StudentScoreProvider")
-            .Replace("HH.TiYu.SQLite.StudentRawScore", "HH.TiYu.Model.StudentScore");
+            .Replace("HH.TiYu.SQLite.StudentRawScore", "HH.TiYu.Model.StudentScore")
+            // 有意变更(2026-10):实体主键 Guid 统一改存字符串,旧 API 形状里的 System.Guid 即 ID 成员。
+            .Replace("System.Guid", "System.String");
     }
     static void Api(string original)
     {
@@ -156,7 +158,7 @@ internal static class VerifySQLite
             Check(Provider().BatchAdd(list,"P1").Result == ResultCode.Successful, "duplicate uploaded batch");
             Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore WHERE Uploaded=1")) == 5, "duplicate preserves upload flags");
             Check(All().All(x => x.Score == 12.3456m), "duplicate does not overwrite original scores");
-            var otherProject = new StudentScore { ID=Guid.NewGuid(), ProjectID="P2", Key=list[0].Key, StudentID="S0", TestID=1, CreateTime=new DateTime(2026,10,16), ScoreFrom=(ScoreSource)0 };
+            var otherProject = new StudentScore { ID=Guid.NewGuid().ToString(), ProjectID="P2", Key=list[0].Key, StudentID="S0", TestID=1, CreateTime=new DateTime(2026,10,16), ScoreFrom=(ScoreSource)0 };
             Check(Provider().BatchAdd(new List<StudentScore>{otherProject},"P2").Result == ResultCode.Successful && All().Count == 6, "same key in another project is independent");
             Check(Provider().BatchDelete(new List<StudentScore>{otherProject},"P2").Result == ResultCode.Successful, "delete independent project row");
 #endif

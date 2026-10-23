@@ -172,19 +172,19 @@ internal static class VerifyDal
     private static void CheckProjectPhysicalItems()
     {
         var projects = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri);
-        var items = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, Guid>>(Uri);
+        var items = ProviderFactory.Create<IBatchProvider<ProjectPhysicalItem, string>>(Uri);
         var project = new PhysicalProject { ID = "PP1", Name = "科目项目", CreateDate = DateTime.Now };
         Check(projects.Insert(project).Result == ResultCode.Successful, "Subject project insert");
         Func<int> count = () => Convert.ToInt32(Scalar("SELECT count(*) FROM ProjectPhysicalItems WHERE ProjectID='PP1'"));
-        var male = new ProjectPhysicalItem { ID = Guid.NewGuid(), ProjectID = project.ID, Sex = Sex.Male, Grade = 7, PhysicalItems = "1,2" };
+        var male = new ProjectPhysicalItem { ID = Guid.NewGuid().ToString(), ProjectID = project.ID, Sex = Sex.Male, Grade = 7, PhysicalItems = "1,2" };
         Check(items.BatchAdd(new List<ProjectPhysicalItem> { male }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Subject batch import");
         Check(count() == 1, "Subject batch import persisted");
-        var replacement = new ProjectPhysicalItem { ID = Guid.NewGuid(), ProjectID = project.ID, Sex = Sex.Male, Grade = 7, PhysicalItems = "3,4" };
+        var replacement = new ProjectPhysicalItem { ID = Guid.NewGuid().ToString(), ProjectID = project.ID, Sex = Sex.Male, Grade = 7, PhysicalItems = "3,4" };
         Check(items.BatchAdd(new List<ProjectPhysicalItem> { replacement }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Subject batch re-import");
         Check(count() == 1 && Convert.ToString(Scalar("SELECT PhysicalItems FROM ProjectPhysicalItems WHERE ProjectID='PP1'")) == "3,4", "Same grade/sex subject import must replace, not duplicate");
-        Check(ProviderFactory.Create<IProvider<ProjectPhysicalItem, Guid>>(Uri).GetItems(new ProjectPhysicalItemSearchCondition { ProjectID = project.ID }).QueryObjects.Count == 1, "Subject project query");
+        Check(ProviderFactory.Create<IProvider<ProjectPhysicalItem, string>>(Uri).GetItems(new ProjectPhysicalItemSearchCondition { ProjectID = project.ID }).QueryObjects.Count == 1, "Subject project query");
         bool unsupported = false;
-        try { items.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = replacement.ID, Key = "Grade", Value = "8" } }); }
+        try { items.BatchPatch(new List<UpdateItem<string>> { new UpdateItem<string> { ID = replacement.ID, Key = "Grade", Value = "8" } }); }
         catch (NotSupportedException) { unsupported = true; }
         Check(unsupported, "Subject batch patch must report unsupported explicitly");
         Check(items.BatchDelete(new List<ProjectPhysicalItem> { replacement }, project.ID).Result == ResultCode.Successful, "Subject batch delete");
@@ -239,19 +239,19 @@ internal static class VerifyDal
     {
         var scores = ProviderFactory.Create<StudentScoreProvider>(Uri);
         int[] whitelist = { 1, 5 };
-        var older = new StudentScore { ID = Guid.NewGuid(), Key = "up-1", StudentID = "s1", TestID = 1, ScoreFrom = ScoreSource.ManualEntry, CreateTime = new DateTime(2026, 10, 1, 8, 0, 0), Score = 10m };
-        var newer = new StudentScore { ID = Guid.NewGuid(), Key = "up-2", StudentID = "s2", TestID = 5, ScoreFrom = ScoreSource.FileImport, CreateTime = new DateTime(2026, 10, 1, 9, 0, 0), Score = 20m };
-        var outside = new StudentScore { ID = Guid.NewGuid(), Key = "up-3", StudentID = "s3", TestID = 2, ScoreFrom = ScoreSource.ManualEntry, CreateTime = new DateTime(2026, 10, 1, 10, 0, 0), Score = 30m };
+        var older = new StudentScore { ID = Guid.NewGuid().ToString(), Key = "up-1", StudentID = "s1", TestID = 1, ScoreFrom = ScoreSource.ManualEntry, CreateTime = new DateTime(2026, 10, 1, 8, 0, 0), Score = 10m };
+        var newer = new StudentScore { ID = Guid.NewGuid().ToString(), Key = "up-2", StudentID = "s2", TestID = 5, ScoreFrom = ScoreSource.FileImport, CreateTime = new DateTime(2026, 10, 1, 9, 0, 0), Score = 20m };
+        var outside = new StudentScore { ID = Guid.NewGuid().ToString(), Key = "up-3", StudentID = "s3", TestID = 2, ScoreFrom = ScoreSource.ManualEntry, CreateTime = new DateTime(2026, 10, 1, 10, 0, 0), Score = 30m };
         Check(scores.BatchAdd(new List<StudentScore> { older, newer, outside }, "UP").Result == ResultCode.Successful, "Upload primitive fixture insert");
-        // 文本形态 ID 行:与历史测试数据一致,上传原语必须与 GUID 存储格式无关
+        // 非 GUID 形态的文本 ID 行:主键字符串化后,上传原语按原值直接取数与置位
         Execute("INSERT INTO StudentScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Score,Uploaded) VALUES('text-id-row','UP','up-4','s4',1,3,'2026-10-01 08:30:00',15,0)");
         var pending = scores.GetPendingForUpload("UP", whitelist);
         Check(pending.Count == 3 && pending[0].StudentID == "s1" && pending[1].StudentID == "s4" && pending[2].StudentID == "s2",
             "Pending query must filter by project, whitelist and upload flag, ordered by CreateTime");
-        Check(pending.All(r => !string.IsNullOrEmpty(r.Mono)), "Pending rows must carry DB-computed HEX(ID)");
+        Check(pending.All(r => !string.IsNullOrEmpty(r.ID)), "Pending rows must carry their string ID");
         Check(scores.CountByUploaded("UP", 0, whitelist) == 3 && scores.CountByUploaded("UP", 1, whitelist) == 0, "Upload counts before ack");
         Check(scores.MarkUploaded(null) == 0 && scores.MarkUploaded(new List<string>()) == 0, "Empty ack batch is a no-op");
-        Check(scores.MarkUploaded(pending.Select(r => r.Mono)) == 3, "Ack marks exactly the pending batch");
+        Check(scores.MarkUploaded(pending.Select(r => r.ID)) == 3, "Ack marks exactly the pending batch");
         Check(scores.CountByUploaded("UP", 0, whitelist) == 0 && scores.CountByUploaded("UP", 1, whitelist) == 3, "Upload counts after ack");
         Check(Convert.ToInt32(Scalar("SELECT COUNT(*) FROM StudentScore WHERE ProjectID='UP' AND Uploaded=0")) == 1, "Non-whitelist score must stay unmarked");
         Check(scores.ResetUploaded("UP", whitelist) == 3, "Reset clears only uploadable scores in the project");
@@ -267,10 +267,10 @@ internal static class VerifyDal
         Check(projects.Insert(project).Result == ResultCode.Successful, "Project insert");
         var facilities = ProviderFactory.Create<IProvider<Facility, string>>(Uri);
         Check(facilities.Insert(new Facility { ID = "F1", Name = "学校", ProjectID = project.ID }).Result == ResultCode.Successful, "Facility insert");
-        var students = ProviderFactory.Create<IProvider<Student, Guid>>(Uri);
-        var batch = ProviderFactory.Create<IBatchProvider<Student, Guid>>(Uri);
+        var students = ProviderFactory.Create<IProvider<Student, string>>(Uri);
+        var batch = ProviderFactory.Create<IBatchProvider<Student, string>>(Uri);
         string testNo = new string('A', 58) + "'中";
-        var student = new Student { ID = Guid.NewGuid(), StudentID = testNo, ProjectID = project.ID, FacilityID = "F1", Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
+        var student = new Student { ID = Guid.NewGuid().ToString(), StudentID = testNo, ProjectID = project.ID, FacilityID = "F1", Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Append).Result == ResultCode.Successful, "Student batch insert");
         PhysicalProject.Current = project;
         new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
@@ -281,9 +281,9 @@ internal static class VerifyDal
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Student batch overwrite");
         var row = students.GetByID(student.ID).QueryObject;
         Check(row.Name == "更新" && row.ClassName == "二班" && row.Grade == null, "Overwrite current fields including null grade");
-        Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "ClassName", Value = "三班" } }).Result == ResultCode.Successful, "Student mapped field patch");
+        Check(batch.BatchPatch(new List<UpdateItem<string>> { new UpdateItem<string> { ID = student.ID, Key = "ClassName", Value = "三班" } }).Result == ResultCode.Successful, "Student mapped field patch");
         Check(students.GetByID(student.ID).QueryObject.ClassName == "三班", "Student patch persisted");
-        Check(batch.BatchPatch(new List<UpdateItem<Guid>> { new UpdateItem<Guid> { ID = student.ID, Key = "Note", Value = "unsupported" } }).Result == ResultCode.Fail, "Unmapped patch falsely succeeded");
+        Check(batch.BatchPatch(new List<UpdateItem<string>> { new UpdateItem<string> { ID = student.ID, Key = "Note", Value = "unsupported" } }).Result == ResultCode.Fail, "Unmapped patch falsely succeeded");
         Execute("INSERT INTO StudentScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Uploaded) VALUES('11111111-2222-3333-4444-555555555555','P''1','raw','student',1,0,'2026-10-16',1)");
         Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on seven-table schema");
         Check(students.GetByID(student.ID).Result == ResultCode.Fail && Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore WHERE Uploaded=1")) == 1, "Roster deletion lost collected scores");
