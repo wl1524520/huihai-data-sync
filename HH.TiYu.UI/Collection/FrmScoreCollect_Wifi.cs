@@ -32,7 +32,6 @@ namespace HH.TiYu.UI
 	{
 		private HostWifiReader _Reader = null;
 
-		private List<Facility> _AllSchools = new FacilityBLL(AppSettings.Current.ConnStr).GetItems(null).QueryObjects;
 
 		private object _GridLocker = new object();
 
@@ -64,7 +63,6 @@ namespace HH.TiYu.UI
 
 		private DataGridViewTextBoxColumn colRecordDate;
 
-		private DataGridViewTextBoxColumn colFacility;
 
 		private ContextMenuStrip contextMenuStrip1;
 
@@ -263,11 +261,6 @@ namespace HH.TiYu.UI
 				dataGridView1.Rows[0].Cells["colUnit"].Value = physicalItem.Unit;
 				dataGridView1.Rows[0].Cells["colScore"].Value = ((!score.SpecialType.HasValue) ? physicalItem.ConvertToStr(score.Score) : GetSpecialScoreText(score.SpecialType.Value));
 				dataGridView1.Rows[0].Cells["colRecordDate"].Value = (score.UpdateDate.HasValue ? score.UpdateDate.Value.ToString("yyyy-MM-dd HH:mm") : string.Empty);
-				if (s != null)
-				{
-					Facility facility = ((_AllSchools != null) ? _AllSchools.SingleOrDefault((Facility it) => it.ID == s.FacilityID) : null);
-					dataGridView1.Rows[0].Cells["colFacility"].Value = ((facility != null) ? facility.Name : null);
-				}
 				if (dataGridView1.Rows[0].Visible)
 				{
 					_CurItemCount++;
@@ -319,11 +312,6 @@ namespace HH.TiYu.UI
 					dataGridView1.Rows[0].Cells["colScore"].Value = record.Result;
 				}
 				dataGridView1.Rows[0].Cells["colRecordDate"].Value = (record.RecordDate.HasValue ? record.RecordDate.Value.ToString("yyyy-MM-dd HH:mm") : string.Empty);
-				if (s != null)
-				{
-					Facility facility = ((_AllSchools != null) ? _AllSchools.SingleOrDefault((Facility it) => it.ID == s.FacilityID) : null);
-					dataGridView1.Rows[0].Cells["colFacility"].Value = ((facility != null) ? facility.Name : null);
-				}
 				if (dataGridView1.Rows[0].Visible)
 				{
 					_CurItemCount++;
@@ -503,7 +491,6 @@ namespace HH.TiYu.UI
 			this.colUnit = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colScore = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colRecordDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-			this.colFacility = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.mnu_Clear = new System.Windows.Forms.ToolStripMenuItem();
 			this.saveAllRecordsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -521,7 +508,7 @@ namespace HH.TiYu.UI
 			this.dataGridView1.AllowUserToResizeRows = false;
 			resources.ApplyResources(this.dataGridView1, "dataGridView1");
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.dataGridView1.Columns.AddRange(this.colSN, this.colStudentID, this.colName, this.colSex, this.colPhysicalItem, this.colUnit, this.colScore, this.colRecordDate, this.colFacility);
+			this.dataGridView1.Columns.AddRange(this.colSN, this.colStudentID, this.colName, this.colSex, this.colPhysicalItem, this.colUnit, this.colScore, this.colRecordDate);
 			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
 			this.dataGridView1.Name = "dataGridView1";
 			this.dataGridView1.RowHeadersVisible = false;
@@ -554,10 +541,6 @@ namespace HH.TiYu.UI
 			resources.ApplyResources(this.colRecordDate, "colRecordDate");
 			this.colRecordDate.Name = "colRecordDate";
 			this.colRecordDate.ReadOnly = true;
-			this.colFacility.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-			resources.ApplyResources(this.colFacility, "colFacility");
-			this.colFacility.Name = "colFacility";
-			this.colFacility.ReadOnly = true;
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[3] { this.mnu_Clear, this.saveAllRecordsMenuItem, this.viewStatisticsMenuItem });
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
 			resources.ApplyResources(this.contextMenuStrip1, "contextMenuStrip1");

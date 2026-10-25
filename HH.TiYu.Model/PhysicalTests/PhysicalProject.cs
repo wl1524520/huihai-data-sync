@@ -17,7 +17,6 @@ namespace HH.TiYu.Model
         /// <summary>默认国民体测项目的固定标识，用于识别系统自建项目。</summary>
         public static string DefaultNationalFitnessProjectId = "GuomingTiChe";
 
-        private Dictionary<string, Facility> _Facilities;
 
         private Dictionary<string, Student> _Students;
 
@@ -38,7 +37,6 @@ namespace HH.TiYu.Model
         public string Memo { get; set; }
 
 
-        public List<Facility> AllFacilities { get; set; }
 
         public List<PhysicalItem> AllPhysicalItems { get; set; }
 
@@ -66,27 +64,7 @@ namespace HH.TiYu.Model
             }
         }
 
-        public Facility GetFacility(string fid)
-        {
-            if (_Facilities == null)
-            {
-                _Facilities = new Dictionary<string, Facility>();
-            }
-            if (_Facilities.ContainsKey(fid))
-            {
-                return _Facilities[fid];
-            }
-            if (AllFacilities != null && AllFacilities.Count > 0)
-            {
-                Facility facility = AllFacilities.SingleOrDefault((Facility it) => it.ID == fid);
-                if (facility != null)
-                {
-                    _Facilities[facility.ID] = facility;
-                }
-                return facility;
-            }
-            return null;
-        }
+
 
         /// <summary>按学号(平台 test_no)取学生,忽略大小写。卡号与身份证索引已随对应字段移除。</summary>
         public Student GetStudentByID(string sid)

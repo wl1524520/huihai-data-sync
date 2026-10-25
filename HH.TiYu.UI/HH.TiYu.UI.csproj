@@ -37,7 +37,6 @@
   <ItemGroup>
     <!-- 旧“学生分组下发”工作流的专用窗体与文本展示控件已随本轮精简删除。 -->
     <Compile Include="Selection\ClassNameCombox.cs" />
-    <Compile Include="Selection\FacilityComboBox.cs" />
     <Compile Include="Collection\FrmDateRange.cs" />
     <Compile Include="Hosts\FrmHosts.cs" />
     <Compile Include="Shared\FrmProcessing.cs" />

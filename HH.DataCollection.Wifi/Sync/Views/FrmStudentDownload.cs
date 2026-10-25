@@ -31,9 +31,15 @@ namespace HH.DataCollection.Wifi.Sync
         private int _collapsedClientHeight;
 
         public FrmStudentDownload(SyncConfig config)
-            : this((report, stop, progress) =>
-                new StudentSync(new SyncApi(config.ApiUrl, config.ApiToken), config).Run(report, stop, progress))
+            : this(CreateDownload(config))
         {
+        }
+
+        private static Action<Action<string>, Func<bool>, Action<int, int>> CreateDownload(SyncConfig config)
+        {
+            // 在 UI 线程捕获下载目标，后续切换年度项目不会改变本轮写入位置。
+            var sync = new StudentSync(new SyncApi(config.ApiUrl, config.ApiToken), config);
+            return sync.Run;
         }
 
         internal FrmStudentDownload(Action<Action<string>, Func<bool>, Action<int, int>> download)

@@ -30,7 +30,7 @@ internal static class VerifyUI
             {
                 "FrmDateRange", "FrmHosts", "FrmProcessing",
                 "FrmScoreCollectStatitics", "FrmScoreCollect_Wifi", "FrmSerialRange", "FrmStudentDownloadPara", "FrmStudentIDRange",
-                "ClassNameCombox", "FacilityComboBox", "GradeComboBox"
+                "ClassNameCombox", "GradeComboBox"
             };
             foreach (string name in retained)
                 Check(types.Any(t => t.Name == name), "Retained UI type missing: " + name);
@@ -71,7 +71,7 @@ internal static class VerifyUI
                     {
                         DataGridView grid = (DataGridView)control.Controls.Find("dataGridView1", true).Single();
                         // 组别列（colGroup）与得分列（colResult）随本轮精简移除：数据源恒空/权限恒 false。
-                        Check(grid.Columns.Count == 9 && !grid.Columns.Contains("colGroup") && !grid.Columns.Contains("colResult"), "Score grid columns missing");
+                        Check(grid.Columns.Count == 8 && !grid.Columns.Contains("colFacility") && !grid.Columns.Contains("colGroup") && !grid.Columns.Contains("colResult"), "Score grid columns missing");
                         Check(grid.Columns["colStudentID"].HeaderText.Length > 0, "Score grid resource captions missing");
                         var display = type.GetMethod("GetSpecialScoreText", BindingFlags.NonPublic | BindingFlags.Static);
                         string[] captions = { "缺考", "免考", "伤病", "犯规", "放弃", "未完成", "缓考", "作废" };
@@ -80,58 +80,39 @@ internal static class VerifyUI
                     }
                 }
             }
-            Check(forms == 8 && controls == 3, "Window/control closure changed");
-            var schools = new List<Facility> {
-                new Facility { ID = "F2", Name = "B school" },
-                new Facility { ID = "F1", Name = "A school" }
-            };
-            PhysicalProject.Current.AllFacilities = schools;
-            using (var selector = new HH.TiYu.UI.Controls.FacilityComboBox())
-            {
-                selector.BindingContext = new BindingContext();
-                selector.Init();
-                Check(selector.Items.Count == 3 && ((Facility)selector.Items[0]).ID == null, "School selector needs an unfiltered option");
-                Check(((Facility)selector.Items[1]).ID == "F1" && ((Facility)selector.Items[2]).ID == "F2", "School selector must list all schools in name order");
-                Check(schools.Count == 2 && schools[0].ID == "F2", "School selector changed project schools");
-                selector.SelectedFacilityID = "F2";
-                Check(selector.SelectedFacilityID == "F2", "School selection failed without regions");
-            }
+            Check(forms == 8 && controls == 2, "Window/control closure changed");
             Check(typeof(FrmStudentDownloadPara).GetField("DownloadPhoto") == null, "Photo download option retained");
             Check(typeof(FrmStudentDownloadPara).GetField("cardID4StudentID") == null, "Card identity replacement option retained");
             using (var form = new FrmStudentDownloadPara())
             {
-                Check(!Walk(form).Any(c => c.Name == "cmbDivision"), "Region selector retained");
+                Check(!Walk(form).Any(c => c.Name == "cmbDivision" || c.Name == "cmbFacility"), "School or region selector retained");
                 var grid = (DataGridView)form.Controls.Find("dataGridView1", true).Single();
-                Check(grid.Columns.Count == 7 && !grid.Columns.Contains("colCardID"), "Student list retained card column");
+                Check(grid.Columns.Count == 6 && !grid.Columns.Contains("colFacility") && !grid.Columns.Contains("colCardID"), "Student list retained card column");
                 Check(!Walk(form).Any(c => c.Name == "chkCardIDForStudentID"), "Card identity checkbox retained");
                 Check(!Walk(form).Any(c => new[] { "txtStudentID1", "txtStudentID2", "txtName" }.Contains(c.Name)), "Removed student query fields retained");
                 PhysicalProject.Current.AddStudents(new List<Student> {
-                    new Student { StudentID = "S1", FacilityID = "F1", Grade = GradeHelper.JuniorHighGrade1, ClassName = "一班", Sex = Sex.Male },
-                    new Student { StudentID = "S2", FacilityID = "F1", Grade = GradeHelper.JuniorHighGrade1, ClassName = "一班", Sex = Sex.Female },
-                    new Student { StudentID = "S3", FacilityID = "F1", Grade = GradeHelper.JuniorHighGrade2, ClassName = "二班", Sex = Sex.Male },
-                    new Student { StudentID = "S4", FacilityID = "F2", Grade = GradeHelper.JuniorHighGrade1, ClassName = "三班", Sex = Sex.Male },
-                    new Student { StudentID = "S5", FacilityID = "F1", Grade = null, ClassName = null, Sex = Sex.Female }
+                    new Student { StudentID = "S1", Grade = GradeHelper.JuniorHighGrade1, ClassName = "一班", Sex = Sex.Male },
+                    new Student { StudentID = "S2", Grade = GradeHelper.JuniorHighGrade1, ClassName = "一班", Sex = Sex.Female },
+                    new Student { StudentID = "S3", Grade = GradeHelper.JuniorHighGrade2, ClassName = "二班", Sex = Sex.Male },
+                    new Student { StudentID = "S4", Grade = GradeHelper.JuniorHighGrade1, ClassName = "三班", Sex = Sex.Male },
+                    new Student { StudentID = "S5", Grade = null, ClassName = null, Sex = Sex.Female }
                 });
-                var school = (HH.TiYu.UI.Controls.FacilityComboBox)form.Controls.Find("cmbFacility", true).Single();
                 var grade = (HH.TiYu.UI.Controls.GradeComboBox)form.Controls.Find("txtGrade", true).Single();
                 var className = (ComboBox)form.Controls.Find("txtClassName", true).Single();
                 var male = (RadioButton)form.Controls.Find("rdMale", true).Single();
                 var female = (RadioButton)form.Controls.Find("rdFemale", true).Single();
                 var all = (RadioButton)form.Controls.Find("rdSexAll", true).Single();
                 var query = typeof(FrmStudentDownloadPara).GetMethod("btnQuery_Click", BindingFlags.NonPublic | BindingFlags.Instance);
-                school.BindingContext = new BindingContext();
-                school.Init();
                 grade.Init();
+                ((HH.TiYu.UI.UserControl.ClassNameCombox)className).Init();
+                Check(className.Items.Contains("一班") && className.Items.Contains("三班"), "Class choices must include the annual roster");
                 Action<int> expectRows = expected => {
                     query.Invoke(form, new object[] { null, EventArgs.Empty });
-                    Check(grid.Rows.Count == expected, "Student query result count: expected " + expected + ", got " + grid.Rows.Count + "; school=" + school.Text + "; grade=" + grade.Text + "; class=" + className.Text);
+                    Check(grid.Rows.Count == expected, "Student query result count: expected " + expected + ", got " + grid.Rows.Count + "; grade=" + grade.Text + "; class=" + className.Text);
                 };
                 expectRows(5);
-                school.SelectedFacilityID = "F1";
-                Check(className.Items.Contains("一班") && !className.Items.Contains("三班"), "School must refresh class choices");
-                expectRows(4);
                 grade.SelectedGrade = GradeHelper.JuniorHighGrade1;
-                expectRows(2);
+                expectRows(3);
                 className.Text = "一";
                 male.Checked = true;
                 expectRows(1);
@@ -140,7 +121,6 @@ internal static class VerifyUI
                 all.Checked = true;
                 className.Text = "不存在";
                 expectRows(0);
-                school.SelectedIndex = 0;
                 grade.SelectedIndex = 0;
                 className.Text = string.Empty;
                 expectRows(5);

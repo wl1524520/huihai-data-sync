@@ -23,8 +23,8 @@ internal static class VerifyRecoveredApi {
             Require(oldTypes.ContainsKey(type.FullName),"Unexpected public type: "+type.FullName);
             var oldContract=Contract(oldTypes[type.FullName]);
             var newContract=Contract(type);
-            // Region removal narrows Init(Division) to Init(); school selector behavior is checked by VerifyUI.
-            if (type.FullName == "HH.TiYu.UI.Controls.FacilityComboBox")
+            // Single-school class choices take only grade; behavior is checked by VerifyUI.
+            if (type.FullName == "HH.TiYu.UI.UserControl.ClassNameCombox")
                 newContract = newContract.Where(c => !c.StartsWith("METHOD:Init`0(")).ToList();
             // Explicit override adds the transaction missing from the legacy base Delete.
             if (type.FullName == "HH.TiYu.DAL.LinqProvider.PhysicalProjectProvider")

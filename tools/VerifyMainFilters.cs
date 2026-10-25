@@ -61,8 +61,8 @@ internal static class VerifyMainFilters
     }
     private static void Student(string id, string name, string grade, string cls, int sex, string project)
     {
-        Sql(string.Format("INSERT INTO Student(ID,StudentID,ProjectID,Name,Sex,FacilityID,Grade,ClassName) " +
-            "VALUES('{0}','{1}','{2}','{3}',{4},'school',{5},'{6}')", Guid.NewGuid(), id, project, name, sex, grade, cls));
+        Sql(string.Format("INSERT INTO Student(ID,StudentID,ProjectID,Name,Sex,Grade,ClassName) " +
+            "VALUES('{0}','{1}','{2}','{3}',{4},{5},'{6}')", Guid.NewGuid(), id, project, name, sex, grade, cls));
     }
 
     private static void WaitFor(Func<bool> condition)
@@ -128,7 +128,7 @@ internal static class VerifyMainFilters
         }
         var after = SyncConfig.Load();
         Check(owner.Enabled && after.ApiUrl == before.ApiUrl && after.ApiToken == before.ApiToken &&
-            after.SourceFacilityId == before.SourceFacilityId && after.RemoteProjectId == before.RemoteProjectId,
+            after.RemoteProjectId == before.RemoteProjectId,
             "Cancelling settings must preserve configuration and restore the main window");
     }
 
@@ -136,15 +136,15 @@ internal static class VerifyMainFilters
     {
         var button = Field<ToolStripButton>(form, "_btnDownload");
         Check(button.Text == "下载名单" && !button.Enabled, "Unconfigured download shortcut must be disabled");
-        var conf = new SyncConfig { ApiUrl = "http://127.0.0.1/api/hh", ApiToken = "test", SourceFacilityId = "school" };
+        var conf = new SyncConfig { ApiUrl = "http://127.0.0.1/api/hh", ApiToken = "test" };
         conf.Save();
         Call(form, "RefreshGate");
         Check(button.Enabled, "Valid saved settings must enable download without a network check");
-        conf.SourceFacilityId = "";
+        conf.ApiToken = "";
         conf.Save();
         Call(form, "RefreshGate");
-        Check(!button.Enabled, "Incomplete school binding must disable download");
-        conf.SourceFacilityId = "school";
+        Check(!button.Enabled, "Missing token must disable download");
+        conf.ApiToken = "test";
         conf.Save();
         Call(form, "RefreshGate");
 
@@ -363,7 +363,8 @@ internal static class VerifyMainFilters
     private static void VerifyDownloadService()
     {
         Sql("INSERT INTO PhysicalProject(ID,Class,Name,CreateDate) VALUES('download',0,'下载验证','2026-10-19')");
-        Sql("INSERT INTO Facility(ID,Name,ProjectID) VALUES('download-school','验证学校','download')");
+        var previousProject = PhysicalProject.Current;
+        PhysicalProject.Current = new PhysicalProject { ID = "download" };
         foreach (bool empty in new bool[] { false, true })
         {
             // A loopback HTTP fixture exercises the production API, paging and commit callback.
@@ -409,7 +410,7 @@ internal static class VerifyMainFilters
                 int notifications = 0;
                 var config = new SyncConfig
                 {
-                    ApiUrl = "http://127.0.0.1:" + port + "/api/hh", ApiToken = "fixture", SourceFacilityId = "download-school"
+                    ApiUrl = "http://127.0.0.1:" + port + "/api/hh", ApiToken = "fixture"
                 };
                 new StudentSync(new SyncApi(config.ApiUrl, config.ApiToken), config).Run(log => { }, () => false,
                     (done, total) =>
@@ -430,6 +431,7 @@ internal static class VerifyMainFilters
             }
             finally { listener.Stop(); server.Join(2000); }
         }
+        PhysicalProject.Current = previousProject;
     }
     private static void VerifyScores(FrmMain form)
     {
@@ -718,7 +720,7 @@ internal static class VerifyMainFilters
 
     private static SyncConfig UploadConfig(UploadServer server)
     {
-        var config = new SyncConfig { ApiUrl = server.Url, ApiToken = "synthetic-fixture", SourceFacilityId = "school",
+        var config = new SyncConfig { ApiUrl = server.Url, ApiToken = "synthetic-fixture",
             RemoteProjectId = "1", RemoteProjectName = "Project" };
         config.Save();
         return config;

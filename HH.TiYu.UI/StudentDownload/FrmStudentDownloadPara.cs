@@ -30,7 +30,6 @@ namespace HH.TiYu.UI
 {
 	public class FrmStudentDownloadPara : Form
 	{
-		private List<Facility> _Facilitys = null;
 
 		public List<Student> students = null;
 
@@ -50,7 +49,6 @@ namespace HH.TiYu.UI
 
 		private GroupBox gpStep1;
 
-		private Label label8;
 
 		private Button btnQuery;
 
@@ -84,7 +82,6 @@ namespace HH.TiYu.UI
 
 		private DataGridViewCheckBoxColumn colSelect;
 
-		private DataGridViewTextBoxColumn colFacility;
 
 		private DataGridViewTextBoxColumn colClassName;
 
@@ -100,7 +97,6 @@ namespace HH.TiYu.UI
 
 		private ClassNameCombox txtClassName;
 
-		private FacilityComboBox cmbFacility;
 
 
 		public FrmStudentDownloadPara()
@@ -111,22 +107,13 @@ namespace HH.TiYu.UI
 		private void ShowStudentInfo(DataGridViewRow row, Student s)
 		{
 			row.Tag = s;
-			row.Cells["colFacility"].Value = FacilityDisplayName(s);
 			row.Cells["colID"].Value = s.StudentID;
 			row.Cells["colClassName"].Value = s.ClassName;
 			row.Cells["colName"].Value = s.Name;
 			row.Cells["colSex"].Value = ((s.Sex == Sex.Male) ? "男" : "女");
 		}
 
-		/// <summary>
-		/// 学校列的显示文本;查不到学校时回退到学校 ID。排序键也用它,
-		/// 保证列表顺序与屏幕上看到的名字一致。
-		/// </summary>
-		private string FacilityDisplayName(Student s)
-		{
-			Facility facility = ((_Facilitys != null && _Facilitys.Count > 0) ? _Facilitys.SingleOrDefault((Facility it) => it.ID == s.FacilityID) : null);
-			return ((facility != null) ? facility.Name : s.FacilityID);
-		}
+
 
 		private List<Student> GetSelectedStudents()
 		{
@@ -143,9 +130,7 @@ namespace HH.TiYu.UI
 
 		private void FrmStudentUpload_Load(object sender, EventArgs e)
 		{
-			_Facilitys = new FacilityBLL(AppSettings.Current.ConnStr).GetItems(null).QueryObjects;
 			txtGrade.Init();
-			cmbFacility.Init();
 			txtClassName.Init();
 			bool result = false;
 			string configContent = AppSettings.Current.GetConfigContent(string.Format("{0}_{1}", base.Name, chkClearFirst.Name));
@@ -177,18 +162,11 @@ namespace HH.TiYu.UI
 				{
 					list = list.Where((Student item) => item.ClassName != null && item.ClassName.Contains(txtClassName.Text)).ToList();
 				}
-				if (!string.IsNullOrEmpty(cmbFacility.SelectedFacilityID))
-				{
-					Facility f = cmbFacility.SelectedItem as Facility;
-					if (f != null)
-					{
-						list = list.Where((Student it) => it.FacilityID == f.ID).ToList();
-					}
-				}
+
 				if (list != null && list.Count > 0)
 				{
 					list = (from s in list
-						orderby FacilityDisplayName(s), s.Grade, s.ClassName, s.StudentID
+						orderby s.Grade, s.ClassName, s.StudentID
 						select s).ToList();
 					foreach (Student item in list)
 					{
@@ -244,10 +222,7 @@ namespace HH.TiYu.UI
 			}
 		}
 
-		private void cmbFacility_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			txtClassName.Init((cmbFacility.SelectedItem == null) ? null : (cmbFacility.SelectedItem as Facility).ID);
-		}
+
 
 		protected override void Dispose(bool disposing)
 		{
@@ -265,7 +240,6 @@ namespace HH.TiYu.UI
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.dataGridView1 = new System.Windows.Forms.DataGridView();
 			this.colSelect = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-			this.colFacility = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colClassName = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colID = new System.Windows.Forms.DataGridViewTextBoxColumn();
 			this.colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -277,9 +251,7 @@ namespace HH.TiYu.UI
 			this.label9 = new System.Windows.Forms.Label();
 			this.chkClearFirst = new System.Windows.Forms.CheckBox();
 			this.gpStep1 = new System.Windows.Forms.GroupBox();
-			this.cmbFacility = new HH.TiYu.UI.Controls.FacilityComboBox(this.components);
 			this.txtClassName = new HH.TiYu.UI.UserControl.ClassNameCombox(this.components);
-			this.label8 = new System.Windows.Forms.Label();
 			this.btnQuery = new System.Windows.Forms.Button();
 			this.label5 = new System.Windows.Forms.Label();
 			this.txtGrade = new HH.TiYu.UI.Controls.GradeComboBox(this.components);
@@ -308,7 +280,7 @@ namespace HH.TiYu.UI
 			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
 			this.toolStripStatusLabel1.Size = new System.Drawing.Size(59, 17);
 			this.toolStripStatusLabel1.Text = "总共 0 项";
-			this.dataGridView1.Columns.AddRange(this.colSelect, this.colFacility, this.colClassName, this.colID, this.colName, this.colSex, this.colMemo);
+			this.dataGridView1.Columns.AddRange(this.colSelect, this.colClassName, this.colID, this.colName, this.colSex, this.colMemo);
 			this.dataGridView1.AllowUserToAddRows = false;
 			this.dataGridView1.AllowUserToDeleteRows = false;
 			this.dataGridView1.AllowUserToResizeRows = false;
@@ -326,11 +298,6 @@ namespace HH.TiYu.UI
 			this.colSelect.HeaderText = "";
 			this.colSelect.Name = "colSelect";
 			this.colSelect.Width = 40;
-			this.colFacility.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
-			this.colFacility.HeaderText = "学校";
-			this.colFacility.MinimumWidth = 100;
-			this.colFacility.Name = "colFacility";
-			this.colFacility.ReadOnly = true;
 			this.colClassName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.DisplayedCells;
 			this.colClassName.HeaderText = "班级";
 			this.colClassName.MinimumWidth = 100;
@@ -400,9 +367,7 @@ namespace HH.TiYu.UI
 			this.chkClearFirst.Visible = false;
 			this.chkClearFirst.CheckedChanged += new System.EventHandler(chkClearFirst_CheckedChanged);
 			this.gpStep1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-			this.gpStep1.Controls.Add(this.cmbFacility);
 			this.gpStep1.Controls.Add(this.txtClassName);
-			this.gpStep1.Controls.Add(this.label8);
 			this.gpStep1.Controls.Add(this.btnQuery);
 			this.gpStep1.Controls.Add(this.label5);
 			this.gpStep1.Controls.Add(this.txtGrade);
@@ -415,26 +380,12 @@ namespace HH.TiYu.UI
 			this.gpStep1.TabIndex = 0;
 			this.gpStep1.TabStop = false;
 			this.gpStep1.Text = "第一步  查询";
-			this.cmbFacility.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cmbFacility.FormattingEnabled = true;
-			this.cmbFacility.Location = new System.Drawing.Point(69, 30);
-			this.cmbFacility.Name = "cmbFacility";
-			this.cmbFacility.Size = new System.Drawing.Size(159, 20);
-			this.cmbFacility.TabIndex = 0;
-			this.cmbFacility.SelectedIndexChanged += new System.EventHandler(cmbFacility_SelectedIndexChanged);
 			this.txtClassName.FormattingEnabled = true;
-			this.txtClassName.Location = new System.Drawing.Point(69, 102);
+			this.txtClassName.Location = new System.Drawing.Point(69, 66);
 			this.txtClassName.Name = "txtClassName";
 			this.txtClassName.Size = new System.Drawing.Size(159, 20);
 			this.txtClassName.TabIndex = 2;
-			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point(31, 33);
-			this.label8.Name = "label8";
-			this.label8.Size = new System.Drawing.Size(29, 12);
-			this.label8.TabIndex = 134;
-			this.label8.Text = "学校";
-			this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			this.btnQuery.Location = new System.Drawing.Point(69, 178);
+			this.btnQuery.Location = new System.Drawing.Point(69, 142);
 			this.btnQuery.Name = "btnQuery";
 			this.btnQuery.Size = new System.Drawing.Size(181, 30);
 			this.btnQuery.TabIndex = 4;
@@ -442,7 +393,7 @@ namespace HH.TiYu.UI
 			this.btnQuery.UseVisualStyleBackColor = true;
 			this.btnQuery.Click += new System.EventHandler(btnQuery_Click);
 			this.label5.AutoSize = true;
-			this.label5.Location = new System.Drawing.Point(31, 105);
+			this.label5.Location = new System.Drawing.Point(31, 69);
 			this.label5.Name = "label5";
 			this.label5.Size = new System.Drawing.Size(29, 12);
 			this.label5.TabIndex = 122;
@@ -450,19 +401,19 @@ namespace HH.TiYu.UI
 			this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.txtGrade.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
 			this.txtGrade.FormattingEnabled = true;
-			this.txtGrade.Location = new System.Drawing.Point(69, 66);
+			this.txtGrade.Location = new System.Drawing.Point(69, 30);
 			this.txtGrade.Name = "txtGrade";
 			this.txtGrade.Size = new System.Drawing.Size(159, 20);
 			this.txtGrade.TabIndex = 1;
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point(31, 142);
+			this.label6.Location = new System.Drawing.Point(31, 106);
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size(29, 12);
 			this.label6.TabIndex = 123;
 			this.label6.Text = "性别";
 			this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
 			this.label3.AutoSize = true;
-			this.label3.Location = new System.Drawing.Point(31, 69);
+			this.label3.Location = new System.Drawing.Point(31, 33);
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size(29, 12);
 			this.label3.TabIndex = 130;
@@ -471,7 +422,7 @@ namespace HH.TiYu.UI
 			this.panel2.Controls.Add(this.rdSexAll);
 			this.panel2.Controls.Add(this.rdFemale);
 			this.panel2.Controls.Add(this.rdMale);
-			this.panel2.Location = new System.Drawing.Point(69, 138);
+			this.panel2.Location = new System.Drawing.Point(69, 102);
 			this.panel2.Name = "panel2";
 			this.panel2.Size = new System.Drawing.Size(159, 21);
 			this.panel2.TabIndex = 3;

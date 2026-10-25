@@ -17,6 +17,7 @@ internal static class VerifyBusiness
     // Model 本轮精简明确允许删除的类型：采集器运行时不可达（无 DAL 映射、无建表、无引用）。
     private static readonly string[] RemovedModelTypes =
     {
+        "HH.TiYu.Model.Facility", "HH.TiYu.Model.SearchCondition.FacilitySearchCondition",
         "HH.TiYu.Model.Division", "HH.TiYu.Model.SearchCondition.DivisionSearchCondition",
         "HH.TiYu.Model.Alarm", "HH.TiYu.Model.AlarmType", "HH.TiYu.Model.AppraiseTemplate",
         "HH.TiYu.Model.TotalRank", "HH.TiYu.Model.Discussion", "HH.TiYu.Model.ResolveType",
@@ -42,7 +43,7 @@ internal static class VerifyBusiness
     };
     private static readonly string[] RemovedTypes =
     {
-        "HH.TiYu.BLL.DivisionBLL",
+        "HH.TiYu.BLL.FacilityBLL", "HH.TiYu.BLL.DivisionBLL",
         "HH.TiYu.BLL.AlarmInfoBLL", "HH.TiYu.BLL.AppraiseTemplateBLL", "HH.TiYu.BLL.DiscussionBLL", "HH.TiYu.BLL.OperatorBLL",
         "HH.TiYu.BLL.PhysicalScoreBLL", "HH.TiYu.BLL.RoleBLL", "HH.TiYu.BLL.SportsBLL", "HH.TiYu.BLL.SportsStudentPairBLL",
         "HH.TiYu.BLL.SportSuggestionBLL", "HH.TiYu.BLL.StandardBLL", "HH.TiYu.BLL.StudentCheckRecordBLL", "HH.TiYu.BLL.StudentGroupBLL",
@@ -50,6 +51,10 @@ internal static class VerifyBusiness
     };
     private static readonly string[] RemovedMembers =
     {
+        "HH.TiYu.Model.Student:FacilityID", "HH.TiYu.Model.Student:get_FacilityID", "HH.TiYu.Model.Student:set_FacilityID",
+        "HH.TiYu.Model.SearchCondition.StudentSearchCondition:School", "HH.TiYu.Model.SearchCondition.StudentSearchCondition:get_School", "HH.TiYu.Model.SearchCondition.StudentSearchCondition:set_School",
+        "HH.TiYu.Model.PhysicalProject:AllFacilities", "HH.TiYu.Model.PhysicalProject:get_AllFacilities", "HH.TiYu.Model.PhysicalProject:set_AllFacilities", "HH.TiYu.Model.PhysicalProject:GetFacility",
+        "HH.TiYu.Model.ProjectLoadOptions:Facilities",
         "HH.TiYu.Model.Facility:get_DivisionID", "HH.TiYu.Model.Facility:set_DivisionID", "HH.TiYu.Model.Facility:DivisionID",
         "HH.TiYu.Model.PhysicalProject:get_AllDivisions", "HH.TiYu.Model.PhysicalProject:set_AllDivisions", "HH.TiYu.Model.PhysicalProject:AllDivisions",
         "HH.TiYu.Model.ProjectLoadOptions:Regions", "HH.TiYu.Model.ProjectLoadOptions:RegionsFacilitiesAndStudents",
@@ -99,7 +104,7 @@ internal static class VerifyBusiness
         "HH.TiYu.Model.StudentNote:学校代码","HH.TiYu.Model.StudentNote:中国美院照片上传时间","HH.TiYu.Model.StudentNote:院系",
         "HH.TiYu.Model.StudentNote:专业","HH.TiYu.Model.StudentNote:特殊学生类型","HH.TiYu.Model.StudentNote:平时成绩",
         // Student 本轮瘦身:非持久化字段、年龄回退、位置索引与扩展位整套移除
-        // (九列持久字段 ID/StudentID/ProjectID/Name/Sex/FacilityID/Grade/ClassName/UpdateDate 之外无成员)。
+        // (八列持久字段 ID/StudentID/ProjectID/Name/Sex/Grade/ClassName/UpdateDate 之外无成员)。
         "HH.TiYu.Model.Student:get_CardID","HH.TiYu.Model.Student:set_CardID","HH.TiYu.Model.Student:CardID",
         "HH.TiYu.Model.Student:get_IDNumber","HH.TiYu.Model.Student:set_IDNumber","HH.TiYu.Model.Student:IDNumber",
         "HH.TiYu.Model.Student:get_BirthDay","HH.TiYu.Model.Student:set_BirthDay","HH.TiYu.Model.Student:BirthDay",
@@ -305,11 +310,11 @@ internal static class VerifyBusiness
     private static void CheckDeliberateRemovals()
     {
         Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.Division") == null, "Division model must remain removed");
-        Require(typeof(Facility).GetProperty("DivisionID") == null && typeof(PhysicalProject).GetProperty("AllDivisions") == null, "Region links must remain removed");
+        Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.Facility") == null && typeof(PhysicalProject).GetProperty("AllDivisions") == null, "Region links must remain removed");
         Require(string.Join(",", typeof(Student).GetProperties().Select(p => p.Name)
                 .OrderBy(n => n, StringComparer.Ordinal).ToArray())
-            == "ClassName,FacilityID,Grade,ID,Name,ProjectID,Sex,StudentID,UpdateDate",
-            "Student 的公开属性应恰为九个持久字段");
+            == "ClassName,Grade,ID,Name,ProjectID,Sex,StudentID,UpdateDate",
+            "Student 的公开属性应恰为八个持久字段");
         Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.StudentNote") == null, "StudentNote 枚举应保持删除");
         Require(typeof(Student).Assembly.GetType("HH.TiYu.Model.ScoreNote") == null, "ScoreNote 应保持删除");
 

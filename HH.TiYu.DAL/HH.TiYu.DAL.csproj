@@ -38,7 +38,6 @@
     <Compile Include="Contracts\IBatchProvider.cs" />
     <Compile Include="Factories\ProviderFactory.cs" />
     <Compile Include="LinqProvider\Scores\StudentScoreProvider.cs" />
-    <Compile Include="LinqProvider\Organizations\FacilityProvider.cs" />
     <Compile Include="LinqProvider\PhysicalTests\PhysicalItemProvider.cs" />
     <Compile Include="LinqProvider\PhysicalTests\PhysicalProjectProvider.cs" />
     <Compile Include="LinqProvider\PhysicalTests\ProjectPhysicalItemProvider.cs" />

@@ -573,21 +573,11 @@ namespace HH.DataCollection.Wifi
             try
             {
                 // 重载内存名单与科目,供采集下发主机使用(与启动时同一加载项组合)
-                projectBLL.GetFullInfo(PhysicalProject.Current, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
+                projectBLL.GetFullInfo(PhysicalProject.Current, ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
             }
             finally
             {
                 Cursor.Current = pre;
-            }
-            // 学校绑定跟随切换后的项目,否则同步下来的学生会写进旧项目
-            try
-            {
-                var rebind = SyncConfig.RebindFacilityForProject(PhysicalProject.Current.ID);
-                if (rebind != null) Program.WriteLog("INFO", "切换项目:" + rebind);
-            }
-            catch (Exception ex)
-            {
-                Program.WriteLog("WARN", "切换项目后重建学校绑定失败:" + ex.Message);
             }
             ReloadAll();
         }
@@ -595,7 +585,7 @@ namespace HH.DataCollection.Wifi
         // ===== 数据加载 =====
 
         /// <summary>
-        /// 门禁:同步设置完整(保存时已通过 /sync/info 拿到学校绑定)才允许开始采集/打开上传成绩;
+        /// 门禁:同步设置完整(保存时通过 /sync/info 核对令牌学校与项目)才允许开始采集/打开上传成绩;
         /// 不做联网验证,只看本地配置是否通过完整校验(断网也应能采集)。
         /// </summary>
         private void RefreshGate()

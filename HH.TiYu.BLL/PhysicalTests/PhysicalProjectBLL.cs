@@ -35,23 +35,7 @@ namespace HH.TiYu.BLL
             {
                 throw new NotSupportedException("采集器不再支持以下项目加载项: 正式学生成绩、评分标准、运动会分组、综合评价、运动建议、学生分组");
             }
-            if ((items & ProjectLoadOptions.Facilities) > (ProjectLoadOptions)0)
-            {
-                if (project.AllFacilities == null)
-                {
-                    project.AllFacilities = new List<Facility>();
-                }
-                QueryResultList<Facility> items3 = new FacilityBLL(base.RepoUri).GetItems(new FacilitySearchCondition
-                {
-                    ProjectID = project.ID
-                });
-                if (items3.Result == ResultCode.Successful)
-                {
-                    project.AllFacilities.Clear();
-                    List<Facility> list = items3.QueryObjects.OrderBy((Facility it) => it.Name).ToList();
-                    project.AllFacilities.AddRange(items3.QueryObjects.OrderBy((Facility it) => it.Name));
-                }
-            }
+
             if ((items & ProjectLoadOptions.Students) > (ProjectLoadOptions)0)
             {
                 QueryResultList<Student> items4 = new StudentBLL(base.RepoUri).GetItems(new StudentSearchCondition

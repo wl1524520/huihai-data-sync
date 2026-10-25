@@ -29,10 +29,7 @@ namespace HH.TiYu.DAL.LinqProvider
             if (search is StudentSearchCondition)
             {
                 StudentSearchCondition con = search as StudentSearchCondition;
-                if (!string.IsNullOrEmpty(con.School))
-                {
-                    queryable = queryable.Where((Student item) => item.FacilityID == con.School);
-                }
+
                 if (!string.IsNullOrEmpty(con.ProjectID))
                 {
                     queryable = queryable.Where((Student item) => item.ProjectID == con.ProjectID);
@@ -92,7 +89,6 @@ namespace HH.TiYu.DAL.LinqProvider
                         }
                         target.Name = source.Name;
                         target.Sex = source.Sex;
-                        target.FacilityID = source.FacilityID;
                         target.Grade = source.Grade;
                         target.ClassName = source.ClassName;
                         target.UpdateDate = DateTime.Now;
@@ -108,7 +104,7 @@ namespace HH.TiYu.DAL.LinqProvider
         {
             try
             {
-                string[] supported = { "Name", "Sex", "FacilityID", "Grade", "ClassName", "UpdateDate" };
+                string[] supported = { "Name", "Sex", "Grade", "ClassName", "UpdateDate" };
                 if (patchs.Any(p => !supported.Contains(p.Key)))
                     throw new NotSupportedException("批量修改仅支持采集器实际存储的学生字段");
                 using (var dc = CreateDataContext())
@@ -123,7 +119,6 @@ namespace HH.TiYu.DAL.LinqProvider
                         {
                             case "Name": student.Name = patch.Value; break;
                             case "Sex": student.Sex = (Sex)Enum.Parse(typeof(Sex), patch.Value); break;
-                            case "FacilityID": student.FacilityID = patch.Value; break;
                             case "ClassName": student.ClassName = patch.Value; break;
                             case "Grade": student.Grade = string.IsNullOrEmpty(patch.Value) ? (int?)null : int.Parse(patch.Value); break;
                             case "UpdateDate": student.UpdateDate = string.IsNullOrEmpty(patch.Value) ? (DateTime?)null : DateTime.Parse(patch.Value); break;
@@ -140,10 +135,10 @@ namespace HH.TiYu.DAL.LinqProvider
         /// 平台名单同步的整页 upsert(单事务),按项目内 StudentID(去首尾空白、忽略大小写)定位:
         ///   - 已存在:更新 StudentID(写回规范化值)/Name/Sex/ClassName/UpdateDate;Grade 仅在传入
         ///     非空时覆盖——平台年级越界时调用方传 null,即保留本地原年级,不让脏值覆盖好数据;
-        ///   - 不存在:新增,Grade 原样写入(可为 null),FacilityID 取参数值。
+        ///   - 不存在:新增,Grade 原样写入(可为 null)。
         /// 返回(新增数, 更新数);失败抛异常,由调用方终止本轮同步。
         /// </summary>
-        public Tuple<int, int> SyncRemotePage(List<Student> page, string projectID, string facilityID)
+        public Tuple<int, int> SyncRemotePage(List<Student> page, string projectID)
         {
             if (page == null) throw new ArgumentNullException("page");
             int inserted = 0, updated = 0;
@@ -180,7 +175,6 @@ namespace HH.TiYu.DAL.LinqProvider
                             StudentID = testNo,
                             Name = source.Name,
                             Sex = source.Sex,
-                            FacilityID = facilityID,
                             Grade = source.Grade,
                             ClassName = source.ClassName,
                             UpdateDate = DateTime.Now,

@@ -8,8 +8,8 @@ namespace HH.DataCollection.Wifi.Db
 {
     /// <summary>
     /// 本地精简库的自建与初始化。
-    /// 库文件为程序目录下的 HH_Data.db,首次启动时创建,只含采集+同步必需的 7 张表:
-    /// PhysicalProject / Facility / PhysicalItem / ProjectPhysicalItems /
+    /// 库文件为程序目录下的 HH_Data.db,首次启动时创建,只含采集+同步必需的 6 张表:
+    /// PhysicalProject / PhysicalItem / ProjectPhysicalItems /
     /// Student / StudentScore(唯一成绩表,带 Uploaded 上传标记) / SyncConfig。
     /// 表结构仅包含当前采集与同步字段；DAL 映射源码位于 HH.TiYu.DAL/LinqProvider/DataMapping.xml。
     /// 修改列名/类型时须同步考虑实体模型与映射；当前版本仅维护当前开发结构。
@@ -139,14 +139,6 @@ namespace HH.DataCollection.Wifi.Db
   [CreateDate] DATETIME NOT NULL,
   [Memo] nvarchar(200), StartDate datetime, EndDate datetime,
   CONSTRAINT [sqlite_autoindex_PhysicalProject_1] PRIMARY KEY ([ID]))",
-            // 学校
-            @"CREATE TABLE IF NOT EXISTS [Facility] (
-  [ID] NVARCHAR(50) NOT NULL,
-  [Name] NVARCHAR(50) NOT NULL,
-  [ProjectID] nvarchar(50) NOT NULL,
-  [Memo] nvarchar(50),
-  CONSTRAINT [sqlite_autoindex_Facility_1] PRIMARY KEY ([ID]))",
-            // 区域(启动加载需要,保持空表)
             // 科目字典
             @"CREATE TABLE IF NOT EXISTS [PhysicalItem] (
   [ID] INT NOT NULL,
@@ -171,7 +163,7 @@ namespace HH.DataCollection.Wifi.Db
   CONSTRAINT [sqlite_autoindex_ProjectPhysicalItems_1] PRIMARY KEY ([ID]))",
             // 学生名单(平台下发)。2026-10-16 版契约的学生条目仅五字段
             // (test_no/name/gender/grade/class_name),平台不再分别下发学号与身份证。
-            // 真值列 9 个:ID StudentID ProjectID Name Sex Grade ClassName FacilityID UpdateDate
+            // 真值列 8 个:ID StudentID ProjectID Name Sex Grade ClassName UpdateDate
             //   StudentID 自 2026-10 起存放平台 test_no(学校 qrcode_field 决定的"学号或身份证",
             //   已去首尾空白,最多 60 字符)。链路闭环:
             //   平台 test_no → 本列 → 下发主机的 HostStudent.StudentID → 主机回传
@@ -182,7 +174,6 @@ namespace HH.DataCollection.Wifi.Db
   [ProjectID] nvarchar(50) NOT NULL,
   [Name] nvarchar(50) NOT NULL,
   [Sex] int NOT NULL,
-  [FacilityID] NVARCHAR(50) NOT NULL,
   [Grade] INTEGER,
   [ClassName] nvarchar(50),
   [UpdateDate] datetime,

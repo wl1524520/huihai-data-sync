@@ -69,14 +69,14 @@ internal static class VerifyDal
             Check(!typeof(StudentBLL).GetMethods().Any(m => m.Name.Contains("Photo")), "Photo BLL remains");
             Check(typeof(ProviderFactory).Assembly.GetType("HH.TiYu.DAL.LinqProvider.StudentPhotoProvider") == null, "Photo provider remains");
             Check(typeof(HH.GeneralLibrary.Core.DAL.Linq.ProviderBase<,>).Assembly.GetType("HH.GeneralLibrary.TempFolderManager") == null, "Photo temp helper remains");
-            Console.WriteLine("PASS current collector DAL: " + checks + " checks; exact seven-table production schema");
+            Console.WriteLine("PASS current collector DAL: " + checks + " checks; exact six-table production schema");
             return 0;
         }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
     }
     private static void CheckSchema()
     {
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE type='table'")) == 7, "Expected seven production tables");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE type='table'")) == 6, "Expected six production tables");
         Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name IN ('Division','StudentPhoto','PhysicalScore','sync_config')")) == 0, "Legacy table remains");
         using (var connection = new SQLiteConnection(LocalDb.ConnStr))
         {
@@ -86,7 +86,7 @@ internal static class VerifyDal
                 var doc = XDocument.Load(stream); XNamespace ns = doc.Root.Name.Namespace;
                 var tables = doc.Root.Elements(ns + "Table").ToList();
                 Check((string)doc.Root.Attribute("Name") == "HuihaiTiyu", "Database contract name");
-                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Facility", "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentScore" }.OrderBy(n => n)), "Seven-table DAL contract");
+                Check(tables.Select(t => (string)t.Attribute("Name")).OrderBy(n => n).SequenceEqual(new[] { "Student", "PhysicalItem", "PhysicalProject", "ProjectPhysicalItems", "SyncConfig", "StudentScore" }.OrderBy(n => n)), "Six-table DAL contract");
                 foreach (var table in tables)
                 {
                     string name = (string)table.Attribute("Name"); var columns = new HashSet<string>();
@@ -99,15 +99,14 @@ internal static class VerifyDal
                     Check(mapped.Count == mapped.Distinct().Count(), "Duplicate mapping: " + name);
                     if (name == "StudentScore") { Check(columns.Remove("Uploaded"), "Raw score upload flag exists outside mapping"); Check(!mapped.Contains("Uploaded"), "Upload flag must not be overwritten by raw score mapping"); }
                     Check(columns.SetEquals(mapped), "Mapping does not match actual table: " + name);
-                    if (name == "Facility") Check(!columns.Contains("DivisionID"), "Retired region link remains");
-                    if (name == "Student") Check(columns.Count == 9, "Student must have only nine persisted fields");
+                    if (name == "Student") Check(columns.Count == 8, "Student must have only eight persisted fields");
                 }
             }
         }
     }
     private static void CheckFactories()
     {
-        string[] supported = { "FacilityProvider", "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentScoreProvider" };
+        string[] supported = { "StudentProvider", "PhysicalItemProvider", "PhysicalProjectProvider", "ProjectPhysicalItemProvider", "SyncConfigProvider", "StudentScoreProvider" };
         string[] removed = { "DivisionProvider", "AlarmProvider", "AppraiseTemplateProvider", "DiscussionProvider", "OperatorProvider", "PhysicalProjectStateProvider", "PhysicalScoreProvider", "RoleProvider", "SportsProvider", "SportsStudentPairProvider", "SportSuggestionProvider", "StandardProvider", "StudentCheckRecordProvider", "StudentGroupPairProvider", "StudentGroupProvider", "SysparameterProvider" };
         var assembly = typeof(ProviderFactory).Assembly;
         foreach (var name in removed)
@@ -144,18 +143,18 @@ internal static class VerifyDal
         var initial = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
         Check(initial.ApiUrl == "" && initial.ApiToken == "", "Empty config defaults");
         var config = new HH.DataCollection.Wifi.Sync.SyncConfig {
-            ApiUrl = " https://example.invalid/api/hh/ ", ApiToken = "token-'中文", SourceFacilityId = "F1",
+            ApiUrl = " https://example.invalid/api/hh/ ", ApiToken = "token-'中文",
             SchoolName = "测试学校", RemoteProjectId = "remote", RemoteProjectName = "项目"
         };
         config.Save();
         var loaded = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
-        Check(loaded.ApiUrl == "https://example.invalid/api/hh" && loaded.ApiToken == config.ApiToken && loaded.SourceFacilityId == "F1" && loaded.SchoolName == config.SchoolName && loaded.RemoteProjectId == "remote" && loaded.RemoteProjectName == config.RemoteProjectName, "Six config values round trip");
+        Check(loaded.ApiUrl == "https://example.invalid/api/hh" && loaded.ApiToken == config.ApiToken && loaded.SchoolName == config.SchoolName && loaded.RemoteProjectId == "remote" && loaded.RemoteProjectName == config.RemoteProjectName, "Five config values round trip");
         loaded.Validate();
         var provider = ProviderFactory.Create<SyncConfigProvider>(Uri);
         provider.SavePairs(new Dictionary<string, string> { { "extension", "keep" } });
         loaded.ApiToken = "updated"; loaded.Save();
         Check(provider.GetByID("extension").QueryObject.Value == "keep", "Unrelated config lost");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM SyncConfig")) == 7, "Config save duplicated keys");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM SyncConfig")) == 6, "Config save duplicated keys");
         provider.SavePairs(new Dictionary<string, string> { { "nullable", null } });
         Check(provider.GetByID("nullable").QueryObject.Value == "", "Null config normalization");
         Execute("CREATE TRIGGER fail_token BEFORE UPDATE ON SyncConfig WHEN NEW.ID='api_token' BEGIN SELECT RAISE(ABORT,'forced verification failure'); END");
@@ -193,45 +192,49 @@ internal static class VerifyDal
     }
     private static void CheckStudentSync()
     {
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name='Facility'")) == 0, "School table must not exist");
+        Check(typeof(Student).GetProperty("FacilityID") == null, "Student school link must not exist");
         var project = new PhysicalProject { ID = "SYNC", Name = "同步项目", CreateDate = DateTime.Now };
         Check(ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri).Insert(project).Result == ResultCode.Successful, "Sync project creation");
-        Check(ProviderFactory.Create<IProvider<Facility, string>>(Uri).Insert(new Facility { ID = "SYNC-F", ProjectID = project.ID, Name = "同步学校" }).Result == ResultCode.Successful, "School creation without region link");
-        var sync = new StudentSync(null, new HH.DataCollection.Wifi.Sync.SyncConfig { SourceFacilityId = "SYNC-F" });
+        PhysicalProject.Current = project;
+        var sync = new StudentSync(null, new HH.DataCollection.Wifi.Sync.SyncConfig());
         var flags = BindingFlags.NonPublic | BindingFlags.Instance;
-        var target = typeof(StudentSync).GetMethod("GetFacility", flags).Invoke(sync, null);
+        PhysicalProject.Current = new PhysicalProject { ID = "different-year" };
+        var target = (PhysicalProject)typeof(StudentSync).GetMethod("GetProject", flags).Invoke(sync, null);
+        Check(target.ID == project.ID, "Roster target must be the current annual project without a school row");
         var upsert = typeof(StudentSync).GetMethod("UpsertPage", flags);
         var page = Newtonsoft.Json.Linq.JArray.Parse("[{test_no:'0001',name:'学生',gender:1,grade:21,class_name:'一班'}]");
         var issues = new List<string>();
-        var result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { page, target, issues });
-        Check(result.Item1 == 1 && result.Item2 == 0, "Student sync insert on fresh seven-table schema");
+        var result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { page, target.ID, issues });
+        Check(result.Item1 == 1 && result.Item2 == 0, "Student sync insert on fresh six-table schema");
         page[0]["name"] = "更新姓名";
-        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { page, target, issues });
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { page, target.ID, issues });
         Check(result.Item1 == 0 && result.Item2 == 1, "Student sync updates existing roster");
         PhysicalProject.Current = project;
-        new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students);
-        Check(project.AllFacilities.Count == 1 && project.AllStudents["0001"].Name == "更新姓名" && project.AllStudents["0001"].ClassName == "一班", "Synced school and roster load without region table");
+        new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Students);
+        Check(project.AllStudents["0001"].Name == "更新姓名" && project.AllStudents["0001"].ClassName == "一班", "Synced roster load without region table");
         Check(Convert.ToInt32(Scalar("SELECT count(*) FROM sqlite_master WHERE name='Division'")) == 0, "Sync recreated retired region table");
         // 年级保护(DAL SyncRemotePage 语义):越界年级新增写 NULL、更新保留本地原年级
         var outOfRange = Newtonsoft.Json.Linq.JArray.Parse("[{test_no:'0002',name:'越界',gender:2,grade:99,class_name:'二班'}]");
-        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target, issues });
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target.ID, issues });
         Check(result.Item1 == 1 && result.Item2 == 0 && issues.Count == 1, "Out-of-range grade must insert with report");
         Check(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'") == DBNull.Value, "Out-of-range grade must persist as NULL");
         outOfRange[0]["grade"] = 21;
-        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target, issues });
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target.ID, issues });
         Check(result.Item1 == 0 && result.Item2 == 1 && Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'")) == 21, "Valid grade update must overwrite");
         outOfRange[0]["grade"] = 99;
-        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target, issues });
+        result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target.ID, issues });
         Check(result.Item1 == 0 && result.Item2 == 1 && Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'")) == 21, "Out-of-range grade update must keep local grade");
         // Provider 级语义:test_no 去首尾空白后按忽略大小写匹配,不重复建行;超长标识明确拒绝
         var studentProvider = ProviderFactory.Create<StudentProvider>(Uri);
-        var trimmed = studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = " 0001 ", Name = "再更新", Sex = Sex.Male, Grade = 31, ClassName = "三班" } }, "SYNC", "SYNC-F");
+        var trimmed = studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = " 0001 ", Name = "再更新", Sex = Sex.Male, Grade = 31, ClassName = "三班" } }, "SYNC");
         Check(trimmed.Item1 == 0 && trimmed.Item2 == 1 &&
             Convert.ToString(Scalar("SELECT Name FROM Student WHERE ProjectID='SYNC' AND StudentID='0001'")) == "再更新" &&
             Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0001'")) == 31,
             "Provider upsert trims test_no and matches existing row");
         Check(Convert.ToInt32(Scalar("SELECT COUNT(*) FROM Student WHERE ProjectID='SYNC'")) == 2, "Trimmed upsert must not duplicate roster rows");
         bool tooLong = false;
-        try { studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = new string('x', 61), Name = "超长", Sex = Sex.Male } }, "SYNC", "SYNC-F"); }
+        try { studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = new string('x', 61), Name = "超长", Sex = Sex.Male } }, "SYNC"); }
         catch (ArgumentException) { tooLong = true; }
         Check(tooLong, "Over-length test_no must be rejected, not silently truncated");
     }
@@ -265,18 +268,15 @@ internal static class VerifyDal
         var projects = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Uri);
         var project = new PhysicalProject { ID = "P'1", Name = "测试项目", CreateDate = DateTime.Now };
         Check(projects.Insert(project).Result == ResultCode.Successful, "Project insert");
-        var facilities = ProviderFactory.Create<IProvider<Facility, string>>(Uri);
-        Check(facilities.Insert(new Facility { ID = "F1", Name = "学校", ProjectID = project.ID }).Result == ResultCode.Successful, "Facility insert");
         var students = ProviderFactory.Create<IProvider<Student, string>>(Uri);
         var batch = ProviderFactory.Create<IBatchProvider<Student, string>>(Uri);
         string testNo = new string('A', 58) + "'中";
-        var student = new Student { ID = Guid.NewGuid().ToString(), StudentID = testNo, ProjectID = project.ID, FacilityID = "F1", Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
+        var student = new Student { ID = Guid.NewGuid().ToString(), StudentID = testNo, ProjectID = project.ID, Name = "学生", Grade = 7, ClassName = "一班", Sex = Sex.Male };
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Append).Result == ResultCode.Successful, "Student batch insert");
         PhysicalProject.Current = project;
-        new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Facilities | ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
-        Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllFacilities.Count == 1 && project.AllPhysicalItems.Count > 0, "Production startup loads schools, students and subjects");
+        new PhysicalProjectBLL(Uri).GetFullInfo(project, ProjectLoadOptions.Students | ProjectLoadOptions.PhysicalItems);
+        Check(project.AllStudents.Count == 1 && project.AllStudents.Values.Single().StudentID == testNo && project.AllPhysicalItems.Count > 0, "Production startup loads students and subjects");
         Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, StudentIDs = new List<string> { testNo } }).QueryObjects.Count == 1, "test_no filter");
-        Check(students.GetItems(new StudentSearchCondition { ProjectID = project.ID, School = "absent" }).QueryObjects.Count == 0, "School filter");
         student.Name = "更新"; student.ClassName = "二班"; student.Grade = null;
         Check(batch.BatchAdd(new List<Student> { student }, project.ID, ImportOption.Override).Result == ResultCode.Successful, "Student batch overwrite");
         var row = students.GetByID(student.ID).QueryObject;
@@ -285,19 +285,19 @@ internal static class VerifyDal
         Check(students.GetByID(student.ID).QueryObject.ClassName == "三班", "Student patch persisted");
         Check(batch.BatchPatch(new List<UpdateItem<string>> { new UpdateItem<string> { ID = student.ID, Key = "Note", Value = "unsupported" } }).Result == ResultCode.Fail, "Unmapped patch falsely succeeded");
         Execute("INSERT INTO StudentScore(ID,ProjectID,[Key],StudentID,TestID,ScoreFrom,CreateTime,Uploaded) VALUES('11111111-2222-3333-4444-555555555555','P''1','raw','student',1,0,'2026-10-16',1)");
-        Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on seven-table schema");
+        Check(batch.BatchDelete(new List<Student> { student }, project.ID).Result == ResultCode.Successful, "Student deletion on six-table schema");
         Check(students.GetByID(student.ID).Result == ResultCode.Fail && Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore WHERE Uploaded=1")) == 1, "Roster deletion lost collected scores");
         Execute("CREATE TRIGGER fail_project BEFORE DELETE ON PhysicalProject BEGIN SELECT RAISE(ABORT,'forced deletion failure'); END");
         Check(projects.Delete(project).Result == ResultCode.Fail, "Project deletion failure must propagate");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore")) == 1 && facilities.GetItems(null).QueryObjects.Count == 1, "Project deletion partially committed");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore")) == 1 && projects.GetByID(project.ID).QueryObject != null, "Project deletion partially committed");
         Execute("DROP TRIGGER fail_project");
-        Check(projects.Delete(project).Result == ResultCode.Successful, "Project deletion on seven-table schema");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0 && facilities.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
+        Check(projects.Delete(project).Result == ResultCode.Successful, "Project deletion on six-table schema");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM StudentScore")) == 0 && projects.GetItems(null).QueryObjects.Count == 0, "Project children not deleted");
         var generated = new PhysicalProject { Name = "新项目", CreateDate = DateTime.Now };
         Check(projects.Insert(generated).Result == ResultCode.Successful && !string.IsNullOrEmpty(generated.ID), "Project ID must not require legacy numbering table");
         PhysicalProject.Current = generated;
         // 学生同步的 SQL 已收编进 DAL StudentProvider.SyncRemotePage；此处直接验证内存名册的 AddStudents 行为。
-        var imported = new Student { StudentID = "imported", FacilityID = "F1", Name = "保留原名", Sex = Sex.Female };
+        var imported = new Student { StudentID = "imported", Name = "保留原名", Sex = Sex.Female };
         generated.AddStudents(new List<Student> { imported });
         Check(generated.AllStudents.ContainsKey("IMPORTED") && generated.AllStudents["IMPORTED"].Name == "保留原名", "In-memory roster import");
     }

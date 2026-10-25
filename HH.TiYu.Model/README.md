@@ -8,8 +8,7 @@
 
 | 目录 | 内容与修改入口 |
 | --- | --- |
-| `Organizations/` | 学校实体及对应查询条件 |
-| `Students/` | 学生九列字段、年级规则 `GradeHelper` 和学生查询条件 |
+| `Students/` | 学生八列字段、年级规则 `GradeHelper` 和学生查询条件 |
 | `PhysicalTests/` | 体测项目、测试科目、项目科目关联、项目分类与加载选项、默认科目生成和查询条件 |
 | `Scores/` | 原始成绩实体 `StudentScore` 与查询条件、内存成绩视图 `PhysicalScore`、成绩来源与特殊成绩类型枚举 |
 | `Configuration/` | 应用配置 `AppSettings`、同步配置实体 `SyncConfigEntry` |
@@ -19,7 +18,7 @@
 
 目录按业务职责组织，查询条件、枚举和辅助类随对应业务存放，保持一层，不预建空目录。只有跨业务使用的基础类型放入 `Shared`，业务规则仍归属对应业务目录；实体与查询条件放在一起便于同步维护。
 
-科目编号、成绩舍入、单位转换和文本解析在 `PhysicalTests/PhysicalItem.cs`；项目内学生与学校索引在 `PhysicalTests/PhysicalProject.cs`；默认科目生成在 `PhysicalTests/PhysicalProjectHelper.cs`。`Scores/PhysicalScore.cs` 是内存视图，原始成绩实体与查询条件位于本项目 `Scores/`，持久化位于 DAL，设备转换与后台保存位于 BLL，本项目不新增正式成绩表或评分链。
+科目编号、成绩舍入、单位转换和文本解析在 `PhysicalTests/PhysicalItem.cs`；项目内学生索引在 `PhysicalTests/PhysicalProject.cs`；默认科目生成在 `PhysicalTests/PhysicalProjectHelper.cs`。`Scores/PhysicalScore.cs` 是内存视图，原始成绩实体与查询条件位于本项目 `Scores/`，持久化位于 DAL，设备转换与后台保存位于 BLL，本项目不新增正式成绩表或评分链。
 
 文件移动不改变命名空间：查询条件仍为 `HH.TiYu.Model.SearchCondition`，操作员仍为 `HH.TiYu.Model.Security`，其余现有类型仍为 `HH.TiYu.Model`。公开接口、枚举数值、程序集身份以及序列化声明保持不变；不按物理目录重命名现有类型。新增源码须显式加入 `HH.TiYu.Model.csproj` 的 `Compile Include`。
 
@@ -34,11 +33,11 @@
 3. 删除评分与排名链（`CalResult`、`CalTotal*`、`GetTotalRank`、`GetScores`、标准/评价/运动建议模板等），见 `docs/model-cleanup-result.md`。
 4. 删除权限系统（`Permission`/`Role`/`PermissionResolver`/`OperatorRightAttribute`），只保留 `Operator.Current/ID/Name/DefaultLogID/CanDelete/CanEdit`。
 5. 删除加密狗（`Operator.DES`）。
-6. 删除整套 Note JSON 扩展位：`StudentNote` 枚举与 `ScoreNote` 随之删除，`Student` 只保留九列持久字段对应的成员，`PhysicalScore` 保留内存成绩视图所需成员；`Student` 另有 `Memo`/`院系`/`平时成绩`/`Upgrade`、卡号/身份证/出生日期/籍贯等未持久化字段、按出生日期回退年级的 `Grade` getter 一并移除（`Student` 现只映射九列，见 `HH.TiYu.DAL/README.md`）。
+6. 删除整套 Note JSON 扩展位：`StudentNote` 枚举与 `ScoreNote` 随之删除，`Student` 只保留八列持久字段对应的成员，`PhysicalScore` 保留内存成绩视图所需成员；`Student` 另有 `Memo`/`院系`/`平时成绩`/`Upgrade`、卡号/身份证/出生日期/籍贯等未持久化字段、按出生日期回退年级的 `Grade` getter 一并移除（`Student` 现只映射八列，见 `HH.TiYu.DAL/README.md`）。
 7. 删除 `StudentPhoto` 与 `Student.HasPhoto`；新增 `SyncConfigEntry` 用于 DAL 配置映射。
 8. `Jurassic.dll` 引用已移除（原用于旧公式 JavaScript 求值）。
 
-Student 只持久化当前九个字段，类本身也只保留这九个属性，不再摆出"看着能用、实际恒空"的字段。`Grade` 取值按平台约定为 11-44，类内不做校验；平台下发的越界值由 `HH.DataCollection.Wifi/Sync/StudentSync.cs` 在解析处拦下并报告（新增按无年级落库，更新保留本地原年级）。逆向模板产生的整块 `using`（`System.Drawing`、`System.Management`、`System.ServiceModel`、`Jurassic` 等）已清理；`[Serializable]`/`[DataContract]` 等契约特性保留。
+Student 只持久化当前八个字段，类本身也只保留这八个属性，不再摆出"看着能用、实际恒空"的字段。`Grade` 取值按平台约定为 11-44，类内不做校验；平台下发的越界值由 `HH.DataCollection.Wifi/Sync/StudentSync.cs` 在解析处拦下并报告（新增按无年级落库，更新保留本地原年级）。逆向模板产生的整块 `using`（`System.Drawing`、`System.Management`、`System.ServiceModel`、`Jurassic` 等）已清理；`[Serializable]`/`[DataContract]` 等契约特性保留。
 
 ## 还原依据与边界
 
@@ -55,3 +54,5 @@ REA 静态分析未执行目标程序集；行为回归是另行运行的隔离�
 最近一次 Debug/Release 验证均通过：Model 的 22 个与 BLL 的 6 个公开/受保护类型，其签名、flags、枚举常量、参数默认值及业务特性与原始 DLL 的差异不超过登记清单；源码侧 517 项检查与 280 项行为观察、legacy 侧 2 项检查与 280 项观察，快照完全一致。这是选定用例的回归证据，不代表全部业务输入已验证。
 
 2026-10-17：完整移除 Division 表、Facility.DivisionID、区域实体/查询/BLL/DAL 和名单下发区域筛选。学校、年级、班级筛选保留。首次启动创建七表新库，不提供旧库迁移。
+
+2026-10-25：采集器按单学校安装使用，学校由接口地址与授权令牌确定。删除 Facility 表、Student.FacilityID 及学校实体/查询/BLL/DAL/筛选控件；学校名称仅作同步配置显示。年度项目和 ProjectID 隔离保留，名单同步直接写入创建下载任务时确定的年度项目。新库六表，学生八字段、同步配置五项，不提供旧库迁移。

@@ -7,7 +7,7 @@
 | `HH.DataCollection.Wifi` | 采集器入口、界面、本地数据库、学生同步与原始成绩上传 |
 | `HH.TiYu.Model` | 数据模型、成绩转换与文本解析，输出 `Model.dll` |
 | `HH.TiYu.DAL` | 数据访问、映射及批量操作，输出 `DAL.dll` |
-| `HH.TiYu.BLL` | 组织、学生、体测项目与科目业务入口、设备成绩转换与后台保存，输出 `BLL.dll` |
+| `HH.TiYu.BLL` | 学生、体测项目与科目业务入口、设备成绩转换与后台保存，输出 `BLL.dll` |
 | `HH.TiYu.Device` | 实际使用的 Wifi 协议与通信，输出 `Device.dll` |
 | `HH.TiYu.UI` | 采集窗口及必要控件，输出 `UI.dll` |
 | `HH.GeneralLibrary` | 必要数据库、通信、日志、转换和控件基础，输出同名 DLL |
@@ -30,7 +30,7 @@
 .\tools\VerifyUI.ps1 -Configuration Debug
 ```
 
-当前数据库采用八表结构，统一由 DAL 映射（含 `SyncConfig` 和 `StudentScore`），原始成绩转换与后台保存由 BLL 维护。学生只存九个实际字段；不提供旧库迁移。详见 [DAL 数据契约](HH.TiYu.DAL/README.md)。
+当前数据库采用六表结构，统一由 DAL 映射（含 `SyncConfig` 和 `StudentScore`），原始成绩转换与后台保存由 BLL 维护。学生只存八个实际字段；不提供旧库迁移。详见 [DAL 数据契约](HH.TiYu.DAL/README.md)。
 
 所有验证也支持 `Release`，均在新建测试目录运行，并在成功结束后删除本次隔离目录（失败时保留残留供排查）。数据库测试使用隔离临时库，协议测试不连接设备，UI 只构造和释放窗口，不执行 Show/Load。未进行设备和云平台实测。
 
@@ -39,3 +39,7 @@
 原 `HH.TiYu.SQLite` 已拆分并入 Model、DAL、BLL，运行时不再依赖 `HH.TiYu.SQLite.dll`；历史 DLL 仅保留作回归基线。详见[拆分记录](docs/sqlite-merge-result.md)。
 
 恢复项目的入口、裁剪范围、REA 证据与改动说明见各项目 README 及[四库恢复记录](docs/source-restoration.md)。第三方库继续保持独立依赖，未恢复未用设备、照片、报表、会员及旧平台模块。
+
+2026-10-25：采集器按单学校安装使用，学校由接口地址与授权令牌确定。删除 Facility 表、Student.FacilityID 及学校实体/查询/BLL/DAL/筛选控件；学校名称仅作同步配置显示。年度项目和 ProjectID 隔离保留，名单同步直接写入创建下载任务时确定的年度项目。新库六表，学生八字段、同步配置五项，不提供旧库迁移。
+
+本次验证（Debug / Release，x86）：DAL 129 项、UI 100 项、业务行为 428 项及 280 个基线观察、程序集引用检查、主界面与本地 HTTP 模拟同步 573 项均通过。未连接真实设备或云平台。

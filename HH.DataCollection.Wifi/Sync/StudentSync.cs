@@ -23,8 +23,8 @@ namespace HH.DataCollection.Wifi.Sync
     ///     (test_no/name/gender/grade/class_name)。test_no 取代 student_no 与 id_number,
     ///     不是平台学生主键,也不区分学号/身份证;客户端只去首尾空白,不做大小写转换
     ///     (身份证统一大写是平台侧规则,学号的大小写与前导零保留)
-    ///   - 平台不再下发 birth/nation/origin_id/addr/class_id/mc:本地只写 9 个真值列,
-    ///     Student 表仅保留当前同步和采集实际使用的九个字段
+    ///   - 平台不再下发 birth/nation/origin_id/addr/class_id/mc:本地只写 8 个真值列,
+    ///     Student 表仅保留当前同步和采集实际使用的八个字段
     ///   - grade 按契约 §3.2 的年级编码表校验(11-44)。越界只报告不阻断:整页照常落库,
     ///     新增按无年级(NULL)写入,更新保留本地原年级(DAL 对 Grade 传 null 不覆盖),
     ///     避免平台的脏值覆盖本地好数据
@@ -35,11 +35,13 @@ namespace HH.DataCollection.Wifi.Sync
 
         private readonly SyncApi _api;
         private readonly SyncConfig _conf;
+        private readonly string _projectID;
 
         public StudentSync(SyncApi api, SyncConfig conf)
         {
             _api = api;
             _conf = conf;
+            _projectID = PhysicalProject.Current == null ? null : PhysicalProject.Current.ID;
         }
 
         public void Run(Action<string> report, Func<bool> stopRequested)
@@ -50,14 +52,14 @@ namespace HH.DataCollection.Wifi.Sync
         /// <summary>进度在整页提交后报告,参数为已保存人数、远端总人数。</summary>
         public void Run(Action<string> report, Func<bool> stopRequested, Action<int, int> progress)
         {
+            _conf.Validate();
             report("开始同步学生信息");
             if (stopRequested()) return;
+            var project = GetProject();
             var info = _api.GetSyncInfo(true); // 与成绩上传一致允许重试,一次网络抖动不至于整轮失败
             report(info.ToString());
 
-            var facility = GetFacility();
-            report(string.Format("本地写入目标:学校:{0}(ID:{1});项目:{2}(ID:{3})",
-                facility.SchoolName, facility.ID, facility.ProjectName, facility.ProjectID));
+            report(string.Format("本地写入目标:项目:{0}(ID:{1})", project.Name, project.ID));
 
             int page = 1, synced = 0, inserted = 0, updated = 0;
             Tuple<int, int> expectedProject = null;
@@ -67,17 +69,17 @@ namespace HH.DataCollection.Wifi.Sync
             while (!stopRequested())
             {
                 var studentPage = _api.GetStudentPage(page, PageSize);
-                var project = Tuple.Create(studentPage.ProjectId, studentPage.ProjectYear);
+                var remoteProject = Tuple.Create(studentPage.ProjectId, studentPage.ProjectYear);
                 var pagination = Tuple.Create(studentPage.Total, studentPage.PerPage, studentPage.LastPage);
                 if (expectedProject == null)
                 {
-                    expectedProject = project;
+                    expectedProject = remoteProject;
                     expectedPagination = pagination;
                     int infoProjectId;
                     if (int.TryParse(info.ProjectId, out infoProjectId) && infoProjectId != studentPage.ProjectId)
                         throw new SyncException("远端当前项目已变更,请重新发起学生同步");
                 }
-                else if (!project.Equals(expectedProject))
+                else if (!remoteProject.Equals(expectedProject))
                 {
                     throw new SyncException("同步过程中远端测试年度或项目已变更,请重新同步");
                 }
@@ -87,7 +89,7 @@ namespace HH.DataCollection.Wifi.Sync
                 }
 
                 if (stopRequested()) break;
-                var summary = UpsertPage(studentPage.Items, facility, gradeIssues);
+                var summary = UpsertPage(studentPage.Items, project.ID, gradeIssues);
                 synced += studentPage.Items.Count;
                 inserted += summary.Item1;
                 updated += summary.Item2;
@@ -122,7 +124,7 @@ namespace HH.DataCollection.Wifi.Sync
         }
 
         /// <summary>整页单事务 upsert(DAL),返回 (新增数, 更新数);越界年级记入 gradeIssues 由 Run 统一报告。</summary>
-        private Tuple<int, int> UpsertPage(JArray items, FacilityTarget facility, List<string> gradeIssues)
+        private Tuple<int, int> UpsertPage(JArray items, string projectID, List<string> gradeIssues)
         {
             var page = new List<Student>();
             foreach (var token in items)
@@ -142,34 +144,18 @@ namespace HH.DataCollection.Wifi.Sync
             }
             // 原工具此处联动更新 PhysicalScore 的标识/年级;本软件无该表,原始成绩原样保留
             return ProviderFactory.Create<StudentProvider>(Db.LocalDb.DalConnStr)
-                .SyncRemotePage(page, facility.ProjectID, facility.ID);
+                .SyncRemotePage(page, projectID);
         }
 
-        private FacilityTarget GetFacility()
+        private PhysicalProject GetProject()
         {
-            var facilityResult = ProviderFactory.Create<IProvider<Facility, string>>(Db.LocalDb.DalConnStr)
-                .GetByID(_conf.SourceFacilityId);
-            if (facilityResult.Result != ResultCode.Successful || facilityResult.QueryObject == null)
-                throw new SyncException("未找到已配置的源学校或项目,请先在设置中保存学校");
-            var projectResult = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Db.LocalDb.DalConnStr)
-                .GetByID(facilityResult.QueryObject.ProjectID);
-            if (projectResult.Result != ResultCode.Successful || projectResult.QueryObject == null)
-                throw new SyncException("未找到已配置的源学校或项目,请先在设置中保存学校");
-            return new FacilityTarget
-            {
-                ID = facilityResult.QueryObject.ID,
-                SchoolName = facilityResult.QueryObject.Name,
-                ProjectID = projectResult.QueryObject.ID,
-                ProjectName = projectResult.QueryObject.Name,
-            };
-        }
-
-        private class FacilityTarget
-        {
-            public string ID;
-            public string SchoolName;
-            public string ProjectID;
-            public string ProjectName;
+            if (string.IsNullOrWhiteSpace(_projectID))
+                throw new SyncException("未选择本地年度项目");
+            var result = ProviderFactory.Create<IProvider<PhysicalProject, string>>(Db.LocalDb.DalConnStr)
+                .GetByID(_projectID);
+            if (result.Result != ResultCode.Successful || result.QueryObject == null)
+                throw new SyncException("未找到当前年度项目，请重新选择项目");
+            return result.QueryObject;
         }
 
         /// <summary>

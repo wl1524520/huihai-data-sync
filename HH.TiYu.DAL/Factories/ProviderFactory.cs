@@ -10,7 +10,7 @@ namespace HH.TiYu.DAL
     {
         private static readonly Lazy<MappingSource> Mapping = new Lazy<MappingSource>(LoadMapping);
         private static readonly Type[] Providers = {
-            typeof(FacilityProvider), typeof(StudentProvider),
+            typeof(StudentProvider),
             typeof(PhysicalItemProvider), typeof(PhysicalProjectProvider),
             typeof(ProjectPhysicalItemProvider), typeof(SyncConfigProvider), typeof(StudentScoreProvider)
         };

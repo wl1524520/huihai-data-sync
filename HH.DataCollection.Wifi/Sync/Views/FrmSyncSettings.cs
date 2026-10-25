@@ -7,7 +7,7 @@ namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
     /// 同步设置(模态小窗):接口地址/令牌。与同步任务窗分开,从主界面工具栏进入。
-    /// 学校不用手填:保存时用地址+令牌调一次 /sync/info,取回平台学校名自动建 Facility 绑定
+    /// 学校不用手填:保存时用地址+令牌调一次 /sync/info,取回令牌对应的学校名用于显示
     /// (顺带验证了地址与令牌的有效性;info 失败则不保存)。学校名显示在主界面状态栏,不在本窗。
     /// </summary>
     public class FrmSyncSettings : Form
@@ -120,9 +120,7 @@ namespace HH.DataCollection.Wifi.Sync
                     Cursor.Current = pre;
                 }
 
-                // 学校落到当前项目下的 Facility 行,返回的 ID 即 source_facility_id
                 conf.SchoolName = info.SchoolName;
-                conf.SourceFacilityId = SyncConfig.EnsureFacility(info.SchoolName, PhysicalProject.Current.ID);
                 // 记录平台当前项目作为基线:此后每轮上传前比对,平台换项目即停轮提示核对
                 conf.RemoteProjectId = info.ProjectId;
                 conf.RemoteProjectName = info.ProjectName;

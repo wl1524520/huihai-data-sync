@@ -24,7 +24,6 @@ namespace HH.TiYu.Model
 
         public Sex Sex { get; set; }
 
-        public string FacilityID { get; set; }
 
         public int? Grade { get; set; }
 
