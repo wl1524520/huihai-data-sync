@@ -59,6 +59,7 @@
     <Compile Include="Shell\FrmSelectProject.cs" />
     <Compile Include="Db\LocalDb.cs" />
     <Compile Include="Sync\SyncConfig.cs" />
+    <Compile Include="Sync\DeviceIdentity.cs" />
     <Compile Include="Sync\SyncApi.cs" />
     <Compile Include="Sync\StudentSync.cs" />
     <Compile Include="Sync\ScoreUpload.cs" />

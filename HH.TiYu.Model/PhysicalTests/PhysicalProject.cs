@@ -66,10 +66,10 @@ namespace HH.TiYu.Model
 
 
 
-        /// <summary>按学号(平台 test_no)取学生,忽略大小写。卡号与身份证索引已随对应字段移除。</summary>
+        /// <summary>按学号(平台 test_no)取学生,区分大小写。卡号与身份证索引已随对应字段移除。</summary>
         public Student GetStudentByID(string sid)
         {
-            sid = sid.ToUpper();
+            if (sid == null) return null;
             if (_Students != null && _Students.ContainsKey(sid))
             {
                 return _Students[sid];
@@ -93,7 +93,7 @@ namespace HH.TiYu.Model
                 {
                     continue;
                 }
-                _Students[student.StudentID.ToUpper()] = student;
+                _Students[student.StudentID] = student;
             }
         }
 

@@ -390,7 +390,7 @@ namespace HH.DataCollection.Wifi.Sync
                 }
                 catch (SyncAuthException)
                 {
-                    // 令牌失效:按接口文档 401 停止,不用同一坏令牌无限重试
+                    // 设备未授权(403)：停止任务，由平台管理员处理
                     throw;
                 }
                 catch (SyncFatalException)
@@ -398,6 +398,8 @@ namespace HH.DataCollection.Wifi.Sync
                     // 学校/项目不存在:重试无意义,直接停止
                     throw;
                 }
+                catch (SyncBatchRejectedException) { throw; }
+                catch (SyncRateLimitedException) { throw; }
                 catch (SyncException ex)
                 {
                     report("本轮上传中止:" + ex.Message);
@@ -422,7 +424,7 @@ namespace HH.DataCollection.Wifi.Sync
             var conf = SyncConfig.Load();
             conf.Validate();
             if (string.IsNullOrEmpty(_projectID)) throw new SyncException("请先选择本地项目。");
-            return new SyncApi(conf.ApiUrl, conf.ApiToken);
+            return new SyncApi(conf.ApiUrl, conf.DeviceNo);
         }
 
         private void StartTask(Action<Action<string>, Func<bool>> task)

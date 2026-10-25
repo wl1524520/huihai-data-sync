@@ -38,7 +38,7 @@ namespace HH.DataCollection.Wifi.Sync
         private static Action<Action<string>, Func<bool>, Action<int, int>> CreateDownload(SyncConfig config)
         {
             // 在 UI 线程捕获下载目标，后续切换年度项目不会改变本轮写入位置。
-            var sync = new StudentSync(new SyncApi(config.ApiUrl, config.ApiToken), config);
+            var sync = new StudentSync(new SyncApi(config.ApiUrl, config.DeviceNo), config);
             return sync.Run;
         }
 

@@ -16,7 +16,7 @@ namespace HH.DataCollection.Wifi.Sync
     ///     (total, per_page, last_page),后续页任一变化即中止
     ///     (文档 §3.4:服务器 offset 分页、无快照,读取期间增删会造成重复或遗漏)
     ///   - 整页单事务 upsert(DAL StudentProvider.SyncRemotePage):按项目内 test_no
-    ///     (去首尾空白、忽略大小写)定位,即唯一键 (StudentID, ProjectID)
+    ///     (去首尾空白、区分大小写)定位,即唯一键 (StudentID, ProjectID)
     ///   - 无 PhysicalScore 表(本软件不建),标识/年级变更的成绩联动因此跳过,
     ///     原始成绩按设备上报时的标识原样保留
     ///   - 2026-10-16 12:42 版契约(§3.2/§10):items[] 仅五字段
@@ -57,6 +57,7 @@ namespace HH.DataCollection.Wifi.Sync
             if (stopRequested()) return;
             var project = GetProject();
             var info = _api.GetSyncInfo(true); // 与成绩上传一致允许重试,一次网络抖动不至于整轮失败
+            _conf.ValidateTarget(info, project.ID);
             report(info.ToString());
 
             report(string.Format("本地写入目标:项目:{0}(ID:{1})", project.Name, project.ID));
@@ -192,7 +193,8 @@ namespace HH.DataCollection.Wifi.Sync
                 int rawGrade = grade.Value<int>();
                 // 契约 §3.2 年级编码表只有小学一至六年级(11-16)、初中(21-23)、
                 // 高中(31-33)、大学(41-44);越界属契约违规,不落库、不阻断整页
-                if (rawGrade >= GradeHelper.PrimaryGrade1 && rawGrade <= GradeHelper.UniversityYear4)
+                if ((rawGrade >= 11 && rawGrade <= 16) || (rawGrade >= 21 && rawGrade <= 23) ||
+                    (rawGrade >= 31 && rawGrade <= 33) || (rawGrade >= 41 && rawGrade <= 44))
                 {
                     st.Grade = rawGrade;
                 }
@@ -203,7 +205,11 @@ namespace HH.DataCollection.Wifi.Sync
                     st.RawGrade = rawGrade;
                 }
                 var gender = item["gender"];
-                st.Gender = gender != null && gender.Type == JTokenType.Integer ? gender.Value<int>() : 0;
+                if (gender == null || gender.Type != JTokenType.Integer || (gender.Value<int>() != 1 && gender.Value<int>() != 2))
+                    throw new SyncException("服务端学生数据 gender 须为 1 或 2");
+                st.Gender = gender.Value<int>();
+                if (st.TestNo.Length > 60 || st.Name.Length > 60 || st.ClassName.Length > 100)
+                    throw new SyncException("服务端学生字段长度超限，不截断：test_no/name/class_name");
 
                 var missing = new System.Text.StringBuilder();
                 if (st.TestNo.Length == 0) missing.Append("test_no ");
@@ -215,7 +221,9 @@ namespace HH.DataCollection.Wifi.Sync
 
             private static string Text(JToken token)
             {
-                return token == null || token.Type == JTokenType.Null ? "" : token.ToString().Trim();
+                if (token == null || token.Type != JTokenType.String)
+                    throw new SyncException("服务端学生文本字段类型错误");
+                return token.Value<string>().Trim();
             }
         }
     }

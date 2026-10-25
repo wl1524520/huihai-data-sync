@@ -101,7 +101,8 @@ namespace HH.DataCollection.Wifi
             _btnSettings.Click += (s, e) =>
             {
                 using (var frm = new FrmSyncSettings())
-                    if (frm.ShowDialog(this) == DialogResult.OK) RefreshGate();
+                    frm.ShowDialog(this);
+                RefreshGate();
             };
             toolStrip.Items.Add(_btnSettings);
             foreach (ToolStripItem item in toolStrip.Items)
@@ -129,7 +130,7 @@ namespace HH.DataCollection.Wifi
             _lblStudents = new ToolStripStatusLabel("学生总数 0 人 / 当前显示 0 人");
             statusStrip.Items.Add(_lblStudents);
             statusStrip.Items.Add(new ToolStripStatusLabel { Spring = true });
-            _lblGate = new ToolStripStatusLabel("请先在 同步设置 中保存接口地址与令牌") { ForeColor = Color.FromArgb(184, 54, 54) };
+            _lblGate = new ToolStripStatusLabel("请先在同步设置中登记设备并检查授权") { ForeColor = Color.FromArgb(184, 54, 54) };
             statusStrip.Items.Add(_lblGate);
             _lblPending = new ToolStripStatusLabel();
             statusStrip.Items.Add(_lblPending);
@@ -412,7 +413,7 @@ namespace HH.DataCollection.Wifi
             bool locked = (_collectForm != null && !_collectForm.IsDisposed)
                        || (_tasksForm != null && !_tasksForm.IsDisposed);
             _lnkSwitch.Enabled = !locked;
-            _btnSettings.Enabled = !locked;
+            _btnSettings.Enabled = !locked && (_downloadForm == null || _downloadForm.IsDisposed);
         }
 
         private FrmSyncTasks _tasksForm;
@@ -441,6 +442,7 @@ namespace HH.DataCollection.Wifi
         {
             string projectID = PhysicalProject.Current.ID;
             _downloadForm = dialog;
+            UpdateLockState();
             dialog.FormClosed += (s, e) =>
             {
                 _downloadForm = null;
@@ -457,13 +459,14 @@ namespace HH.DataCollection.Wifi
                     MessageBox.Show("名单已保存，但刷新采集名单失败：" + ex.Message,
                         "名单刷新失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-                finally { if (!IsDisposed && !Disposing) ReloadAll(); }
+                finally { if (!IsDisposed && !Disposing) { ReloadAll(); UpdateLockState(); } }
             };
             try { dialog.Show(this); }
             catch
             {
                 _downloadForm = null;
                 dialog.Dispose();
+                UpdateLockState();
                 throw;
             }
             RefreshGate();
@@ -585,7 +588,7 @@ namespace HH.DataCollection.Wifi
         // ===== 数据加载 =====
 
         /// <summary>
-        /// 门禁:同步设置完整(保存时通过 /sync/info 核对令牌学校与项目)才允许开始采集/打开上传成绩;
+        /// 门禁:同步设置完整(保存时通过 /sync/info 核对设备授权、学校与项目)才允许开始采集/打开上传成绩;
         /// 不做联网验证,只看本地配置是否通过完整校验(断网也应能采集)。
         /// </summary>
         private void RefreshGate()

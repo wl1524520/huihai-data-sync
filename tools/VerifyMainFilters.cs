@@ -97,28 +97,29 @@ internal static class VerifyMainFilters
                 try
                 {
                     var url = Field<TextBox>(dialog, "_txtApiUrl");
-                    var token = Field<TextBox>(dialog, "_txtToken");
+                    var device = Field<TextBox>(dialog, "_txtDeviceNo");
                     var save = (Button)dialog.AcceptButton;
                     var cancel = (Button)dialog.CancelButton;
                     Check(dialog.Modal && dialog.Owner == owner, "Settings must remain an owned modal dialog");
                     // 验证主窗放在屏幕外；系统会将模态窗约束到工作区，故在此检查居中策略。
                     Check(dialog.StartPosition == FormStartPosition.CenterParent,
                         "Settings dialog must retain parent-centered positioning");
-                    Check(url.Text == before.ApiUrl && token.Text == before.ApiToken,
-                        "Settings must load existing URL and token");
-                    Check(url.Height == token.Height && url.Left == token.Left && url.Width == token.Width && url.Width >= 400,
+                    Check(url.Text == before.ApiUrl && device.Text == before.DeviceNo,
+                        "Settings must load existing URL and device");
+                    Check(device.ReadOnly, "Device number must be read-only");
+                    Check(url.Height == device.Height && url.Left == device.Left && url.Width == device.Width && url.Width >= 400,
                         "Settings fields must have consistent heights, alignment and adequate width");
-                    Check(url.TabIndex < token.TabIndex && save.TabIndex < cancel.TabIndex,
-                        "Settings must retain URL, token, save and cancel keyboard order");
+                    Check(url.TabIndex < device.TabIndex && save.TabIndex < cancel.TabIndex,
+                        "Settings must retain URL, device, save and cancel keyboard order");
                     Check(save.Parent == cancel.Parent && save.Left < cancel.Left && save.Top == cancel.Top,
                         "Save and cancel actions must be aligned at the bottom right");
                     CheckVisibleBounds(dialog);
-                    // 使用示例内容预览文字对齐，不将实际配置中的令牌写入截图。
+                    // 使用示例内容预览文字对齐，不将实际配置中的设备号写入截图。
                     url.Text = "https://example.com/api/hh";
-                    token.Text = "preview-token";
+                    device.Text = "550e8400-e29b-41d4-a716-446655440000";
                     SaveWindowPreview(dialog, "SyncSettings");
                     url.Text = "http://127.0.0.1/unsaved";
-                    token.Text = "unsaved-verification-token";
+                    device.Text = "unsaved-verification-device";
                     cancel.PerformClick();
                 }
                 catch (Exception ex) { failure = ex; dialog.Close(); }
@@ -127,7 +128,7 @@ internal static class VerifyMainFilters
             if (failure != null) throw failure;
         }
         var after = SyncConfig.Load();
-        Check(owner.Enabled && after.ApiUrl == before.ApiUrl && after.ApiToken == before.ApiToken &&
+        Check(owner.Enabled && after.ApiUrl == before.ApiUrl && after.DeviceNo == before.DeviceNo &&
             after.RemoteProjectId == before.RemoteProjectId,
             "Cancelling settings must preserve configuration and restore the main window");
     }
@@ -136,15 +137,15 @@ internal static class VerifyMainFilters
     {
         var button = Field<ToolStripButton>(form, "_btnDownload");
         Check(button.Text == "下载名单" && !button.Enabled, "Unconfigured download shortcut must be disabled");
-        var conf = new SyncConfig { ApiUrl = "http://127.0.0.1/api/hh", ApiToken = "test" };
+        var conf = new SyncConfig { ApiUrl = "http://127.0.0.1/api/hh", DeviceNo = "fixture-device-001", RegistrationStatus = "active", SchoolId = "1", RemoteProjectId = "1" };
         conf.Save();
         Call(form, "RefreshGate");
         Check(button.Enabled, "Valid saved settings must enable download without a network check");
-        conf.ApiToken = "";
+        conf.DeviceNo = "";
         conf.Save();
         Call(form, "RefreshGate");
-        Check(!button.Enabled, "Missing token must disable download");
-        conf.ApiToken = "test";
+        Check(!button.Enabled, "Missing device must disable download");
+        conf.DeviceNo = "fixture-device-001";
         conf.Save();
         Call(form, "RefreshGate");
 
@@ -388,7 +389,7 @@ internal static class VerifyMainFilters
                         string body;
                         if (i == 0 && request.Contains("/sync/info"))
                             body = "{\"school\":{\"id\":1,\"name\":\"School\"},\"project\":{\"id\":1,\"name\":\"Project\"}}";
-                        else if (i == 1 && request.Contains("/sync/student?page=1&per_page=1000"))
+                        else if (i == 1 && request.Contains("page=1&per_page=1000"))
                             body = "{\"items\":" + (empty ? "[]" :
                                 "[{\"test_no\":\"00001X\",\"name\":\"Student\",\"gender\":1,\"grade\":11,\"class_name\":\"Class\"}]") +
                                 ",\"meta\":{\"current_page\":1,\"per_page\":1000,\"last_page\":1,\"total\":" +
@@ -401,7 +402,7 @@ internal static class VerifyMainFilters
                         stream.Write(payload, 0, payload.Length);
                     }
                 }
-                catch (Exception ex) { serverError = ex; }
+                catch (Exception ex) { serverError = ex; Console.Error.WriteLine("Download fixture: " + ex); }
             });
             server.IsBackground = true;
             server.Start();
@@ -410,9 +411,11 @@ internal static class VerifyMainFilters
                 int notifications = 0;
                 var config = new SyncConfig
                 {
-                    ApiUrl = "http://127.0.0.1:" + port + "/api/hh", ApiToken = "fixture"
+                    ApiUrl = "http://127.0.0.1:" + port + "/api/hh", DeviceNo = "fixture-device-001", RegistrationStatus = "active", SchoolId = "1", RemoteProjectId = "1"
                 };
-                new StudentSync(new SyncApi(config.ApiUrl, config.ApiToken), config).Run(log => { }, () => false,
+                Sql("DELETE FROM SyncConfig WHERE ID LIKE 'local_target_%'");
+                config.Save();
+                new StudentSync(new SyncApi(config.ApiUrl, config.DeviceNo), config).Run(log => { }, () => false,
                     (done, total) =>
                     {
                         notifications++;
@@ -689,14 +692,14 @@ internal static class VerifyMainFilters
                         if (count == 0) throw new IOException("Incomplete fixture body");
                         read += count;
                     }
-                    bool info = headers.StartsWith("GET /api/hh/sync/info ");
+                    bool info = headers.StartsWith("GET /api/hh/sync/info?device_no=");
                     if (!info && !headers.StartsWith("POST /api/hh/sync/score "))
                         throw new Exception("Unexpected upload request");
                     int number = info ? Interlocked.Increment(ref infoRequests) : Interlocked.Increment(ref postRequests);
                     if (!info)
                         BatchCounts.Add(Encoding.UTF8.GetString(data).Split(new string[] { "\"test_no\"" }, StringSplitOptions.None).Length - 1);
                     if (BeforeReply != null) BeforeReply(info, number);
-                    int status = info ? InfoStatus : (number == AuthBatch ? 401 : 200);
+                    int status = info ? InfoStatus : (number == AuthBatch ? 403 : 200);
                     string body = info
                         ? "{\"school\":{\"id\":1,\"name\":\"School\"},\"project\":{\"id\":" + ProjectID + ",\"name\":\"Project\"}}"
                         : "{\"success\":" + (number == RejectBatch ? "false" : "true") + "}";
@@ -720,8 +723,9 @@ internal static class VerifyMainFilters
 
     private static SyncConfig UploadConfig(UploadServer server)
     {
-        var config = new SyncConfig { ApiUrl = server.Url, ApiToken = "synthetic-fixture",
+        var config = new SyncConfig { ApiUrl = server.Url, DeviceNo = "synthetic-fixture", RegistrationStatus = "active", SchoolId = "1",
             RemoteProjectId = "1", RemoteProjectName = "Project" };
+        Sql("DELETE FROM SyncConfig WHERE ID LIKE 'local_target_%'"); // Each fixture uses a new ephemeral platform.
         config.Save();
         return config;
     }
@@ -766,6 +770,7 @@ internal static class VerifyMainFilters
             var updates = new List<Tuple<int, int, int>>();
             Tuple<int, int> result = null;
             bool authFailed = false;
+            bool rejected = false;
             try
             {
                 result = new ScoreUpload(new SyncApi(server.Url, "synthetic-fixture"), "upload-fixture")
@@ -782,12 +787,13 @@ internal static class VerifyMainFilters
                     });
             }
             catch (SyncAuthException) { authFailed = true; }
+            catch (SyncBatchRejectedException) { rejected = true; }
             var last = updates[updates.Count - 1];
             int expectedSent = mode == "success" ? 2005 : mode == "empty" ? 0 : 1000;
             int expectedFailed = mode == "rejected" || mode == "auth" ? 1000 : 0;
             Check(last.Item1 == expectedSent && last.Item2 == expectedFailed,
                 "Success, failure and stop must retain their actual final progress: " + mode);
-            Check(authFailed == (mode == "auth") && (authFailed || (result.Item1 == expectedSent && result.Item2 == expectedFailed)),
+            Check(authFailed == (mode == "auth") && (authFailed || (rejected && mode == "rejected") || (result != null && result.Item1 == expectedSent && result.Item2 == expectedFailed)),
                 "Progress must agree with round results and fatal errors: " + mode);
             Check(server.PostRequests == (mode == "success" ? 3 : mode == "empty" ? 0 : mode == "stop" ? 1 : 2),
                 "Round must honor paging and terminate at the expected batch: " + mode);
@@ -1139,6 +1145,7 @@ internal static class VerifyMainFilters
                 VerifyUploadService();
                 VerifyUploadWindow(form);
             }
+            checks += VerifySyncProtocol.Run();
             Console.WriteLine("Main filter verification passed: " + checks + " checks.");
             return 0;
         }

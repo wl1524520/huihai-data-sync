@@ -141,32 +141,32 @@ internal static class VerifyDal
     private static void CheckConfig()
     {
         var initial = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
-        Check(initial.ApiUrl == "" && initial.ApiToken == "", "Empty config defaults");
+        Check(initial.ApiUrl == "" && initial.DeviceNo == "", "Empty config defaults");
         var config = new HH.DataCollection.Wifi.Sync.SyncConfig {
-            ApiUrl = " https://example.invalid/api/hh/ ", ApiToken = "token-'中文",
-            SchoolName = "测试学校", RemoteProjectId = "remote", RemoteProjectName = "项目"
+            ApiUrl = " https://example.invalid/api/hh/ ", DeviceNo = "fixture-device-中文",
+            RegistrationStatus = "active", SchoolId = "1", SchoolName = "测试学校", RemoteProjectId = "remote", RemoteProjectName = "项目"
         };
         config.Save();
         var loaded = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
-        Check(loaded.ApiUrl == "https://example.invalid/api/hh" && loaded.ApiToken == config.ApiToken && loaded.SchoolName == config.SchoolName && loaded.RemoteProjectId == "remote" && loaded.RemoteProjectName == config.RemoteProjectName, "Five config values round trip");
+        Check(loaded.ApiUrl == "https://example.invalid/api/hh" && loaded.DeviceNo == config.DeviceNo && loaded.SchoolName == config.SchoolName && loaded.RemoteProjectId == "remote" && loaded.RemoteProjectName == config.RemoteProjectName, "Seven config values round trip");
         loaded.Validate();
         var provider = ProviderFactory.Create<SyncConfigProvider>(Uri);
         provider.SavePairs(new Dictionary<string, string> { { "extension", "keep" } });
-        loaded.ApiToken = "updated"; loaded.Save();
+        loaded.DeviceNo = "updated"; loaded.Save();
         Check(provider.GetByID("extension").QueryObject.Value == "keep", "Unrelated config lost");
-        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM SyncConfig")) == 6, "Config save duplicated keys");
+        Check(Convert.ToInt32(Scalar("SELECT count(*) FROM SyncConfig")) == 8, "Config save duplicated keys");
         provider.SavePairs(new Dictionary<string, string> { { "nullable", null } });
         Check(provider.GetByID("nullable").QueryObject.Value == "", "Null config normalization");
-        Execute("CREATE TRIGGER fail_token BEFORE UPDATE ON SyncConfig WHEN NEW.ID='api_token' BEGIN SELECT RAISE(ABORT,'forced verification failure'); END");
-        loaded.ApiUrl = "https://changed.invalid/api/hh"; loaded.ApiToken = "must fail";
+        Execute("CREATE TRIGGER fail_device BEFORE UPDATE ON SyncConfig WHEN NEW.ID='device_no' BEGIN SELECT RAISE(ABORT,'forced verification failure'); END");
+        loaded.ApiUrl = "https://changed.invalid/api/hh"; loaded.DeviceNo = "must fail";
         bool failed = false;
         try { loaded.Save(); } catch { failed = true; }
         Check(failed, "Config transaction failure not propagated");
         var after = HH.DataCollection.Wifi.Sync.SyncConfig.Load();
-        Check(after.ApiUrl == "https://example.invalid/api/hh" && after.ApiToken == "updated", "Partial config transaction committed");
-        Execute("DROP TRIGGER fail_token");
+        Check(after.ApiUrl == "https://example.invalid/api/hh" && after.DeviceNo == "updated", "Partial config transaction committed");
+        Execute("DROP TRIGGER fail_device");
         loaded.Save();
-        Check(HH.DataCollection.Wifi.Sync.SyncConfig.Load().ApiToken == "must fail", "Config recovery after rollback");
+        Check(HH.DataCollection.Wifi.Sync.SyncConfig.Load().DeviceNo == "must fail", "Config recovery after rollback");
     }
     private static void CheckProjectPhysicalItems()
     {
@@ -225,7 +225,7 @@ internal static class VerifyDal
         outOfRange[0]["grade"] = 99;
         result = (Tuple<int, int>)upsert.Invoke(sync, new object[] { outOfRange, target.ID, issues });
         Check(result.Item1 == 0 && result.Item2 == 1 && Convert.ToInt32(Scalar("SELECT Grade FROM Student WHERE ProjectID='SYNC' AND StudentID='0002'")) == 21, "Out-of-range grade update must keep local grade");
-        // Provider 级语义:test_no 去首尾空白后按忽略大小写匹配,不重复建行;超长标识明确拒绝
+        // Provider 级语义:test_no 去首尾空白后按精确标识匹配,不重复建行;超长标识明确拒绝
         var studentProvider = ProviderFactory.Create<StudentProvider>(Uri);
         var trimmed = studentProvider.SyncRemotePage(new List<Student> { new Student { StudentID = " 0001 ", Name = "再更新", Sex = Sex.Male, Grade = 31, ClassName = "三班" } }, "SYNC");
         Check(trimmed.Item1 == 0 && trimmed.Item2 == 1 &&
@@ -299,6 +299,6 @@ internal static class VerifyDal
         // 学生同步的 SQL 已收编进 DAL StudentProvider.SyncRemotePage；此处直接验证内存名册的 AddStudents 行为。
         var imported = new Student { StudentID = "imported", Name = "保留原名", Sex = Sex.Female };
         generated.AddStudents(new List<Student> { imported });
-        Check(generated.AllStudents.ContainsKey("IMPORTED") && generated.AllStudents["IMPORTED"].Name == "保留原名", "In-memory roster import");
+        Check(generated.AllStudents.ContainsKey("imported") && generated.AllStudents["imported"].Name == "保留原名", "In-memory roster import");
     }
 }

@@ -8,8 +8,8 @@ namespace HH.DataCollection.Wifi.Sync
 {
     /// <summary>
     /// 同步接口的 HTTP 层(.NET 4.0 无 HttpClient,用 HttpWebRequest)。
-    /// 契约见 unite-tizhi-docs/docs/汇海同步接口文档.md(2026-10-16 版):
-    ///   认证头 X-Huihai-Token;base 必须以 /api/hh 结尾;
+    /// 契约见 unite-tizhi-docs/docs/汇海同步接口文档.md(2026-10-25 版):
+    ///   设备号 device_no;base 必须以 /api/hh 结尾;
     ///   成功判定严格为 HTTP 200 + JSON + success===true;
     ///   429 遵从 Retry-After 退避,5xx/网络错误有上限退避重试,重试保留原载荷(§7)。
     /// </summary>
@@ -22,15 +22,79 @@ namespace HH.DataCollection.Wifi.Sync
         private const int DefaultRateLimitDelayMs = 30000;
 
         private readonly string _baseUrl;
-        private readonly string _token;
+        private readonly string _deviceNo;
 
-        public SyncApi(string baseUrl, string token)
+        public SyncApi(string baseUrl, string deviceNo)
         {
             _baseUrl = (baseUrl ?? "").Trim().TrimEnd('/');
-            _token = token ?? "";
+            _deviceNo = deviceNo ?? "";
+            if (_deviceNo.Length < 10 || _deviceNo.Length > 100 || _deviceNo != _deviceNo.Trim())
+                throw new ConfigException("设备号须为 10 至 100 个字符且不含首尾空白");
         }
 
-        /// <summary>GET /sync/info:返回 token 绑定的学校与平台当前项目。retry=true 时网络错误/限流/5xx 重试至多 3 次(间隔 1s/2s)。</summary>
+        public RegistrationResult Register()
+        {
+            var payload = new JObject();
+            payload["device_no"] = _deviceNo;
+            string body = payload.ToString(Newtonsoft.Json.Formatting.None);
+            for (int attempt = 0; attempt < MaxAttempts; attempt++)
+            {
+                HttpResult response = null;
+                try { response = Send("POST", "/sync/register", null, body); }
+                catch (WebException ex)
+                {
+                    if (attempt == MaxAttempts - 1) throw new SyncException("注册网络请求失败：" + ex.Message);
+                }
+                catch (IOException ex)
+                {
+                    if (attempt == MaxAttempts - 1) throw new SyncException("注册响应读取失败：" + ex.Message);
+                }
+                if (response != null)
+                {
+                    if (response.StatusCode == 200)
+                    {
+                        var data = ParseJsonObject(response.Body, "注册响应不是有效 JSON");
+                        var status = data["status"];
+                        var message = data["message"];
+                        if (status == null || status.Type != JTokenType.String || message == null || message.Type != JTokenType.String ||
+                            (status.Value<string>() != "active" && status.Value<string>() != "pending_school" && status.Value<string>() != "pending_authorization"))
+                            throw new SyncException("设备注册响应格式错误");
+                        return new RegistrationResult { Status = status.Value<string>(), Message = message.Value<string>() };
+                    }
+                    if (Array.IndexOf(RetryableStatusCodes, response.StatusCode) < 0 || attempt == MaxAttempts - 1)
+                        throw BuildHttpError(response.StatusCode, response.Body);
+                }
+                if (attempt < MaxAttempts - 1)
+                    System.Threading.Thread.Sleep(response != null && response.StatusCode == 429 ? RetryDelay(response, attempt) : 1000 << attempt);
+            }
+            throw new SyncException("注册失败");
+        }
+
+        private static SyncException BuildHttpError(int status, string body)
+        {
+            string detail = "";
+            try
+            {
+                var data = JObject.Parse(body);
+                detail = data["message"] == null ? "" : data["message"].ToString();
+                var errors = data["errors"] as JObject;
+                if (errors != null) detail += " [" + FlattenErrors(errors) + "]";
+            }
+            catch { }
+            string message = "HTTP " + status + (detail.Length == 0 ? "" : "：" + detail);
+            if (status == 403) return new SyncAuthException(message + "；请登记设备并由平台管理员启用、绑定学校");
+            if (status == 400) return new SyncFatalException(message);
+            return new SyncException(message);
+        }
+
+        private static int RetryDelay(HttpResult response, int attempt)
+        {
+            return response.RetryAfterSeconds.HasValue
+                ? (int)Math.Min(int.MaxValue, (long)response.RetryAfterSeconds.Value * 1000)
+                : DefaultRateLimitDelayMs * (1 << attempt);
+        }
+
+        /// <summary>GET /sync/info:返回设备绑定的学校与平台当前项目。retry=true 时网络错误/限流/5xx 重试至多 3 次(间隔 1s/2s)。</summary>
         public SyncInfo GetSyncInfo(bool retry)
         {
             int attempts = retry ? MaxAttempts : 1;
@@ -54,8 +118,10 @@ namespace HH.DataCollection.Wifi.Sync
                         var school = data["school"] as JObject;
                         var project = data["project"] as JObject;
                         if (school == null || project == null ||
-                            school["id"] == null || project["id"] == null ||
-                            school["name"] == null || project["name"] == null)
+                            school["id"] == null || school["id"].Type != JTokenType.Integer ||
+                            project["id"] == null || project["id"].Type != JTokenType.Integer ||
+                            school["name"] == null || school["name"].Type != JTokenType.String ||
+                            project["name"] == null || project["name"].Type != JTokenType.String)
                             throw new SyncException("服务端返回的同步信息格式错误");
                         return new SyncInfo
                         {
@@ -67,12 +133,12 @@ namespace HH.DataCollection.Wifi.Sync
                     }
                     lastError = "HTTP " + resp.StatusCode;
                     if (Array.IndexOf(RetryableStatusCodes, resp.StatusCode) < 0)
-                        throw new SyncException(lastError);
+                        throw BuildHttpError(resp.StatusCode, resp.Body);
                     if (resp.StatusCode == 429 && i < attempts - 1)
                     {
                         // 429 遵从 Retry-After(秒),缺失或非数字时退避 30s(文档 §7)
                         System.Threading.Thread.Sleep(
-                            resp.RetryAfterSeconds.HasValue ? resp.RetryAfterSeconds.Value * 1000 : DefaultRateLimitDelayMs);
+                            RetryDelay(resp, i));
                         continue;
                     }
                 }
@@ -110,9 +176,9 @@ namespace HH.DataCollection.Wifi.Sync
                         throw BuildStudentPage422(resp.Body); // 参数错/脏数据都不重试
                     lastError = "HTTP " + resp.StatusCode;
                     if (Array.IndexOf(RetryableStatusCodes, resp.StatusCode) < 0)
-                        throw new SyncException(lastError);
+                        throw BuildHttpError(resp.StatusCode, resp.Body);
                 }
-                if (i < MaxAttempts - 1) System.Threading.Thread.Sleep(1000 << i);
+                if (i < MaxAttempts - 1) System.Threading.Thread.Sleep(resp != null && resp.StatusCode == 429 ? RetryDelay(resp, i) : 1000 << i);
             }
             throw new SyncException(lastError ?? "获取学生名单失败");
         }
@@ -120,44 +186,26 @@ namespace HH.DataCollection.Wifi.Sync
         /// <summary>学生分页 422:errors 结构是参数验证失败,data_issues 才是全校脏数据。</summary>
         private static SyncException BuildStudentPage422(string body)
         {
-            string message = null;
             try
             {
-                var err = JObject.Parse(body);
-                if (err["message"] != null) message = err["message"].ToString();
-                var errors = err["errors"] as JObject;
-                if (errors != null && errors.HasValues)
-                {
-                    string detail = FlattenErrors(errors);
-                    return new SyncException("学生同步请求参数错误(422)" +
-                        (message != null ? ":" + message : "") +
-                        (detail.Length > 0 ? " [" + detail + "]" : ""));
-                }
+                var error = JObject.Parse(body);
+                var issues = error["data_issues"] as JObject;
+                if (issues == null) return BuildHttpError(422, body);
+                var text = new StringBuilder("平台学生数据存在脏数据(422)，请管理员修复后重新同步");
+                text.Append("；问题总数：").Append(issues["total"]);
+                var counts = issues["issue_counts"] as JObject;
+                if (counts != null)
+                    foreach (var count in counts) text.Append("；").Append(count.Key).Append("：").Append(count.Value);
+                return new SyncException(text.ToString());
             }
-            catch (SyncException) { throw; }
-            catch { /* 落到默认脏数据提示 */ }
-            var sb = new StringBuilder(message ?? "平台学生数据存在脏数据,请先处理后再同步");
-            try
-            {
-                var issues = JObject.Parse(body)["data_issues"] as JObject;
-                var counts = issues != null ? issues["issue_counts"] as JObject : null;
-                if (counts != null && counts.HasValues)
-                {
-                    var parts = new StringBuilder();
-                    foreach (var kv in counts)
-                        parts.Append(parts.Length == 0 ? "(" : ";").Append(kv.Key).Append(":").Append(kv.Value);
-                    sb.Append(parts.Append(")"));
-                }
-            }
-            catch { /* 用已拼好的提示 */ }
-            return new SyncException(sb.ToString());
+            catch { return BuildHttpError(422, body); }
         }
 
         /// <summary>
         /// POST /sync/score:上传一批成绩(1~5000 条),重试保留原载荷(文档 §7)。
         /// 仅当 HTTP 200 + JSON + success===true 视为平台已接收。
-        /// 异常分类(依据 2026-10-16 版接口文档 §4/§7):
-        ///   401 → SyncAuthException(停止本轮);400 → SyncFatalException(停止本轮);
+        /// 异常分类(依据 2026-10-25 版接口文档 §4/§7):
+        ///   403 → SyncAuthException(停止本轮);400 → SyncFatalException(停止本轮);
         ///   200+success=false → SyncBatchRejectedException(部分明细保存失败,停止本轮,重启后原样补传);
         ///   422 → SyncBatchRejectedException(字段验证失败,附 errors 字段定位,修复前重发无意义,停止本轮);
         ///   429 → 按 Retry-After(无则 30s)退避重试,连续 3 次未缓解抛 SyncRateLimitedException(停止本轮);
@@ -165,7 +213,10 @@ namespace HH.DataCollection.Wifi.Sync
         /// </summary>
         public void PostScores(JArray items)
         {
+            if (items == null || items.Count < 1 || items.Count > 5000)
+                throw new SyncBatchRejectedException("成绩批次须为 1 至 5000 条");
             var payload = new JObject();
+            payload["device_no"] = _deviceNo;
             payload["items"] = items;
             string body = payload.ToString(Newtonsoft.Json.Formatting.None);
             string lastError = null;
@@ -196,10 +247,10 @@ namespace HH.DataCollection.Wifi.Sync
                         }
                         throw new SyncException(data["message"] != null ? data["message"].ToString() : "服务端响应不满足接收协议");
                     }
-                    if (resp.StatusCode == 401)
-                        throw new SyncAuthException("令牌无效或已停用(401),请检查同步设置");
+                    if (resp.StatusCode == 403)
+                        throw BuildHttpError(resp.StatusCode, resp.Body);
                     if (resp.StatusCode == 400)
-                        throw new SyncFatalException("学校或项目不存在(400),请核对同步设置与平台配置");
+                        throw BuildHttpError(resp.StatusCode, resp.Body);
                     if (resp.StatusCode == 422)
                     {
                         string detail = "";
@@ -219,7 +270,7 @@ namespace HH.DataCollection.Wifi.Sync
                         if (i < MaxAttempts - 1)
                         {
                             // 遵从 Retry-After(秒);缺失或非数字时退避 30s(文档 §7)
-                            int delayMs = resp.RetryAfterSeconds.HasValue ? resp.RetryAfterSeconds.Value * 1000 : DefaultRateLimitDelayMs;
+                            int delayMs = RetryDelay(resp, i);
                             System.Threading.Thread.Sleep(delayMs);
                             continue;
                         }
@@ -228,7 +279,7 @@ namespace HH.DataCollection.Wifi.Sync
                     }
                     lastError = "HTTP " + resp.StatusCode;
                     if (Array.IndexOf(RetryableStatusCodes, resp.StatusCode) < 0)
-                        throw new SyncException(lastError); // 404/405 等:按配置排查,不重试
+                        throw BuildHttpError(resp.StatusCode, resp.Body); // 404/405 等:按配置排查,不重试
                 }
                 if (i < MaxAttempts - 1) System.Threading.Thread.Sleep(1000 << i);
             }
@@ -277,7 +328,7 @@ namespace HH.DataCollection.Wifi.Sync
             };
             if (page.CurrentPage != expectedPage || page.CurrentPage < 1 || page.LastPage < 1)
                 throw new SyncException("服务端学生分页响应格式错误:页码不一致");
-            if (page.CurrentPage > page.LastPage || page.PerPage < 1 || page.Total < 0)
+            if (page.PerPage < 1 || page.PerPage > 1000 || page.Total < 0 || items.Count > page.PerPage)
                 throw new SyncException("服务端学生分页响应格式错误:分页参数无效");
             // 2026-10-16 12:42 版契约(§3.2/§10):items[] 仅五字段,test_no 取代 student_no 与 id_number
             // (test_no 是学校 qrcode_field 决定的"学号或身份证",客户端不区分、原样处理)
@@ -308,16 +359,17 @@ namespace HH.DataCollection.Wifi.Sync
 
         private HttpResult Send(string method, string path, string query, string jsonBody)
         {
+            if (method == "GET")
+                query = "device_no=" + Uri.EscapeDataString(_deviceNo) + (string.IsNullOrEmpty(query) ? "" : "&" + query);
             string url = _baseUrl + path + (string.IsNullOrEmpty(query) ? "" : "?" + query);
             var req = (HttpWebRequest)WebRequest.Create(url);
             req.Method = method;
             req.Timeout = TimeoutMs;
             req.ReadWriteTimeout = TimeoutMs;
             req.Accept = "application/json";
-            req.Headers["X-Huihai-Token"] = _token;
+            req.ContentType = "application/json";
             if (jsonBody != null)
             {
-                req.ContentType = "application/json";
                 byte[] bytes = Encoding.UTF8.GetBytes(jsonBody);
                 req.ContentLength = bytes.Length;
                 using (var stream = req.GetRequestStream())
@@ -339,13 +391,17 @@ namespace HH.DataCollection.Wifi.Sync
             }
         }
 
-        /// <summary>解析 Retry-After 响应头(仅支持秒数形式;HTTP 日期等返回 null)。</summary>
+        /// <summary>解析 Retry-After 秒数或 HTTP 日期，非法值使用默认退避。</summary>
         private static int? ParseRetryAfter(HttpWebResponse resp)
         {
             string value = resp.Headers["Retry-After"];
             int seconds;
             if (!string.IsNullOrEmpty(value) && int.TryParse(value.Trim(), out seconds) && seconds >= 0)
                 return seconds;
+            DateTimeOffset date;
+            if (DateTimeOffset.TryParse(value, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal, out date))
+                return (int)Math.Min(int.MaxValue, Math.Max(0, Math.Ceiling((date - DateTimeOffset.UtcNow).TotalSeconds)));
             return null;
         }
 
@@ -355,6 +411,12 @@ namespace HH.DataCollection.Wifi.Sync
             public string Body;
             public int? RetryAfterSeconds;
         }
+    }
+
+    public class RegistrationResult
+    {
+        public string Status;
+        public string Message;
     }
 
     public class SyncInfo
@@ -396,7 +458,7 @@ namespace HH.DataCollection.Wifi.Sync
         public SyncBatchRejectedException(string message) : base(message) { }
     }
 
-    /// <summary>令牌失效:停止本轮,不继续后续批次。</summary>
+    /// <summary>设备未授权:停止本轮,不继续后续批次。</summary>
     public class SyncAuthException : SyncException
     {
         public SyncAuthException(string message) : base(message) { }

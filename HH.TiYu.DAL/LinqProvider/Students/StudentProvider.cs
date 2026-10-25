@@ -18,6 +18,14 @@ namespace HH.TiYu.DAL.LinqProvider
         {
         }
 
+        /// <summary>同步目标改绑检查；projectID 为空时检查全部年度。</summary>
+        public bool HasLocalData(string projectID)
+        {
+            using (var dc = CreateDataContext())
+                return dc.GetTable<Student>().Any(s => projectID == null || s.ProjectID == projectID) ||
+                    dc.GetTable<StudentScore>().Any(s => projectID == null || s.ProjectID == projectID);
+        }
+
         protected override Student GetingItemByID(string id, DataContext dc)
         {
             return dc.GetTable<Student>().SingleOrDefault((Student item) => item.ID == id);
@@ -66,7 +74,7 @@ namespace HH.TiYu.DAL.LinqProvider
                 using (var dc = CreateDataContext())
                 {
                     var existing = dc.GetTable<Student>().Where(s => s.ProjectID == projectID).ToList()
-                        .ToDictionary(s => s.StudentID, StringComparer.OrdinalIgnoreCase);
+                        .ToDictionary(s => s.StudentID, StringComparer.Ordinal);
                     foreach (var source in students)
                     {
                         if (string.IsNullOrWhiteSpace(source.StudentID) || source.StudentID.Length > 60)
@@ -132,7 +140,7 @@ namespace HH.TiYu.DAL.LinqProvider
         }
 
         /// <summary>
-        /// 平台名单同步的整页 upsert(单事务),按项目内 StudentID(去首尾空白、忽略大小写)定位:
+        /// 平台名单同步的整页 upsert(单事务),按项目内 StudentID(去首尾空白、区分大小写)定位:
         ///   - 已存在:更新 StudentID(写回规范化值)/Name/Sex/ClassName/UpdateDate;Grade 仅在传入
         ///     非空时覆盖——平台年级越界时调用方传 null,即保留本地原年级,不让脏值覆盖好数据;
         ///   - 不存在:新增,Grade 原样写入(可为 null)。
@@ -144,7 +152,7 @@ namespace HH.TiYu.DAL.LinqProvider
             int inserted = 0, updated = 0;
             using (var dc = CreateDataContext())
             {
-                var existing = new Dictionary<string, Student>(StringComparer.OrdinalIgnoreCase);
+                var existing = new Dictionary<string, Student>(StringComparer.Ordinal);
                 foreach (var row in dc.GetTable<Student>().Where(s => s.ProjectID == projectID).ToList())
                 {
                     string key = (row.StudentID ?? string.Empty).Trim();

@@ -55,6 +55,12 @@ namespace HH.DataCollection.Wifi
                 //    采集器固定单库,ConnStr 恒等于 LocalDB(已移除 RemoteDB 覆盖开关)
                 AppSettings.Current.LocalDB = "SQLITE:Data Source=" + LocalDb.DbPath;
                 LocalDb.EnsureDatabase();
+                var identity = Sync.DeviceIdentity.LoadOrCreate();
+                var syncConfig = Sync.SyncConfig.Load();
+                if (syncConfig.DeviceNo.Length > 0 && syncConfig.DeviceNo != identity)
+                    throw new Sync.ConfigException("本地配置与设备身份文件不一致，请恢复原设备身份文件后启动。");
+                syncConfig.DeviceNo = identity;
+                syncConfig.Save();
                 LocalDb.SeedPhysicalItems();
 
                 // 2) 操作员:绕过登录,内置默认采集员

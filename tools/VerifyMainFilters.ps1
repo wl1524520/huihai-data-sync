@@ -13,7 +13,7 @@ Get-ChildItem -LiteralPath $output -Filter '*.dll' | Copy-Item -Destination $run
 Copy-Item -LiteralPath (Join-Path $output 'HH.DataCollection.Wifi.exe') -Destination $run
 $exe = Join-Path $run 'VerifyMainFilters.exe'
 Copy-Item -LiteralPath (Join-Path $output 'HH.DataCollection.Wifi.exe.config') -Destination ($exe + '.config')
-& $csc /nologo /target:exe /platform:x86 /langversion:4 "/out:$exe" /r:System.Data.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll "/r:$run\HH.DataCollection.Wifi.exe" "/r:$run\Model.dll" "/r:$run\HH.GeneralLibrary.dll" "/r:$run\System.Data.SQLite.dll" (Join-Path $PSScriptRoot 'VerifyMainFilters.cs')
+& $csc /nologo /target:exe /platform:x86 /langversion:4 "/out:$exe" /r:System.Data.dll /r:System.Data.Linq.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll "/r:$run\HH.DataCollection.Wifi.exe" "/r:$run\Model.dll" "/r:$run\DAL.dll" "/r:$run\Newtonsoft.Json.dll" "/r:$run\HH.GeneralLibrary.dll" "/r:$run\System.Data.SQLite.dll" (Join-Path $PSScriptRoot 'VerifyMainFilters.cs') (Join-Path $PSScriptRoot 'VerifySyncProtocol.cs')
 if ($LASTEXITCODE -ne 0) { throw 'Main filter verifier compilation failed' }
 Push-Location $run
 try { & $exe; if ($LASTEXITCODE -ne 0) { throw "Main filter verification failed; artifacts: $run" } }

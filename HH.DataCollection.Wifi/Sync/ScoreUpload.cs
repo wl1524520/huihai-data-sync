@@ -20,7 +20,7 @@ namespace HH.DataCollection.Wifi.Sync
     ///   - 每批 1000 条;网络错误/5xx 由 SyncApi 有限退避后仍失败则跳过本批传下一批,下轮自然重传;
     ///     429 退避后仍未缓解停止本轮;200+success=false 与 422 按文档 §4/§7 停止本轮,重启后原样补传
     ///   - 仅当 HTTP 200 + JSON success===true 才把该批标记 Uploaded=1
-    ///   - 401/400 停止本轮;上传前按文档 §4/§5 做本地预校验,非法行隔离不上传、不阻断其他成绩
+    ///   - 403/400 停止本轮;上传前按文档 §4/§5 做本地预校验,非法行隔离不上传、不阻断其他成绩
     ///   - 另做一次"标识是否在本地名单中"的核对:后台业务拒绝(学生不存在/免测/日期越界等)
     ///     不通过接口返回(文档 §6.2),客户端唯一能自救的是把这类行提前报出来;只报告、不阻断
     ///   - 本类不含 SQL:取待传、置位、重置、统计与上传口径由 DAL StudentScoreProvider 的上传原语
@@ -98,9 +98,6 @@ namespace HH.DataCollection.Wifi.Sync
         {
             var info = ReadRemoteInfo();
             report(info.ToString());
-            var conf = SyncConfig.Load();
-            if (string.IsNullOrWhiteSpace(conf.RemoteProjectId))
-                report("提示:尚未记录远端项目基线(旧版设置),重新保存一次同步设置即可启用项目变更检测");
             report("本地项目:" + _projectID);
 
             // 固定本轮数据快照。预校验隔离后确定分母，新采集的成绩留到下一轮。
@@ -122,7 +119,7 @@ namespace HH.DataCollection.Wifi.Sync
                 catch (SyncAuthException)
                 {
                     failed += batch.Count;
-                    throw; // 令牌失效:停止本轮
+                    throw; // 设备未授权:停止本轮
                 }
                 catch (SyncFatalException)
                 {
@@ -132,14 +129,14 @@ namespace HH.DataCollection.Wifi.Sync
                 catch (SyncBatchRejectedException ex)
                 {
                     failed += batch.Count;
-                    report("服务端拒收,停止本轮:" + ex.Message);
-                    break;
+                    report("服务端拒收,停止任务:" + ex.Message);
+                    throw;
                 }
                 catch (SyncRateLimitedException ex)
                 {
                     failed += batch.Count;
                     report(ex.Message);
-                    break;
+                    throw;
                 }
                 catch (SyncException ex)
                 {
@@ -170,10 +167,7 @@ namespace HH.DataCollection.Wifi.Sync
             // 平台项目变更检测(文档 §2/§8:年度切换应暂停同步核对):
             // 保存设置时记录的远端项目与当前 info 不一致 → 停止本轮,避免成绩发进新项目而本地底账在旧项目
             var conf = SyncConfig.Load();
-            if (!string.IsNullOrWhiteSpace(conf.RemoteProjectId) && conf.RemoteProjectId != info.ProjectId)
-                throw new SyncFatalException(string.Format(
-                    "平台当前项目已切换(原:{0}/ID:{1} → 现:{2}/ID:{3}),停止本轮;请核对后重新保存同步设置",
-                    conf.RemoteProjectName, conf.RemoteProjectId, info.ProjectName, info.ProjectId));
+            conf.ValidateTarget(info, _projectID);
             return info;
         }
 
@@ -240,7 +234,7 @@ namespace HH.DataCollection.Wifi.Sync
                 return;
             }
             var unknown = new List<StudentScoreProvider.PendingUploadScore>();
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var row in pending)
             {
                 string id = (row.StudentID ?? "").Trim();
@@ -256,10 +250,10 @@ namespace HH.DataCollection.Wifi.Sync
                 "请核对名单,或确认学校 qrcode_field 与主机上报的标识类型一致)", unknown.Count));
         }
 
-        /// <summary>当前项目的本地学生标识集合(去首尾空白;忽略大小写,兼容身份证与学号的平台规范化差异)。</summary>
+        /// <summary>当前项目的本地学生标识集合，去首尾空白并保留大小写。</summary>
         private HashSet<string> LoadKnownIdentifiers()
         {
-            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var set = new HashSet<string>(StringComparer.Ordinal);
             var result = ProviderFactory.Create<IProvider<Student, string>>(Db.LocalDb.DalConnStr)
                 .GetItems(new StudentSearchCondition { ProjectID = _projectID });
             if (result.Result == ResultCode.Successful && result.QueryObjects != null)
