@@ -24,7 +24,7 @@
 | `HH.TiYu.Device` | `Device.dll`；WiFi 主机发现、成绩通信、控制命令、记录解析和清空学生 | `Wifi/`、`Records/` |
 | `HH.TiYu.UI` | `UI.dll`；主机窗口、采集窗口、统计、范围输入和进度窗口 | `Hosts/`、`Collection/`、`Shared/` |
 | `HH.GeneralLibrary` | `HH.GeneralLibrary.dll`；数据访问基础、网络、日志、转换、输入控件和 Excel 导出 | `DataAccess/`、`Communication/`、`Conversion/`、`Diagnostics/`、`UI/` |
-| `lib` | 第三方运行依赖、科目种子脚本、程序图标和离线验证基线 | `README` 不再单独维护，以本文为准 |
+| `lib` | 第三方运行依赖、科目种子脚本、程序图标和离线验证基线 | [依赖说明](../lib/README.md) |
 | `tools` | 契约、数据库、协议、界面和行为回归脚本 | `Verify*.ps1`、`Verify*.cs` |
 
 各业务项目保留其现有程序集名称和命名空间。`HH.GeneralLibrary` 的调用方必须统一引用该项目并重新编译，不能与旧名称程序集混用。
