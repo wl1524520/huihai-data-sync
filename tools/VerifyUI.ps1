@@ -15,8 +15,10 @@ foreach ($name in $sourceAssemblies) {
   Copy-Item -LiteralPath (Join-Path $applicationOutput ($name + '.dll')) -Destination $run
 }
 $exe = Join-Path $run 'VerifyUI.exe'
+Copy-Item -LiteralPath (Join-Path $repo 'lib\DbUpdate_SQLite.sql') -Destination $run
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Mono.Cecil.dll') -Destination $run
 Copy-Item -LiteralPath (Join-Path $repo 'HH.DataCollection.Wifi\App.config') -Destination ($exe + '.config')
-& $csc /nologo /target:exe /platform:x86 /langversion:4 "/out:$exe" /r:System.Core.dll /r:System.Data.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll "/r:$run\UI.dll" "/r:$run\Model.dll" "/r:$run\HH.GeneralLibrary.dll" "/r:$run\System.Data.SQLite.dll" (Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs') (Join-Path $PSScriptRoot 'VerifyUI.cs')
+& $csc /nologo /target:exe /platform:x86 /langversion:4 "/out:$exe" /r:System.Core.dll /r:System.Data.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll "/r:$run\UI.dll" "/r:$run\Model.dll" "/r:$run\Device.dll" "/r:$run\HH.GeneralLibrary.dll" "/r:$run\System.Data.SQLite.dll" "/r:$run\Mono.Cecil.dll" (Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs') (Join-Path $PSScriptRoot 'VerifyUI.cs')
 if ($LASTEXITCODE -ne 0) { throw 'UI verifier compilation failed' }
 # Constructors only: no Show/ShowDialog or Load handlers; no device/network calls.
 # Constructor-side DAL reads use the actual current schema in this isolated directory.

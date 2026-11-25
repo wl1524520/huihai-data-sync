@@ -1,78 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Collector contract. LocalDb creates the schema, including raw scores. -->
+<!-- Collector contract: subject dictionary and raw scores only. -->
 <Database Name="HuihaiTiyu" xmlns="http://schemas.microsoft.com/linqtosql/mapping/2007">
-  <Table Name="Student" Member="HH.TiYu.Model.Student">
-    <Type Name="HH.TiYu.Model.Student">
-      <Column Name="ID" Member="ID"  DbType="nvarchar(36) not null" IsPrimaryKey="true"/>
-      <Column Name="StudentID" Member="StudentID"  DbType="nvarchar(64) not null" UpdateCheck="Never"/>
-      <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
-      <Column Name="Name" Member="Name"  DbType="nvarchar(60) not null" UpdateCheck="Never"/>
-      <Column Name="Sex" Member="Sex"  DbType="int not null" UpdateCheck="Never"/>
-      <Column Name="Grade" Member="Grade"  DbType="int" UpdateCheck="Never"/>
-      <Column Name="ClassName" Member="ClassName"  DbType="nvarchar(100)" UpdateCheck="Never"/>
-      <Column Name="UpdateDate" Member="UpdateDate"  DbType="datetime" UpdateCheck="Never"/>
-    </Type>
-  </Table>
   <Table Name="PhysicalItem" Member="HH.TiYu.Model.PhysicalItem">
     <Type Name="HH.TiYu.Model.PhysicalItem">
-      <Column Name="ID" Member="ID"  DbType="int NOT NULL" IsPrimaryKey="true" />
-      <Column Name="Name" Member="Name"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
-      <Column Name="Unit" Member="Unit"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
-      <Column Name="PointCount" Member="PointCount"  DbType="int not null" UpdateCheck="Never"/>
-      <Column Name="HasMachine" Member="HasMachine" DbType="bit not null" UpdateCheck="Never"/>
-      <Column Name="SortMode" Member="SortMode"  DbType="int" UpdateCheck="Never"/>
-      <Column Name="Formula" Member="Formula"  DbType="nvarchar(50)" UpdateCheck="Never"/>
-      <Column Name="Max" Member="Max" DbType="decimal(18,4)" UpdateCheck="Never"/>
-      <Column Name="Min" Member="Min" DbType="decimal(18,4)" UpdateCheck="Never"/>
-      <Column Name="TestCount" Member="TestCount"  DbType="int" UpdateCheck="Never"/>
-      <Column Name="ShortName" Member="ShortName"  DbType="nVarChar(50)" UpdateCheck="Never"/>
-      <Column Name="Memo" Member="Memo"  DbType="nVarChar(200)" UpdateCheck="Never"/>
-    </Type>
-  </Table>
-  <Table Name="PhysicalProject" Member="HH.TiYu.Model.PhysicalProject">
-    <Type Name="HH.TiYu.Model.PhysicalProject">
-      <Column Name="ID" Member="ID"  DbType="nvarchar(50) NOT NULL" IsPrimaryKey="true" />
-      <Column Name="Class" Member="Class" DbType="tinyint not null" UpdateCheck="Never"/>
-      <Column Name="Name" Member="Name"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
-      <Column Name="CreateDate" Member="CreateDate"  DbType="Datetime not null" UpdateCheck="Never"/>
-      <Column Name="StartDate" Member="StartDate"  DbType="Datetime" UpdateCheck="Never"/>
-      <Column Name="EndDate" Member="EndDate"  DbType="Datetime" UpdateCheck="Never"/>
-      <Column Name="Memo" Member="Memo"  DbType="nVarChar(200)" UpdateCheck="Never"/>
-    </Type>
-  </Table>
-  <Table Name="ProjectPhysicalItems" Member="HH.TiYu.Model.ProjectPhysicalItem">
-    <Type Name="HH.TiYu.Model.ProjectPhysicalItem">
-      <Column Name="ID" Member="ID"  DbType="nvarchar(36) not null" IsPrimaryKey="true"/>
-      <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) not null" UpdateCheck="Never"/>
-      <Column Name="Grade" Member="Grade"  DbType="int not null" UpdateCheck="Never"/>
-      <Column Name="Sex" Member="Sex"  DbType="tinyint not null" UpdateCheck="Never"/>
-      <Column Name="PhysicalItems" Member="PhysicalItems"  DbType="nvarchar(1000) null" UpdateCheck="Never"/>
-      <Column Name="TotalFormula" Member="TotalFormula"  DbType="nvarchar(1000)" UpdateCheck="Never"/>
-    </Type>
-  </Table>
-  <Table Name="SyncConfig" Member="HH.TiYu.Model.SyncConfigEntry">
-    <Type Name="HH.TiYu.Model.SyncConfigEntry">
-      <Column Name="ID" Member="ID" DbType="nvarchar(4000) not null" IsPrimaryKey="true" CanBeNull="false" />
-      <Column Name="Value" Member="Value" DbType="nvarchar(4000) not null" CanBeNull="false" UpdateCheck="Never" />
+      <Column Name="ID" Member="ID" DbType="int NOT NULL" IsPrimaryKey="true" />
+      <Column Name="Name" Member="Name" DbType="nvarchar(50) NOT NULL" UpdateCheck="Never" />
+      <Column Name="Unit" Member="Unit" DbType="nvarchar(50) not null" UpdateCheck="Never" />
+      <Column Name="PointCount" Member="PointCount" DbType="int not null" UpdateCheck="Never" />
+      <Column Name="HasMachine" Member="HasMachine" DbType="bit not null" UpdateCheck="Never" />
+      <Column Name="SortMode" Member="SortMode" DbType="int" UpdateCheck="Never" />
+      <Column Name="Formula" Member="Formula" DbType="nvarchar(50)" UpdateCheck="Never" />
+      <Column Name="Max" Member="Max" DbType="decimal(18,4)" UpdateCheck="Never" />
+      <Column Name="Min" Member="Min" DbType="decimal(18,4)" UpdateCheck="Never" />
+      <Column Name="TestCount" Member="TestCount" DbType="int" UpdateCheck="Never" />
+      <Column Name="ShortName" Member="ShortName" DbType="nVarChar(50)" UpdateCheck="Never" />
+      <Column Name="Memo" Member="Memo" DbType="nVarChar(200)" UpdateCheck="Never" />
     </Type>
   </Table>
   <Table Name="StudentScore" Member="HH.TiYu.Model.StudentScore">
     <Type Name="HH.TiYu.Model.StudentScore">
-      <Column Name="ID" Member="ID"  DbType="nvarchar(36) not null" IsPrimaryKey="true"/>
-      <Column Name="ProjectID" Member="ProjectID"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
-      <Column Name="Key" Member="Key"  DbType="nvarchar(50) NOT NULL" UpdateCheck="Never"/>
-      <Column Name="StudentID" Member="StudentID"  DbType="nvarchar(64) not null" UpdateCheck="Never"/>
-      <Column Name="TestID" Member="TestID"  DbType="int not null" UpdateCheck="Never"/>
-      <Column Name="ScoreFrom" Member="ScoreFrom"  DbType="tinyint not null" UpdateCheck="Never"/>
-      <Column Name="CreateTime" Member="CreateTime"  DbType="datetime not null" UpdateCheck="Never"/>
-      <Column Name="StudentName" Member="StudentName"  DbType="nvarchar(50)" UpdateCheck="Never"/>
-      <Column Name="Sex" Member="Sex" DbType="nvarchar(50)" UpdateCheck="Never"/>
-      <Column Name="Score" Member="Score" DbType="decimal(18,4)" UpdateCheck="Never"/>
-      <Column Name="SpecialType" Member="SpecialType"  DbType="int" UpdateCheck="Never"/>
-      <Column Name="HostSn" Member="HostSn"  DbType="nvarchar(50)" UpdateCheck="Never"/>
-      <Column Name="HostID" Member="HostID"  DbType="INT" UpdateCheck="Never"/>
-      <Column Name="ScoreSer" Member="ScoreSer"  DbType="INT" UpdateCheck="Never"/>
-      <Column Name="IDSource" Member="IDSource" DbType="INT NOT NULL" CanBeNull="false" UpdateCheck="Never"/>
+      <Column Name="ID" Member="ID" DbType="nvarchar(36) not null" IsPrimaryKey="true" />
+      <Column Name="Key" Member="Key" DbType="nvarchar(50) NOT NULL" UpdateCheck="Never" />
+      <Column Name="StudentID" Member="StudentID" DbType="nvarchar(64) not null" UpdateCheck="Never" />
+      <Column Name="TestID" Member="TestID" DbType="int not null" UpdateCheck="Never" />
+      <Column Name="ScoreFrom" Member="ScoreFrom" DbType="tinyint not null" UpdateCheck="Never" />
+      <Column Name="CreateTime" Member="CreateTime" DbType="datetime not null" UpdateCheck="Never" />
+      <Column Name="StudentName" Member="StudentName" DbType="nvarchar(50)" UpdateCheck="Never" />
+      <Column Name="Sex" Member="Sex" DbType="nvarchar(50)" UpdateCheck="Never" />
+      <Column Name="Score" Member="Score" DbType="decimal(18,4)" UpdateCheck="Never" />
+      <Column Name="SpecialType" Member="SpecialType" DbType="int" UpdateCheck="Never" />
+      <Column Name="HostSn" Member="HostSn" DbType="nvarchar(50)" UpdateCheck="Never" />
+      <Column Name="HostID" Member="HostID" DbType="INT" UpdateCheck="Never" />
+      <Column Name="ScoreSer" Member="ScoreSer" DbType="INT" UpdateCheck="Never" />
+      <Column Name="IDSource" Member="IDSource" DbType="INT NOT NULL" CanBeNull="false" UpdateCheck="Never" />
     </Type>
   </Table>
 </Database>

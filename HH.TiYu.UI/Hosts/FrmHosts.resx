@@ -1570,12 +1570,6 @@
   <data name="&gt;&gt;testCommunicationQualityMenuItem.Type" xml:space="preserve">
     <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="downloadStudentsMenuItem.Size" type="System.Drawing.Size, System.Drawing">
-    <value>172, 22</value>
-  </data>
-  <data name="downloadStudentsMenuItem.Text" xml:space="preserve">
-    <value>下载学生名单</value>
-  </data>
   <data name="btnRevert.TabIndex" type="System.Int32, mscorlib">
     <value>153</value>
   </data>
@@ -1737,12 +1731,6 @@
   </data>
   <data name="btnAll.TabIndex" type="System.Int32, mscorlib">
     <value>151</value>
-  </data>
-  <data name="&gt;&gt;downloadStudentsMenuItem.Name" xml:space="preserve">
-    <value>downloadStudentsMenuItem</value>
-  </data>
-  <data name="&gt;&gt;downloadStudentsMenuItem.Type" xml:space="preserve">
-    <value>System.Windows.Forms.ToolStripMenuItem, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="advancedBatchCollectionMenuItem.Text" xml:space="preserve">
     <value>高级集中采集</value>

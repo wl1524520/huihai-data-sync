@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,8 +15,6 @@ using HH.TiYu.BLL;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
 using HH.TiYu.Model.Security;
-using HH.TiYu.UI.Controls;
-using HH.TiYu.UI.UserControl;
 using HH.TiYu.Device;
 using HH.TiYu.Device.Wifi;
 using HH.GeneralLibrary;

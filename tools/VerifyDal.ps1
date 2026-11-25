@@ -10,7 +10,7 @@ $sourceDal = Join-Path $repo "HH.TiYu.DAL\bin\$Configuration\DAL.dll"
 foreach ($variant in @('source')) {
     $dir = Join-Path $run $variant
     New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    Copy-Item (Join-Path $lib 'config.xml'), (Join-Path $lib 'DbUpdate_SQLITE.sql') $dir
+    Copy-Item (Join-Path $lib 'DbUpdate_SQLITE.sql') $dir
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Mono.Cecil.dll') -Destination $dir
     if ($variant -eq 'source') {
         $collectorOutput = Join-Path $repo "HH.DataCollection.Wifi\bin\$Configuration"
@@ -24,8 +24,7 @@ foreach ($variant in @('source')) {
     $references += @('DAL.dll','BLL.dll','Model.dll','HH.GeneralLibrary.dll','System.Data.SQLite.dll','Newtonsoft.Json.dll','Mono.Cecil.dll') | ForEach-Object { Join-Path $dir $_ }
     $compilerArgs = @('/nologo', '/target:exe', '/platform:x86', '/langversion:4', '/codepage:65001', "/out:$dir\VerifyDal.exe")
     $compilerArgs += $references | ForEach-Object { '/reference:' + $_ }
-    $compilerArgs += @((Join-Path $PSScriptRoot 'VerifyDal.cs'), (Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs'), (Join-Path $repo 'HH.DataCollection.Wifi\Sync\SyncConfig.cs'))
-    $compilerArgs += @((Join-Path $repo 'HH.DataCollection.Wifi\Sync\StudentSync.cs'), (Join-Path $repo 'HH.DataCollection.Wifi\Sync\SyncApi.cs'))
+    $compilerArgs += @((Join-Path $PSScriptRoot 'VerifyDal.cs'), (Join-Path $repo 'HH.DataCollection.Wifi\Db\LocalDb.cs'))
     & (Join-Path $framework 'csc.exe') @compilerArgs
     if ($LASTEXITCODE -ne 0) { throw "Verification compile failed: $variant" }
     Push-Location $dir

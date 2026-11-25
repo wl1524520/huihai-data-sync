@@ -1,98 +1,56 @@
 # 采集器 DAL
 
 基于恢复源码维护，目标为 .NET Framework 4.0 / C# 4 / x86，输出 DAL.dll。
-当前代码以采集器功能为准，不再保证原体测软件的全部 API 或完整数据库兼容。
+当前代码只服务采集器两表数据库，不保证原体测软件 API 或旧数据库兼容。
 
 ## 目录与维护入口
 
 | 目录 / 文件 | 职责 |
 | --- | --- |
-| `Contracts/IBatchProvider.cs` | 批量新增、删除、修改的数据访问契约 |
-| `Factories/ProviderFactory.cs` | 创建有效 Provider、缓存并加载嵌入式映射 |
-| `LinqProvider/Students/` | 学生查询、导入、覆盖与批量修改、删除，平台名单同步 upsert |
-| `LinqProvider/PhysicalTests/` | 体测项目、科目字典、项目科目关联的读写 |
-| `LinqProvider/Scores/` | 原始成绩查询、排序分页、按项目与 Key 去重写入和删除，成绩上传原语 |
-| `LinqProvider/Configuration/` | 同步配置的查询和事务保存 |
-| `LinqProvider/DataMapping.xml` | 六表共享的 LINQ to SQL 映射资源 |
+| `Factories/ProviderFactory.cs` | 创建两个有效 Provider、缓存并加载嵌入式映射 |
+| `LinqProvider/PhysicalTests/PhysicalItemProvider.cs` | 科目字典读写 |
+| `LinqProvider/Scores/StudentScoreProvider.cs` | 原始成绩查询、排序分页、全局 Key 去重写入和删除 |
+| `LinqProvider/DataMapping.xml` | 两表 LINQ to SQL 映射资源 |
 | `Properties/AssemblyInfo.cs` | 程序集元数据 |
 
-Provider 在 `LinqProvider` 下按业务职责分组；学生、体测分组与 BLL 对应。新增 Provider 放入对应业务目录，不预建空目录；跨业务的批量契约放入 `Contracts`，工厂创建与注册入口放入 `Factories`。
-
-目录调整不改变类型命名空间：契约和工厂仍为 `HH.TiYu.DAL`，Provider 仍为 `HH.TiYu.DAL.LinqProvider`；现有公开接口和程序集身份保持不变。新增源码须显式添加到 `HH.TiYu.DAL.csproj` 的 `Compile Include`；新增可用 Provider 还须在工厂中注册并按需维护映射。
-
-共享映射文件保留原路径，嵌入资源逻辑名称固定为 `HH.TiYu.DAL.LinqProvider.DataMapping.xml`，必须与工厂的 `GetManifestResourceStream` 参数一致；物理目录不决定运行时资源名称。数据库建表和独立同步 SQL 的维护边界见下文。
+Provider 命名空间保持为 `HH.TiYu.DAL.LinqProvider`。新增源码须显式添加到 `HH.TiYu.DAL.csproj`；新增 Provider 还须在工厂注册并维护映射。嵌入资源逻辑名称固定为 `HH.TiYu.DAL.LinqProvider.DataMapping.xml`。
 
 ## 当前数据契约
 
-`LinqProvider/DataMapping.xml` 仅映射六表：
+`LinqProvider/DataMapping.xml` 仅映射：
 
 | 表 | 实体/用途 |
 | --- | --- |
-| PhysicalProject | 体测项目 |
 | PhysicalItem | 科目字典 |
-| ProjectPhysicalItems | 项目科目关联 |
-| Student | 学生名单 |
-| SyncConfig | 同步配置，ID 为配置键、Value 为配置值 |
 | StudentScore | 原始成绩；实体位于 Model，保存调度位于 BLL |
 
-Student 仅映射 ID、StudentID、ProjectID、Name、Sex、Grade、ClassName、UpdateDate，八列与实体同名属性一一对应。
-StudentID 保存平台 test_no，映射容量为 64，平台约束最多 60 字符。名单下发不再用卡号替换标识。
-已修复 ID 重复 NOT NULL、科目 Min/Max 可空性和 Memo 长度声明。
+实际建库由采集器 `Db/LocalDb.cs` 负责。名单、年度项目、项目科目关联、同步配置表，以及 `StudentScore.ProjectID`、`StudentScore.Uploaded` 均已删除；对应 Provider、批量契约和上传原语不再保留。
 
-实际建库仍由采集器 `Db/LocalDb.cs` 负责，共六表。StudentScore 已并入本项目映射；Uploaded 不映射到成绩实体，由建表默认值 0 初始化并由上传模块维护，避免成绩写入覆盖已上传状态。
-当前开发版本不提供旧库迁移。XML 不负责建表；字段调整需同步修改 LocalDb 和同步 SQL。
+当前版本不提供旧库迁移。XML 不负责建表；字段调整必须同步修改 `LocalDb`、实体与映射。
 
 ## Provider 与读写范围
 
-ProviderFactory 缓存映射，只允许创建上述六表的 Provider；其余契约一律抛出 NotSupportedException。
-工厂不再吞掉映射异常，也不存在可实例化的停用 Provider：本轮精简已删除 15 个停用 Provider 源码（Alarm、AppraiseTemplate、Discussion、Operator、PhysicalProjectState、PhysicalScore、Role、Sports、SportsStudentPair、SportSuggestion、Standard、StudentCheckRecord、StudentGroup、StudentGroupPair、Sysparameter）以及 `AutoNumberCreater`、`AutoCreateNumber` 两个编号类型，并移除了 DAL 项目对 `System.Data.SQLite` 的显式引用（保留的 Provider 只用 LINQ 映射，无 SQLite 类型使用）。旧实现仍可从原始 `lib/DAL.dll` 基线重新反编译恢复。
-
-- StudentScoreProvider 按项目与 Key 去重，已有行不覆盖；数据库结构与原始成绩字段保持不变。
-- StudentScoreProvider 的上传原语（GetPendingForUpload / MarkUploaded / ResetUploaded / CountByUploaded）集中维护上传口径 SQL：白名单科目由调用方传入，主键字符串化后 ID 按原值直接取数、MarkUploaded 在单事务内按原值置位。Uploaded 列仍不映射（见上文），避免 LINQ 写回覆盖上传状态。
-- StudentProvider 支持当前字段的查询、导入、覆盖、批量修改、删除；查询条件只保留项目与标识集合两项，未映射字段修改明确失败。
-- StudentProvider.SyncRemotePage 承担平台名单同步的整页 upsert：按项目内 test_no（去首尾空白、区分大小写）定位，返回新增/更新计数；Grade 传 null 时更新保留本地原年级、新增写 NULL，超长或空标识明确抛 ArgumentException。
-- 删除学生名单不删除已经采集的 StudentScore。
-- PhysicalProjectProvider 使用 GUID 生成项目编号；当前已移除模板项目科目复制分支，项目编号不依赖任何编号表。
-- ProjectPhysicalItemProvider 的批量导入按性别与年级替换同组记录，批量删除按主键删除；`BatchPatch` 明确抛出 NotSupportedException，采集器不支持项目科目的批量修改。
-- 显式删除项目时，在一个事务中清理项目、名单、科目关联和原始成绩；工作单元入口没有显式事务时拒绝执行。
-- SyncConfigProvider.SavePairs 使用映射读写，并在单个事务中新增/覆盖传入键，保留其他键，空值转换为空字符串。
-- 采集器 SyncConfig.Load/Save 已接入 DAL，保存七项设备同步配置及年度目标绑定，保留 URL 规范化。
-- 学生同步（StudentSync）与成绩上传（ScoreUpload）的库表读写已全部收编进 DAL：同步类不再含 SQL，只持有接口契约、科目白名单（CodeMap）与分批/ACK 语义；Uploaded 列的读写经 StudentScoreProvider 上传原语完成。
-
-## 无学生照片
-
-已删除 StudentPhoto、Student.HasPhoto、StudentPhotoProvider、StudentBLL 的照片方法和 TempFolderManager。
-照片表不创建也不映射。照片旧枚举值仅保留数值定义，避免改变无关枚举，不提供照片业务入口。
-构建排除九个已无调用的图像/照片库并清理输出目录残留；原始 lib 文件保持不变。
+- `ProviderFactory` 只允许创建 `PhysicalItemProvider` 和 `StudentScoreProvider`，其余契约抛出 `NotSupportedException`。
+- `StudentScoreProvider.BatchAdd` 按全库 `Key` 去重，同批及库内重复记录均不覆盖首次保存的成绩。
+- 成绩查询保留时间范围、学生标识、姓名、科目、主机序列号筛选及排序分页；不再有项目筛选。
+- `BatchDelete` 按实体主键删除，不需要项目参数。
+- DAL 不直接引用 `System.Data.SQLite`，两个 Provider 均通过 LINQ 映射访问数据库。
 
 ## 验证
 
-在 `HH.DataCollection.Wifi` 仓库根目录运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
-测试在全新隔离目录使用真实 LocalDb 六表结构，覆盖六表映射、15 个停用 Provider 与 2 个编号类型的显式不存在断言、六个有效 Provider 的存在与可创建断言、DAL 不再直接引用 `System.Data.SQLite`、启动加载学生和科目、学生增改删、项目科目批量导入/替换/删除与 `BatchPatch` 明确不支持、配置七项回读与事务回滚、项目删除回滚、照片类型删除、名单同步 upsert 的年级保护与标识规范化、成绩上传原语的口径/置位/重置与存储格式无关性。
-不再扩展旧业务表，也不再要求映射与原 DLL 逐字相同。
-VerifyBusiness 保留模型算法的原 DLL 对照；VerifyRecoveredApi 验证剩余 API 和所有源码组件间的引用解析。
-未连接真实设备或云平台。
+在仓库根目录运行 `tools/VerifyDal.ps1 -Configuration Debug` 或 Release。
+
+测试在全新隔离目录使用真实两表 `LocalDb`，覆盖精确表结构、实体映射、两个 Provider 创建、科目种子查询、成绩全局去重、组合筛选与删除，以及旧表、旧模型、旧 Provider、上传方法和项目配置的显式不存在断言。
+
+`VerifyBusiness` 对照保留模型的原 DLL 行为；`VerifySQLite` 验证保存队列、并发、重试与新旧实现共同行为；`VerifyRecoveredApi` 验证剩余 API 和源码组件引用。未连接真实设备或云平台。
 
 ## 逆向来源与证据
 
-REA 负责执行不加载目标程序集的 PE/CLI、成员与调用指令检查。C# 由本机 Visual Studio 附带的 **ILSpy 9.1.0.7988** 以 `DecompilerSettings(LanguageVersion.CSharp4)` 恢复，再按业务类型分文件，并完成前述明确修改。ILSpy 设置来源见 [官方 DecompilerSettings](https://github.com/icsharpcode/ILSpy/blob/master/ICSharpCode.Decompiler/DecompilerSettings.cs)。这些是可维护的恢复源码，不是原作者源码、注释或变量名的逐字恢复。
+原始 `lib/DAL.dll` 仅作恢复与验证基线。C# 由 ILSpy 以 C# 4 恢复，再按采集器范围持续精简；这些是可维护的恢复源码，不是原作者源码的逐字恢复。
 
-原始 `lib/DAL.dll`：
+- 原文件 SHA-256：`ed06bf37cd4c308653f30d0c6bc65e8b72d2fa2c796ccffc9689c0edc4a9c5b7`。
+- 原 MVID：`dc0873a2-c796-43f5-8836-4a3a3d5f07f4`。
+- 原映射资源名：`HH.TiYu.DAL.LinqProvider.DataMapping.xml`。
+- 静态元数据不能替代运行验证；不声称与原软件二进制、CIL 或全部业务行为等价。
 
-- 大小：95,232 字节。
-- SHA-256：`ed06bf37cd4c308653f30d0c6bc65e8b72d2fa2c796ccffc9689c0edc4a9c5b7`。
-- MVID：`dc0873a2-c796-43f5-8836-4a3a3d5f07f4`。
-- 原始成员：112 个元数据类型、256 个方法，其中包含编译器生成的实现。
-- 映射资源名：`HH.TiYu.DAL.LinqProvider.DataMapping.xml`，21,171 字节。
-- 映射 SHA-256：`5a366abb27ac2eaa43a95a9f77334f884b282edce3244abe9f82778e3e1370fa`。
-
-REA 原件证据：`ev_e4af9617b188e6d76bb79b7520c4366d1fab52592ffd7acc3783d9cacd186f23`（程序集），`ev_9f7df1ef7bc7ffd91ea7f377c1ce897984b5fa0a4cc91a5a3df46890e0466017`（成员与 CIL）。Debug 还原件成员证据：`ev_3d4e43c5412c27b992bcd30fee43775f686f5bc07c06cb99014c09a1cf5dea98`。
-
-REA 原始成员对比 `ev_47fcc5466aebcff059d9c15b66d0aac3814a32810caf21fbeed6788f31bdcf8c` 对重新编译后的元数据 token/签名字节及闭包类型变化会产生大量未配对记录，不能将其“新增/删除”数量解释为业务 API 增删或功能缺失。这里采用 `VerifyDal.cs` 解析后的类型名称与完整方法形状比较，并结合运行验证判断兼容性；不声称二进制、CIL 或全局行为完全等价。
-
-2026-10-17：完整移除 Division 表、Facility.DivisionID、区域实体/查询/BLL/DAL 和名单下发区域筛选。学校、年级、班级筛选保留。首次启动创建七表新库，不提供旧库迁移。
-
-2026-10-25：采集器按单学校安装使用，学校由平台上的设备授权及学校绑定关系确定。删除 Facility 表、Student.FacilityID 及学校实体/查询/BLL/DAL/筛选控件；学校名称仅作同步配置显示。年度项目和 ProjectID 隔离保留，名单同步直接写入创建下载任务时确定的年度项目。新库六表，学生八字段、同步配置七项及本地年度目标绑定，不提供旧库迁移。
-
-
-2026-10-25 设备接口适配：`StudentProvider.HasLocalData` 供目标改绑检查使用；名单合并区分大小写。Student.Name 容量为 60、ClassName 为 100；StudentScore.StudentID 与 Student.StudentID 均声明容量 64，接口校验上限 60。新库建表与映射同步调整，不做历史数据库迁移。
+2026-11-25：数据库和 DAL 收敛为 `PhysicalItem`、`StudentScore` 两表，删除名单、年度项目、同步配置和上传数据契约，不做旧库迁移。

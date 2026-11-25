@@ -15,8 +15,6 @@ using HH.TiYu.BLL;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
 using HH.TiYu.Model.Security;
-using HH.TiYu.UI.Controls;
-using HH.TiYu.UI.UserControl;
 using HH.TiYu.Device;
 using HH.TiYu.Device.Wifi;
 using HH.GeneralLibrary;
@@ -126,18 +124,10 @@ namespace HH.TiYu.UI
 						if (!record.Invalid)
 						{
 							_Records.Add(record);
-							PhysicalScore score = GetScoreFrom(record);
-							if (score != null)
-							{
-								ShowScore(record.SN, score);
-							}
-							else
-							{
-								ShowRecord(record);
-							}
+							ShowRecord(record);
 							if (StudentScoresSavingService.Current != null)
 							{
-								StudentScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, _Reader.HostSN);
+								StudentScoresSavingService.Current.AddScore(record, ScoreSource.Huihai200Host, _Reader.HostSN);
 							}
 						}
 						FileLog.Log("原始采集记录", record.ToString());
@@ -152,139 +142,21 @@ namespace HH.TiYu.UI
 			Invoke(method);
 		}
 
-		private PhysicalScore GetScoreFrom(PhysicalRecord item)
-		{
-			PhysicalScore physicalScore = null;
-			if (PhysicalProject.Current.StartDate.HasValue && item.RecordDate < PhysicalProject.Current.StartDate.Value.Date)
-			{
-				return null;
-			}
-			if (PhysicalProject.Current.EndDate.HasValue && item.RecordDate > PhysicalProject.Current.EndDate.Value.Date)
-			{
-				return null;
-			}
-			Student studentByID = PhysicalProject.Current.GetStudentByID(item.StudentNumber);
-			if (studentByID != null)
-			{
-				int pid = PhysicalItem.ConvertPhysicalItem(studentByID, item.PhysicalItem);
-				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == pid);
-				if (physicalItem != null)
-				{
-					if (item.SpecialResult.HasValue)
-					{
-						physicalScore = new PhysicalScore
-						{
-							ID = Guid.NewGuid().ToString(),
-							StudentID = studentByID.StudentID,
-							Grade = studentByID.Grade,
-							ProjectID = PhysicalProject.Current.ID,
-							PhysicalItem = pid,
-							UpdateDate = (item.RecordDate.HasValue ? item.RecordDate : new DateTime?(DateTime.Now))
-						};
-						if (item.SpecialResult.HasValue)
-						{
-							if (item.SpecialResult == 160)
-							{
-								physicalScore.SpecialType = SpecialScoreType.Foul;
-							}
-							else if (item.SpecialResult == 161)
-							{
-								physicalScore.SpecialType = SpecialScoreType.Abandoned;
-							}
-							else if (item.SpecialResult == 162)
-							{
-								physicalScore.SpecialType = SpecialScoreType.Incomplete;
-							}
-							else
-							{
-								physicalScore.SpecialType = SpecialScoreType.Foul;
-							}
-						}
-					}
-					else
-					{
-						decimal num = item.Result;
-						if (physicalItem.Unit == "分.秒")
-						{
-							num = PhysicalItem.ConvertToMinuteSecond(item.Result);
-						}
-						else if (physicalItem.ID == 6 && physicalItem.Unit == "米")
-						{
-							num /= 100m;
-						}
-						if (!physicalItem.Min.HasValue || !(physicalItem.Min.Value > num))
-						{
-							if (physicalItem.Max.HasValue)
-							{
-								decimal? max = physicalItem.Max;
-								decimal num2 = num;
-								if ((max.GetValueOrDefault() < num2) & max.HasValue)
-								{
-									goto IL_04b9;
-								}
-							}
-							physicalScore = new PhysicalScore
-							{
-								ID = Guid.NewGuid().ToString(),
-								StudentID = studentByID.StudentID,
-								Grade = studentByID.Grade,
-								ProjectID = PhysicalProject.Current.ID,
-								PhysicalItem = pid,
-								Score = num,
-								UpdateDate = (item.RecordDate.HasValue ? item.RecordDate : new DateTime?(DateTime.Now))
-							};
-						}
-					}
-					goto IL_04b9;
-				}
-			}
-			goto IL_04b9;
-			IL_04b9:
-			return physicalScore;
-		}
-
-		private void ShowScore(int sn, PhysicalScore score)
-		{
-			lock (_GridLocker)
-			{
-				dataGridView1.Rows.Insert(0, 1);
-				dataGridView1.Rows[0].Tag = score;
-				dataGridView1.Rows[0].DefaultCellStyle.ForeColor = (score.SpecialType.HasValue ? Color.Red : Color.Black);
-				dataGridView1.Rows[0].Cells["colSN"].Value = sn;
-				Student s = PhysicalProject.Current.GetStudentByID(score.StudentID);
-				dataGridView1.Rows[0].DefaultCellStyle.ForeColor = ((s != null) ? Color.Black : Color.Red);
-				dataGridView1.Rows[0].Cells["colStudentID"].Value = score.StudentID;
-				dataGridView1.Rows[0].Cells["colName"].Value = ((s != null) ? s.Name : null);
-				dataGridView1.Rows[0].Cells["colSex"].Value = ((s == null) ? string.Empty : ((s.Sex == Sex.Male) ? "男" : "女"));
-				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == PhysicalItem.ConvertPhysicalItem(s, score.PhysicalItem));
-				dataGridView1.Rows[0].Cells["colPhysicalItem"].Value = string.Format("{0}", physicalItem.Name);
-				dataGridView1.Rows[0].Cells["colUnit"].Value = physicalItem.Unit;
-				dataGridView1.Rows[0].Cells["colScore"].Value = ((!score.SpecialType.HasValue) ? physicalItem.ConvertToStr(score.Score) : GetSpecialScoreText(score.SpecialType.Value));
-				dataGridView1.Rows[0].Cells["colRecordDate"].Value = (score.UpdateDate.HasValue ? score.UpdateDate.Value.ToString("yyyy-MM-dd HH:mm") : string.Empty);
-				if (dataGridView1.Rows[0].Visible)
-				{
-					_CurItemCount++;
-				}
-				lblCount.Text = string.Format("共 {0} 项", _CurItemCount);
-			}
-		}
-
 		private void ShowRecord(PhysicalRecord record)
 		{
 			lock (_GridLocker)
 			{
 				dataGridView1.Rows.Insert(0, 1);
 				dataGridView1.Rows[0].Tag = record;
-				dataGridView1.Rows[0].DefaultCellStyle.ForeColor = Color.Red;
+				dataGridView1.Rows[0].DefaultCellStyle.ForeColor = Color.Black;
 				dataGridView1.Rows[0].Cells["colSN"].Value = record.SN;
-				Student s = PhysicalProject.Current.GetStudentByID(record.StudentNumber);
 				dataGridView1.Rows[0].Cells["colStudentID"].Value = record.StudentNumber;
-				dataGridView1.Rows[0].Cells["colName"].Value = ((s != null) ? s.Name : null);
-				dataGridView1.Rows[0].Cells["colSex"].Value = ((s == null) ? string.Empty : ((s.Sex == Sex.Male) ? "男" : "女"));
-				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == PhysicalItem.ConvertPhysicalItem(s, record.PhysicalItem));
+				dataGridView1.Rows[0].Cells["colName"].Value = record.Name;
+				dataGridView1.Rows[0].Cells["colSex"].Value = record.Sex;
+				PhysicalItem physicalItem = WifiCollectionContext.FindPhysicalItem(record.PhysicalItem);
 				if (physicalItem != null)
 				{
-					dataGridView1.Rows[0].Cells["colPhysicalItem"].Value = string.Format("{0}", physicalItem.Name);
+					dataGridView1.Rows[0].Cells["colPhysicalItem"].Value = physicalItem.Name;
 					dataGridView1.Rows[0].Cells["colUnit"].Value = physicalItem.Unit;
 					if (physicalItem.Unit == "分.秒")
 					{
@@ -294,11 +166,9 @@ namespace HH.TiYu.UI
 					{
 						record.Result /= 100m;
 					}
-					string empty = string.Empty;
 					if (record.SpecialResult.HasValue)
 					{
-						empty = GetSpecialScoreText((record.SpecialResult == 160) ? SpecialScoreType.Foul : ((record.SpecialResult == 161) ? SpecialScoreType.Abandoned : ((record.SpecialResult != 162) ? SpecialScoreType.Foul : SpecialScoreType.Incomplete)));
-						dataGridView1.Rows[0].Cells["colScore"].Value = empty;
+						dataGridView1.Rows[0].Cells["colScore"].Value = GetSpecialScoreText((record.SpecialResult == 160) ? SpecialScoreType.Foul : ((record.SpecialResult == 161) ? SpecialScoreType.Abandoned : ((record.SpecialResult != 162) ? SpecialScoreType.Foul : SpecialScoreType.Incomplete)));
 					}
 					else
 					{
@@ -429,15 +299,7 @@ namespace HH.TiYu.UI
 					continue;
 				}
 				_Records.Add(item);
-				PhysicalScore score = GetScoreFrom(item);
-				if (score != null)
-				{
-					ShowScore(item.SN, score);
-				}
-				else
-				{
-					ShowRecord(item);
-				}
+				ShowRecord(item);
 			}
 			lblCount.Text = string.Format("采集到 {0} 条记录  总共 {1} 条记录", list.Count, dataGridView1.Rows.Count);
 			statusStrip1.Refresh();
@@ -450,19 +312,7 @@ namespace HH.TiYu.UI
 				if (!record.Invalid)
 				{
 					_Records.Add(record);
-					PhysicalScore scoreFrom = GetScoreFrom(record);
-					if (scoreFrom != null)
-					{
-						ShowScore(record.SN, scoreFrom);
-					}
-					else
-					{
-						ShowRecord(record);
-					}
-				}
-				else
-				{
-					PhysicalRecord physicalRecord = record;
+					ShowRecord(record);
 				}
 			}
 			lblCount.Text = string.Format("采集到 {0} 条记录  总共 {1} 条记录", records.Count, dataGridView1.Rows.Count);

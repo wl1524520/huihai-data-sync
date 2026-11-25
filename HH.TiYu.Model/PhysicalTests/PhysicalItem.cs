@@ -1,4 +1,4 @@
-﻿// Recovered from lib/Model.dll with ILSpy; see README.md.
+// Recovered from lib/Model.dll with ILSpy; see README.md.
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -109,19 +109,6 @@ namespace HH.TiYu.Model
         public string ShortName { get; set; }
 
         public string Memo { get; set; }
-
-        public static int ConvertPhysicalItem(Student s, int physicalItem)
-        {
-            if (s != null && s.Sex == Sex.Male && physicalItem == Run800MetersItemId)
-            {
-                return Run1000MetersItemId;
-            }
-            if (s != null && s.Sex == Sex.Female && physicalItem == Run1000MetersItemId)
-            {
-                return Run800MetersItemId;
-            }
-            return physicalItem;
-        }
 
         public string ConvertToStr(decimal value)
         {

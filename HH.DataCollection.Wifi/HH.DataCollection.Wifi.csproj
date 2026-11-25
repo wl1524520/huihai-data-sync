@@ -55,24 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
-    <Compile Include="Shell\FrmMain.cs" />
-    <Compile Include="Shell\FrmSelectProject.cs" />
     <Compile Include="Db\LocalDb.cs" />
-    <Compile Include="Sync\SyncConfig.cs" />
-    <Compile Include="Sync\DeviceIdentity.cs" />
-    <Compile Include="Sync\SyncApi.cs" />
-    <Compile Include="Sync\StudentSync.cs" />
-    <Compile Include="Sync\ScoreUpload.cs" />
-    <Compile Include="Sync\Views\FrmSyncSettings.cs" />
-    <Compile Include="Sync\Views\FrmSyncTasks.cs" />
-    <Compile Include="Sync\Views\FrmStudentDownload.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <!-- 工具栏图标,由 tools\ExtractIcons.ps1 从原软件 GuojiaTiZhi.exe 资源提取 -->
-    <EmbeddedResource Include="Resources\wireless.png" />
-    <EmbeddedResource Include="Resources\upload.png" />
-    <EmbeddedResource Include="Resources\network.png" />
-    <EmbeddedResource Include="Resources\download.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -114,9 +97,8 @@
       <RuntimeLibraries Include="$(HuiHaiDir)Newtonsoft.Json.dll;$(HuiHaiDir)System.Data.SQLite.dll;$(HuiHaiDir)NPOI.dll;$(HuiHaiDir)NPOI.OOXML.dll;$(HuiHaiDir)NPOI.OpenXml4Net.dll;$(HuiHaiDir)NPOI.OpenXmlFormats.dll;$(HuiHaiDir)ICSharpCode.SharpZipLib.dll" />
     </ItemGroup>
     <!-- 清理旧构建留下的已移除组件，兼容直接增量构建。 -->
-    <Delete Files="$(TargetDir)LJH.GeneralLibrary.dll;$(TargetDir)LJH.GeneralLibrary.pdb;$(TargetDir)HH.TiYu.SQLite.dll;$(TargetDir)HH.TiYu.SQLite.pdb;$(TargetDir)AForge.dll;$(TargetDir)AForge.Controls.dll;$(TargetDir)AForge.Imaging.dll;$(TargetDir)AForge.Math.dll;$(TargetDir)AForge.Video.dll;$(TargetDir)AForge.Video.DirectShow.dll;$(TargetDir)FJ.CoreWin.dll;$(TargetDir)JpgDll.dll;$(TargetDir)SavePhoto.dll;$(TargetDir)dt215.dll;$(TargetDir)dt215L.dll;$(TargetDir)Microsoft.ReportViewer.Common.dll;$(TargetDir)Microsoft.ReportViewer.DataVisualization.dll;$(TargetDir)Microsoft.ReportViewer.ProcessingObjectModel.dll;$(TargetDir)Microsoft.ReportViewer.WinForms.dll;$(TargetDir)Jurassic.dll;$(TargetDir)Barcode._1D.dll;$(TargetDir)TSNMachineInterfaceCSharp.dll;$(TargetDir)zTempTestSample_HID.dll;$(TargetDir)SLABHIDDevice.dll;$(TargetDir)sdtapi.dll" />
+    <Delete Files="$(TargetDir)config.xml;$(TargetDir)LJH.GeneralLibrary.dll;$(TargetDir)LJH.GeneralLibrary.pdb;$(TargetDir)HH.TiYu.SQLite.dll;$(TargetDir)HH.TiYu.SQLite.pdb;$(TargetDir)AForge.dll;$(TargetDir)AForge.Controls.dll;$(TargetDir)AForge.Imaging.dll;$(TargetDir)AForge.Math.dll;$(TargetDir)AForge.Video.dll;$(TargetDir)AForge.Video.DirectShow.dll;$(TargetDir)FJ.CoreWin.dll;$(TargetDir)JpgDll.dll;$(TargetDir)SavePhoto.dll;$(TargetDir)dt215.dll;$(TargetDir)dt215L.dll;$(TargetDir)Microsoft.ReportViewer.Common.dll;$(TargetDir)Microsoft.ReportViewer.DataVisualization.dll;$(TargetDir)Microsoft.ReportViewer.ProcessingObjectModel.dll;$(TargetDir)Microsoft.ReportViewer.WinForms.dll;$(TargetDir)Jurassic.dll;$(TargetDir)Barcode._1D.dll;$(TargetDir)TSNMachineInterfaceCSharp.dll;$(TargetDir)zTempTestSample_HID.dll;$(TargetDir)SLABHIDDevice.dll;$(TargetDir)sdtapi.dll" />
     <Copy SourceFiles="@(RuntimeLibraries)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
-    <Exec Command="xcopy &quot;$(HuiHaiDir)config.xml&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
     <Exec Command="xcopy &quot;$(HuiHaiDir)DbUpdate_SQLITE.sql&quot; &quot;$(TargetDir)&quot; /D /Y /R" />
   </Target>
 </Project>

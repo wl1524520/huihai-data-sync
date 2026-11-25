@@ -15,8 +15,6 @@ using HH.TiYu.BLL;
 using HH.TiYu.Model;
 using HH.TiYu.Model.SearchCondition;
 using HH.TiYu.Model.Security;
-using HH.TiYu.UI.Controls;
-using HH.TiYu.UI.UserControl;
 using HH.TiYu.Device;
 using HH.TiYu.Device.Wifi;
 using HH.GeneralLibrary;
@@ -59,8 +57,6 @@ namespace HH.TiYu.UI
 		private ToolStripMenuItem startRealtimeCollectionMenuItem;
 
 		private ToolStripSeparator toolStripSeparator1;
-
-		private ToolStripMenuItem downloadStudentsMenuItem;
 
 		private ToolStripMenuItem clearStudentsMenuItem;
 
@@ -297,6 +293,7 @@ namespace HH.TiYu.UI
 			if (MessageBox.Show("是否关闭此窗口?", "询问", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No)
 			{
 				e.Cancel = true;
+				return;
 			}
 			foreach (FrmScoreCollect_Wifi openFrm in _OpenFrms)
 			{
@@ -387,7 +384,7 @@ namespace HH.TiYu.UI
 		private void ShowHostInfo(WifiHostInfo host)
 		{
 			DataGridViewRow dataGridViewRow = null;
-			PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == host.PhysicalID);
+			PhysicalItem physicalItem = WifiCollectionContext.FindPhysicalItem(host.PhysicalID);
 			foreach (DataGridViewRow item in (IEnumerable)dataGridView2.Rows)
 			{
 				if (item.Cells["colSer"].Value != null && item.Cells["colSer"].Value.ToString() == host.SerialNumber)
@@ -663,7 +660,7 @@ namespace HH.TiYu.UI
 						}
 						if (StudentScoresSavingService.Current != null)
 						{
-							StudentScoresSavingService.Current.AddScore(PhysicalProject.Current.ID, record, ScoreSource.Huihai200Host, reader.HostSN);
+							StudentScoresSavingService.Current.AddScore(record, ScoreSource.Huihai200Host, reader.HostSN);
 						}
 						FileLog.Log("原始采集记录", record.ToString());
 					}
@@ -700,98 +697,6 @@ namespace HH.TiYu.UI
 			frmP.Show();
 		}
 
-		private PhysicalScore GetScoreFrom(PhysicalRecord item)
-		{
-			PhysicalScore physicalScore = null;
-			if (PhysicalProject.Current.StartDate.HasValue && item.RecordDate < PhysicalProject.Current.StartDate.Value.Date)
-			{
-				return null;
-			}
-			if (PhysicalProject.Current.EndDate.HasValue && item.RecordDate > PhysicalProject.Current.EndDate.Value.Date)
-			{
-				return null;
-			}
-			Student studentByID = PhysicalProject.Current.GetStudentByID(item.StudentNumber);
-			if (studentByID != null)
-			{
-				int pid = PhysicalItem.ConvertPhysicalItem(studentByID, item.PhysicalItem);
-				PhysicalItem physicalItem = PhysicalProject.Current.AllPhysicalItems.SingleOrDefault((PhysicalItem it) => it.ID == pid);
-				if (physicalItem != null)
-				{
-					if (item.SpecialResult.HasValue)
-					{
-						physicalScore = new PhysicalScore
-						{
-							ID = Guid.NewGuid().ToString(),
-							StudentID = studentByID.StudentID,
-							Grade = studentByID.Grade,
-							ProjectID = PhysicalProject.Current.ID,
-							PhysicalItem = pid,
-							UpdateDate = (item.RecordDate.HasValue ? item.RecordDate : new DateTime?(DateTime.Now))
-						};
-						if (item.SpecialResult.HasValue)
-						{
-							if (item.SpecialResult == 160)
-							{
-								physicalScore.SpecialType = SpecialScoreType.Foul;
-							}
-							else if (item.SpecialResult == 161)
-							{
-								physicalScore.SpecialType = SpecialScoreType.Abandoned;
-							}
-							else if (item.SpecialResult == 162)
-							{
-								physicalScore.SpecialType = SpecialScoreType.Incomplete;
-							}
-							else
-							{
-								physicalScore.SpecialType = SpecialScoreType.Foul;
-							}
-						}
-					}
-					else
-					{
-						decimal num = item.Result;
-						if (physicalItem.Unit == "分.秒")
-						{
-							num = PhysicalItem.ConvertToMinuteSecond(item.Result);
-						}
-						else if (physicalItem.ID == 6 && physicalItem.Unit == "米")
-						{
-							num /= 100m;
-						}
-						if (!physicalItem.Min.HasValue || !(physicalItem.Min.Value > num))
-						{
-							if (physicalItem.Max.HasValue)
-							{
-								decimal? max = physicalItem.Max;
-								decimal num2 = num;
-								if ((max.GetValueOrDefault() < num2) & max.HasValue)
-								{
-									goto IL_049b;
-								}
-							}
-							physicalScore = new PhysicalScore
-							{
-								ID = Guid.NewGuid().ToString(),
-								StudentID = studentByID.StudentID,
-								Grade = studentByID.Grade,
-								ProjectID = PhysicalProject.Current.ID,
-								PhysicalItem = pid,
-								Score = num,
-								UpdateDate = (item.RecordDate.HasValue ? item.RecordDate : new DateTime?(DateTime.Now))
-							};
-							// 采集器只存原始成绩，不做评分：原 CalResult 调用已移除。
-						}
-					}
-					goto IL_049b;
-				}
-			}
-			goto IL_049b;
-			IL_049b:
-			return physicalScore;
-		}
-
 		private void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
 		{
 			if (e.RowIndex >= 0 && e.ColumnIndex >= 0 && dataGridView2.Columns[e.ColumnIndex].Name == "colOperation" && dataGridView2.Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null && dataGridView2.Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString() == "查看数据")
@@ -805,46 +710,6 @@ namespace HH.TiYu.UI
 					frmScoreCollect_Wifi.ShowPhysicalRecords(list);
 					frmScoreCollect_Wifi.ShowDialog();
 				}
-			}
-		}
-
-		private void DownloadStudentsMenuItem_Click(object sender, EventArgs e)
-		{
-			bool flag = false;
-			foreach (DataGridViewRow selectedRow in dataGridView2.SelectedRows)
-			{
-				if (selectedRow.Tag == null && Convert.ToBoolean(selectedRow.Cells["colCheck"].EditedFormattedValue))
-				{
-					flag = true;
-					break;
-				}
-			}
-			if (!flag)
-			{
-				return;
-			}
-			FrmStudentDownloadPara frmStudentDownloadPara = new FrmStudentDownloadPara();
-			frmStudentDownloadPara.StartPosition = FormStartPosition.CenterParent;
-			if (frmStudentDownloadPara.ShowDialog() != DialogResult.OK)
-			{
-				return;
-			}
-			List<Student> students = frmStudentDownloadPara.students;
-			int maxStudentPertime = frmStudentDownloadPara.maxStudentPertime;
-			bool clearFirst = frmStudentDownloadPara.clearFirst;
-			int num = 0;
-			for (int i = 0; i < dataGridView2.Rows.Count; i++)
-			{
-				DataGridViewRow dataGridViewRow2 = dataGridView2.Rows[i];
-				if (dataGridViewRow2.Selected && dataGridViewRow2.Tag == null && Convert.ToBoolean(dataGridViewRow2.Cells["colCheck"].EditedFormattedValue))
-				{
-					UploadStudents(dataGridViewRow2, students, maxStudentPertime);
-					num++;
-				}
-			}
-			if (num > 0)
-			{
-				RenderProcessingForms();
 			}
 		}
 
@@ -864,79 +729,6 @@ namespace HH.TiYu.UI
 			{
 				RenderProcessingForms();
 			}
-		}
-
-		private void UploadStudents(DataGridViewRow row, List<Student> students, int maxStudentPertime)
-		{
-			WifiHostInfo hi = row.Cells["colSer"].Tag as WifiHostInfo;
-			HH.TiYu.Device.Wifi.StudentDownloader sd = HH.TiYu.Device.Wifi.StudentDownloader.CreateInstance(hi.HostID, hi.IP, hi.LocalIP);
-			sd.Log = chkLog.Checked;
-			row.Tag = sd;
-			row.Cells["colOperation"].Value = "下载学生";
-			FrmProcessing frmP = new FrmProcessing();
-			frmP.MdiParent = this;
-			_ProcessingForms.Add(frmP);
-			frmP.Caption = string.Format("主机{0}_{1} 下载学生", hi.HostID, row.Cells["colSer"].Value);
-			Action action = delegate
-			{
-				try
-				{
-					int num = 0;
-					List<HostStudent> list = new List<HostStudent>();
-					frmP.ShowProgress(string.Format("正在下载学生信息到 主机 {0} ...", hi.HostID), 0m);
-					using (WifiHost wifiHost = WifiHost.CreateInstance(hi.HostID, hi.IP, hi.LocalIP))
-					{
-						wifiHost.Log = sd.Log;
-						wifiHost.PreDownloadStudent();
-					}
-					sd.Open();
-					foreach (Student student in students)
-					{
-						list.Add(new HostStudent
-						{
-							StudentID = student.StudentID,
-							Name = student.Name,
-							Sex = ((student.Sex == Sex.Male) ? "男" : "女"),
-							Grade = 0, // 下发名单不携带年级，本地年级仍用于筛选。
-							ClassName = student.ClassName,
-						});
-						num++;
-						if (list.Count >= maxStudentPertime || (num == students.Count && list.Count > 0))
-						{
-							StudentDownloadResult studentDownloadResult = sd.DownloadStudents(list.ToArray());
-							list.Clear();
-							frmP.ShowProgress(string.Format("主机 {0} 已经下载 {1} 人，总共 {2}", hi.HostID, num, students.Count), (decimal)num / (decimal)students.Count);
-							if (studentDownloadResult == StudentDownloadResult.StorageFull)
-							{
-								frmP.ShowProgress(string.Format("主机 {0} 存储器已满", hi.HostID), 0.9m, Color.Red);
-								return;
-							}
-						}
-					}
-					frmP.ShowProgress(string.Empty, 1m);
-				}
-				catch (ThreadAbortException)
-				{
-				}
-				catch (Exception)
-				{
-				}
-				finally
-				{
-					sd.Close();
-				}
-			};
-			Thread t = new Thread(action.Invoke);
-			t.IsBackground = true;
-			t.Start();
-			frmP.FormClosed += delegate(object obj, FormClosedEventArgs args)
-			{
-				_ProcessingForms.Remove(obj as FrmProcessing);
-				t.Abort();
-				row.Tag = null;
-				row.Cells["colOperation"].Value = null;
-			};
-			frmP.Show();
 		}
 
 		private void ClearStudents(DataGridViewRow row)
@@ -1256,7 +1048,6 @@ namespace HH.TiYu.UI
 			this.collectDataByTimeRangeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.collectDataBySerialRangeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-			this.downloadStudentsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.clearStudentsMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
 			this.syncTimeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -1338,9 +1129,9 @@ namespace HH.TiYu.UI
 			this.colOperation.ReadOnly = true;
 			this.colOperation.Resizable = System.Windows.Forms.DataGridViewTriState.True;
 			this.colOperation.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[12]
+			this.contextMenuStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[11]
 			{
-				this.startRealtimeCollectionMenuItem, this.stopRealtimeCollectionMenuItem, this.collectAllDataMenuItem, this.advancedBatchCollectionMenuItem, this.toolStripSeparator1, this.downloadStudentsMenuItem, this.clearStudentsMenuItem,
+				this.startRealtimeCollectionMenuItem, this.stopRealtimeCollectionMenuItem, this.collectAllDataMenuItem, this.advancedBatchCollectionMenuItem, this.toolStripSeparator1, this.clearStudentsMenuItem,
 				this.toolStripSeparator2, this.syncTimeMenuItem, this.testCommunicationQualityMenuItem, this.shutdownHostMenuItem, this.toolStripSeparator4
 			});
 			this.contextMenuStrip2.Name = "contextMenuStrip1";
@@ -1371,9 +1162,6 @@ namespace HH.TiYu.UI
 			this.collectDataBySerialRangeMenuItem.Click += new System.EventHandler(CollectDataBySerialRangeMenuItem_Click);
 			this.toolStripSeparator1.Name = "toolStripSeparator1";
 			resources.ApplyResources(this.toolStripSeparator1, "toolStripSeparator1");
-			this.downloadStudentsMenuItem.Name = "downloadStudentsMenuItem";
-			resources.ApplyResources(this.downloadStudentsMenuItem, "downloadStudentsMenuItem");
-			this.downloadStudentsMenuItem.Click += new System.EventHandler(DownloadStudentsMenuItem_Click);
 			this.clearStudentsMenuItem.Name = "clearStudentsMenuItem";
 			resources.ApplyResources(this.clearStudentsMenuItem, "clearStudentsMenuItem");
 			this.clearStudentsMenuItem.Click += new System.EventHandler(ClearStudentsMenuItem_Click);

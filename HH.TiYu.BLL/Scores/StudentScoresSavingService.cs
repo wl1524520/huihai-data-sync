@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -13,8 +13,8 @@ using HH.GeneralLibrary.LOG;
 
 namespace HH.TiYu.BLL
 {
-	public class StudentScoresSavingService
-	{
+    public class StudentScoresSavingService
+    {
         private readonly object _UnsavedRecordsLocker = new object();
         private readonly object _lifecycleLocker = new object();
         private readonly List<StudentScore> _UnsavedItems = new List<StudentScore>();
@@ -36,16 +36,14 @@ namespace HH.TiYu.BLL
                 lock (_UnsavedRecordsLocker)
                 {
                     if (_stopRequested) return;
-                    // 按记录所属项目分批，切换当前项目不会遗留旧项目的待保存成绩。
-                    string projectID = _UnsavedItems.Count == 0 ? null : _UnsavedItems[0].ProjectID;
-                    batch = _UnsavedItems.Where(it => it.ProjectID == projectID).Take(500).ToList();
+                    batch = _UnsavedItems.Take(500).ToList();
                 }
                 bool saved = false;
                 if (batch.Count > 0)
                 {
                     try
                     {
-                        CommandResult result = ProviderFactory.Create<StudentScoreProvider>(AppSettings.Current.StudentScoreDB).BatchAdd(batch, batch[0].ProjectID);
+                        CommandResult result = ProviderFactory.Create<StudentScoreProvider>(AppSettings.Current.StudentScoreDB).BatchAdd(batch);
                         saved = result != null && result.Result == ResultCode.Successful;
                         if (!saved) FileLog.Log("原始成绩保存", "原始成绩保存到本地失败：" + (result == null ? "无返回结果" : result.Message));
                     }
@@ -129,14 +127,14 @@ namespace HH.TiYu.BLL
             if (!Stop(TimeSpan.FromSeconds(10))) throw new TimeoutException("原始成绩未全部保存，待保存数量：" + PendingCount);
         }
 
-		public void AddScore(string projectID, PhysicalRecord record, ScoreSource scoreFrom, string hostSN = null)
-		{
-			lock (_UnsavedRecordsLocker)
-			{
+        public void AddScore(PhysicalRecord record, ScoreSource scoreFrom, string hostSN = null)
+        {
+            lock (_UnsavedRecordsLocker)
+            {
                 if (_stopping) throw new InvalidOperationException("保存服务正在停止，不能再添加成绩。");
-				_UnsavedItems.Add(StudentScoreConverter.Convert(projectID, record, scoreFrom, hostSN));
+                _UnsavedItems.Add(StudentScoreConverter.Convert(record, scoreFrom, hostSN));
                 _wake.Set();
-			}
-		}
-	}
+            }
+        }
+    }
 }

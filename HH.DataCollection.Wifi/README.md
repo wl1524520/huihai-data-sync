@@ -1,61 +1,41 @@
 # 采集器主程序维护
 
-本项目是 .NET Framework 4.0 / x86 Windows Forms 应用，输出 `HH.DataCollection.Wifi.exe`，引用 Model、DAL、BLL、SQLite、Device、UI 和 HH.GeneralLibrary 源码项目。
+本项目是 .NET Framework 4.0 / x86 Windows Forms 应用，输出 `HH.DataCollection.Wifi.exe`，引用 Model、DAL、BLL、Device、UI 和 HH.GeneralLibrary 源码项目。
+
+程序启动后直接打开 `HH.TiYu.UI.FrmHosts`（窗口标题“数据采集_Wifi”），不再显示独立主界面。启动只初始化本地两表库、科目种子、默认操作员和原始成绩保存服务，不创建年度项目或加载名单。
+
+当前版本只提供汇海 Wifi 主机成绩采集、采集记录查看、本地保存、统计与导出。平台同步设置、平台名单下载、成绩上传及向主机下发名单均已移除；启动不再要求设备登记、学校授权或网络连接。主机“清空学生、对时、关机、通讯质量检测”按现场维护需要保留。
 
 ## 目录与修改入口
 
 | 路径 | 职责 |
 | --- | --- |
-| `Program.cs` | 单实例、异常日志、本地库初始化、当前学年项目加载、原始成绩保存服务启停和主界面启动 |
-| `Shell/FrmMain.cs` | 主界面、学生与原始成绩列表、采集入口、同步入口和项目切换协调 |
-| `Shell/FrmSelectProject.cs` | 历史项目选择对话框 |
-| `Db/LocalDb.cs` | 六表数据库创建与测试科目字典初始化 |
-| `Sync/DeviceIdentity.cs` | 无前缀 GUID 设备身份的生成、独立文件持久化与完整性检查 |
-| `Sync/SyncConfig.cs` | 同步配置读写、校验、设备授权及学校/项目基线 |
-| `Sync/SyncApi.cs` | HTTP 接口、响应与错误类型、重试和服务端错误处理 |
-| `Sync/StudentSync.cs` | 学生名单下发解析、校验与分页事务(DAL 落库) |
-| `Sync/ScoreUpload.cs` | 原始成绩筛选、转换、上传与上传批次调度(标记维护走 DAL) |
-| `Sync/Views/` | 同步设置 `FrmSyncSettings`、任务执行与日志窗口 `FrmSyncTasks` |
-| `Resources/` | 采集、上传和网络设置工具栏图标 |
-| `app.config` | 运行时配置与程序集绑定策略 |
+| `Program.cs` | 单实例、异常日志、本地库初始化、原始成绩保存服务启停，以及直接启动 `FrmHosts` |
+| `Db/LocalDb.cs` | `PhysicalItem`、`StudentScore` 两表创建与科目字典初始化 |
 
-`Shell` 负责应用导航和流程协调；同步服务和配置保留在 `Sync`，对应窗体集中在 `Sync/Views`。数据库结构由 `Db` 管理。新增源码优先归入对应职责目录，不预建空目录，也不将业务逻辑放入资源目录。
+主界面 `FrmMain`、项目选择窗口 `FrmSelectProject` 及其专用资源已删除。新增源码须显式加入项目文件的 `Compile Include`。
 
-物理目录调整不改变命名空间：启动入口和主界面仍为 `HH.DataCollection.Wifi`，同步窗体及服务仍为 `HH.DataCollection.Wifi.Sync`，数据库入口仍为 `HH.DataCollection.Wifi.Db`。窗体布局与事件关联直接写在各自 `.cs` 中，没有独立 `.Designer.cs`。新增源码须显式加入项目文件的 `Compile Include`。
+## 采集与持久化边界
 
-## 同步与持久化边界
+主机发现、实时／集中采集及原始记录解析由 Device 和 UI 完成；`StudentScoresSavingService` 将有效记录排入保存队列，经 DAL 写入 `StudentScore`。UI 直接使用主机上报的姓名、性别和科目编号，并从全局科目字典补充名称、单位及显示格式，不查询本地名单。
 
-同步接口以工作区的[汇海同步接口文档](../../unite-tizhi-docs/docs/汇海同步接口文档.md)为准。目录整理不修改请求、响应、认证、重试或上传行为；修改这些行为时应先核对接口文档。
+启动使用应用目录下的 `HH_Data.db`，错误日志位于 `logs/error.log`。单实例、保存队列与退出排空流程由 `Program` 协调。关闭“数据采集_Wifi”窗口即退出程序，随后等待已排队成绩保存完成。
 
-`StudentSync` 和 `ScoreUpload` 的库表读写全部经过 DAL:`StudentProvider.SyncRemotePage` 承担名单 upsert,`StudentScoreProvider` 的上传原语承担取待传、置位、重置与统计,`Uploaded` 列仍不映射。调整学生或成绩字段时,应同时检查 `Db/LocalDb.cs`、Model 实体与 DAL 映射/上传原语 SQL;同步类只持有接口契约与科目白名单等业务规则。当前库为六表,由 DAL 统一映射;原始成绩实体在 Model,设备转换与后台保存服务在 BLL,Program 负责服务启停。
+数据库仅包含 `PhysicalItem` 和 `StudentScore`；名单、年度项目、项目科目关联、同步配置，以及成绩中的 `ProjectID`、`Uploaded` 均已移除。不提供旧库迁移，也不执行删表、删列或清空历史成绩的迁移。
 
-启动使用应用目录下的 `HH_Data.db`，错误日志位于 `logs/error.log`；源码目录不决定运行时文件位置。单实例、保存队列与退出排空流程由 `Program` 协调，目录调整保持现有行为。
+## 配置与部署
 
-## 资源、配置与部署
-
-三个图标保留在 `Resources`，运行时嵌入资源名称为 `HH.DataCollection.Wifi.Resources.wireless.png`、`HH.DataCollection.Wifi.Resources.upload.png`、`HH.DataCollection.Wifi.Resources.network.png`，供 `FrmMain` 按名称加载。不要仅移动资源而遗漏嵌入名称与调用方的对应关系。
-
-`Program.cs` 和 `app.config` 保留项目根目录。构建后从 `lib` 复制通用运行依赖及 `config.xml`、`DbUpdate_SQLITE.sql`；Model、DAL、BLL、SQLite、Device、UI、HH.GeneralLibrary 均使用源码构建产物。发布使用 `bin/Release` 完整文件集，不用原始 `lib` 业务 DLL 覆盖输出。
+`Program.cs` 和 `app.config` 保留项目根目录。构建后从 `lib` 复制通用运行依赖及 `DbUpdate_SQLITE.sql`；旧 `config.xml` 不再部署，构建会清理输出目录中的遗留副本。Model、DAL、BLL、Device、UI、HH.GeneralLibrary 均使用源码构建产物。发布使用 `bin/Release` 完整文件集，不用原始 `lib` 业务 DLL 覆盖输出。
 
 ## 构建与验证
 
-在 `HH.DataCollection.Wifi` 解决方案根目录执行：
+在解决方案根目录执行：
 
 ```powershell
 & C:\Windows\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe HH.DataCollection.Wifi.sln /t:Build /p:Configuration=Debug /p:Platform=x86
-.\tools\VerifyRecoveredApi.ps1 -Configuration Debug
+.\tools\VerifyUI.ps1 -Configuration Debug
 .\tools\VerifyDal.ps1 -Configuration Debug
+.\tools\VerifyRecoveredApi.ps1 -Configuration Debug
 ```
 
-上述构建和验证也支持 Release。接口验证会构建完整解决方案，核对七个源码程序集的部署产物及程序集间引用；DAL 验证使用隔离数据库检查当前表结构、读写与同步配置。恢复的采集窗体另由 `tools/VerifyUI.ps1` 验证。
-
-这些检查不启动 `Program.Main`，不覆盖主程序四个窗体的实际显示、项目切换交互、设备通信或真实云平台同步；现场流程仍需相应验收。
-
-2026-10-17：完整移除 Division 表、Facility.DivisionID、区域实体/查询/BLL/DAL 和名单下发区域筛选。学校、年级、班级筛选保留。首次启动创建七表新库，不提供旧库迁移。
-
-2026-10-25：采集器按单学校安装使用，学校由平台上的设备授权及学校绑定关系确定。删除 Facility 表、Student.FacilityID 及学校实体/查询/BLL/DAL/筛选控件；学校名称仅作同步配置显示。年度项目和 ProjectID 隔离保留，名单同步直接写入创建下载任务时确定的年度项目。新库六表，学生八字段、同步配置七项及本地年度目标绑定，不提供旧库迁移。
-
-
-设备身份保存于 `%LOCALAPPDATA%/Huihai/DataCollection/<安装目录摘要>/device-id.txt`。摘要只用于隔离同一 Windows 用户的不同安装路径，不参与设备号生成，不读取硬件。相同用户、相同安装路径的重启和业务库重建复用原设备号；不同用户或安装路径视为独立实例。升级请保留安装路径和身份文件，不复制身份文件供其他电脑使用。文件损坏或身份与业务配置缓存冲突时停止启动，不覆盖既有身份；删除身份文件及业务配置后会登记为新设备，需要管理员重新授权。
-
-同步配置包含 `api_url`、`device_no`（身份缓存）、`registration_status`、`school_id`、`school_name`、`remote_project_id`、`remote_project_name`，并通过 `local_target_<本地年度ID>` 固定每个年度的接口地址、学校和平台项目。授权检查期间或失败后同步入口保持关闭；403、400、422、拒收 ACK 和连续限流会停止上传任务，修复后手动重新启动。每轮上传及名单下载前核对目标；有旧数据时不能直接改绑。名单下载期间设置入口锁定，避免中途修改接入配置。
+上述构建和验证也支持 Release。验证使用隔离目录，不启动真实采集流程，不连接设备或云平台。程序直接启动行为、主机通信和真实成绩保存仍需现场验收。

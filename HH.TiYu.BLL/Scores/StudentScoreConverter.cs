@@ -4,16 +4,15 @@ using HH.TiYu.Device;
 
 namespace HH.TiYu.BLL
 {
-    /// <summary>设备记录到原始成绩的转换；保留现有 Key、时间与特殊成绩规则。</summary>
+    /// <summary>设备记录到原始成绩的转换；保留时间、特殊成绩与设备定位信息。</summary>
     internal static class StudentScoreConverter
     {
-        internal static StudentScore Convert(string projectID, PhysicalRecord record, ScoreSource scoreFrom, string hostSN)
+        internal static StudentScore Convert(PhysicalRecord record, ScoreSource scoreFrom, string hostSN)
         {
             DateTime recordTime = record.RecordDate ?? DateTime.Now;
             StudentScore studentScore = new StudentScore();
             studentScore.ID = Guid.NewGuid().ToString();
-            studentScore.ProjectID = projectID;
-            studentScore.Key = string.Format("{0}_{1}_{2}_{3}_{4}_{5}_{6}", projectID, hostSN, record.SN, record.StudentNumber, record.PhysicalItem, record.Result, recordTime.ToString("yyyyMMddHHmmss"));
+            studentScore.Key = string.Format("{0}_{1}_{2}_{3}_{4}_{5}", hostSN, record.SN, record.StudentNumber, record.PhysicalItem, record.Result, recordTime.ToString("yyyyMMddHHmmss"));
             studentScore.StudentID = record.StudentNumber;
             studentScore.IDSource = (int)record.IDSource;
             studentScore.StudentName = record.Name;

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -31,33 +31,19 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
-    <Reference Include="System.Xml" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
-    <Reference Include="Newtonsoft.Json"><HintPath>..\lib\Newtonsoft.Json.dll</HintPath><Private>False</Private></Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Configuration\AppSettings.cs" />
     <Compile Include="Shared\DateTimeRange.cs" />
-    <Compile Include="Students\GradeHelper.cs" />
     <Compile Include="PhysicalTests\PhysicalItem.cs" />
-    <Compile Include="PhysicalTests\PhysicalProject.cs" />
-    <Compile Include="PhysicalTests\PhysicalProjectClass.cs" />
-    <Compile Include="PhysicalTests\PhysicalProjectHelper.cs" />
-    <Compile Include="Scores\PhysicalScore.cs" />
     <Compile Include="Scores\StudentScore.cs" />
     <Compile Include="Scores\StudentScoreSearchCondition.cs" />
-    <Compile Include="PhysicalTests\ProjectPhysicalItem.cs" />
     <Compile Include="Shared\Sex.cs" />
     <Compile Include="Scores\SpecialScoreType.cs" />
-    <Compile Include="Students\Student.cs" />
     <Compile Include="Scores\ScoreSource.cs" />
-    <Compile Include="PhysicalTests\ProjectLoadOptions.cs" />
     <Compile Include="Security\Operator.cs" />
-    <Compile Include="PhysicalTests\PhysicalProjectSearchCondition.cs" />
-    <Compile Include="PhysicalTests\ProjectPhysicalItemSearchCondition.cs" />
-    <Compile Include="Students\StudentSearchCondition.cs" />
-    <Compile Include="Configuration\SyncConfigEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

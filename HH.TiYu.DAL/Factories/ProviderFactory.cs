@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Linq.Mapping;
 using System.IO;
 using System.Linq;
@@ -10,10 +10,9 @@ namespace HH.TiYu.DAL
     {
         private static readonly Lazy<MappingSource> Mapping = new Lazy<MappingSource>(LoadMapping);
         private static readonly Type[] Providers = {
-            typeof(StudentProvider),
-            typeof(PhysicalItemProvider), typeof(PhysicalProjectProvider),
-            typeof(ProjectPhysicalItemProvider), typeof(SyncConfigProvider), typeof(StudentScoreProvider)
+            typeof(PhysicalItemProvider), typeof(StudentScoreProvider)
         };
+
         private static MappingSource LoadMapping()
         {
             using (Stream stream = typeof(ProviderFactory).Assembly.GetManifestResourceStream("HH.TiYu.DAL.LinqProvider.DataMapping.xml"))
@@ -22,6 +21,7 @@ namespace HH.TiYu.DAL
                 return XmlMappingSource.FromStream(stream);
             }
         }
+
         public static T Create<T>(string connStr) where T : class
         {
             Type provider = Providers.SingleOrDefault(type => typeof(T).IsAssignableFrom(type));

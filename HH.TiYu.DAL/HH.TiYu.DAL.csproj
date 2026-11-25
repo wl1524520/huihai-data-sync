@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -34,15 +34,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <!-- 采集器仅保留 DataMapping.xml 映射到的八表 Provider；停用的旧 Provider 已随本轮精简删除。 -->
-    <Compile Include="Contracts\IBatchProvider.cs" />
+    <!-- 采集器仅启用科目字典与原始成绩两个 Provider。 -->
     <Compile Include="Factories\ProviderFactory.cs" />
     <Compile Include="LinqProvider\Scores\StudentScoreProvider.cs" />
     <Compile Include="LinqProvider\PhysicalTests\PhysicalItemProvider.cs" />
-    <Compile Include="LinqProvider\PhysicalTests\PhysicalProjectProvider.cs" />
-    <Compile Include="LinqProvider\PhysicalTests\ProjectPhysicalItemProvider.cs" />
-    <Compile Include="LinqProvider\Students\StudentProvider.cs" />
-    <Compile Include="LinqProvider\Configuration\SyncConfigProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="LinqProvider\DataMapping.xml">
       <LogicalName>HH.TiYu.DAL.LinqProvider.DataMapping.xml</LogicalName>
